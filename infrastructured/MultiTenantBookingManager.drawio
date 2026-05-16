@@ -1,0 +1,45 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="MVP" id="1QLuf25oUAK21Q6uPX4a">
+    <mxGraphModel dx="1414" dy="912" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="5U60eVnLWCPcy8E-voun-3" parent="1" style="swimlane;whiteSpace=wrap;html=1;" value="DB" vertex="1">
+          <mxGeometry height="260" width="260" x="120" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="5U60eVnLWCPcy8E-voun-4" parent="5U60eVnLWCPcy8E-voun-3" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.database;whiteSpace=wrap;" value="SQLServer" vertex="1">
+          <mxGeometry height="80" width="80" x="100" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="5U60eVnLWCPcy8E-voun-5" parent="1" style="swimlane;whiteSpace=wrap;html=1;" value="Backend" vertex="1">
+          <mxGeometry height="260" width="260" x="420" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="5U60eVnLWCPcy8E-voun-8" parent="5U60eVnLWCPcy8E-voun-5" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="API" vertex="1">
+          <mxGeometry height="30" width="60" x="-50" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="5U60eVnLWCPcy8E-voun-9" parent="5U60eVnLWCPcy8E-voun-5" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;" value="FastAPI&lt;div&gt;Python&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="100" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="5U60eVnLWCPcy8E-voun-7" edge="1" parent="1" source="5U60eVnLWCPcy8E-voun-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="380" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="5U60eVnLWCPcy8E-voun-10" parent="1" style="swimlane;whiteSpace=wrap;html=1;" value="FrontEnd" vertex="1">
+          <mxGeometry height="265" width="260" x="750" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="5U60eVnLWCPcy8E-voun-12" parent="5U60eVnLWCPcy8E-voun-10" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;" value="NextJS&lt;div&gt;Typescript&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="77" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="5U60eVnLWCPcy8E-voun-13" edge="1" parent="1" source="5U60eVnLWCPcy8E-voun-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="5U60eVnLWCPcy8E-voun-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="5U60eVnLWCPcy8E-voun-15" parent="1" style="swimlane;horizontal=0;whiteSpace=wrap;html=1;" value="MVP" vertex="1">
+          <mxGeometry height="380" width="1040" x="60" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="5U60eVnLWCPcy8E-voun-16" parent="5U60eVnLWCPcy8E-voun-15" style="image;sketch=0;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/mscae/Docker.svg;" value="" vertex="1">
+          <mxGeometry height="45.1" width="55" x="495" y="330" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
