@@ -7,6 +7,7 @@
   - [Atributos por tabla](#atributos-por-tabla)
     - [Tabla business\_types](#tabla-business_types)
     - [Tabla tenant\_statuses](#tabla-tenant_statuses)
+    - [Tabla superadmins](#tabla-superadmins)
     - [Tabla tenants](#tabla-tenants)
     - [Tabla tenant\_owners](#tabla-tenant_owners)
     - [Tabla customers](#tabla-customers)
@@ -28,7 +29,7 @@
   - [Vistas SQL propuestas](#vistas-sql-propuestas)
   - [Triggers propuestos](#triggers-propuestos)
 
-Para mantener el proyecto claro, se propone una base de datos con 14 tablas principales. Esto cumple de sobra con el mínimo de 10 tablas y mantiene el sistema entendible.
+Para mantener el proyecto claro, se propone una base de datos con 15 tablas principales. Esto cumple de sobra con el mínimo de 10 tablas y mantiene el sistema entendible.
 
 Tablas propuestas
 
@@ -36,6 +37,7 @@ Tablas propuestas
 | --- | --- |
 | business_types | Tipos de negocio permitidos. |
 | tenant_statuses | Estados posibles de un tenant. |
+| superadmins | Administradores globales de la plataforma MBM. |
 | tenants | Negocios registrados en MBM. |
 | tenant_owners | Duenos o administradores de cada tenant. |
 | customers | Clientes que realizan reservas. |
@@ -100,6 +102,28 @@ Relación principal:
 - tenant_statuses 1:N tenants
 
 Un estado puede pertenecer a muchos tenants.
+
+### Tabla superadmins
+
+Contiene los administradores globales de la plataforma MBM. Son los únicos que pueden activar o suspender tenants.
+
+Para el MVP puede existir un solo superadmin, pero la tabla permite agregar mas en el futuro.
+
+Atributos:
+
+- superadmin_id: PK. Identificador único del superadmin.
+- email: Correo de acceso.
+- password_hash: Contrasena cifrada.
+- full_name: Nombre completo.
+- is_active: Indica si el superadmin esta activo.
+- created_at: Fecha de creación.
+- updated_at: Fecha de actualización.
+
+Relación principal:
+
+- superadmins 1:N audit_logs
+
+Un superadmin puede generar muchos registros de auditoría al gestionar tenants.
 
 ### Tabla tenants
 
@@ -177,6 +201,7 @@ Atributos:
 - phone: Teléfono.
 - notes: Notas opcionales.
 - created_at: Fecha de creación.
+- updated_at: Fecha de actualización.
 
 Relación principal:
 
@@ -206,6 +231,7 @@ Atributos:
 - description: Descripción opcional.
 - is_active: Indica si la categoría esta activa.
 - created_at: Fecha de creación.
+- updated_at: Fecha de actualización.
 
 Relación principal:
 
@@ -261,6 +287,7 @@ Atributos:
 - is_main: Indica si es la sede principal.
 - is_active: Indica si la ubicación esta activa.
 - created_at: Fecha de creación.
+- updated_at: Fecha de actualización.
 
 Relación principal:
 
@@ -275,10 +302,11 @@ Atributos:
 
 - business_hour_id: PK. Identificador único del horario.
 - tenant_id: FK hacia tenants.
-- day_of_week: Dia de la semana.
-- open_time: Hora de apertura.
-- close_time: Hora de cierre.
+- day_of_week: Dia de la semana (0 = domingo, 6 = sabado).
+- open_time: Hora de apertura. NULL si is_closed es verdadero.
+- close_time: Hora de cierre. NULL si is_closed es verdadero.
 - is_closed: Indica si el negocio cierra ese dia.
+- updated_at: Fecha de actualización.
 
 Ejemplo:
 
@@ -306,9 +334,10 @@ Atributos:
 - start_time: Hora de inicio.
 - end_time: Hora de fin.
 - capacity: Cantidad de reservas permitidas en ese bloque.
-- reserved_count: Cantidad de reservas ya tomadas.
+- reserved_count: Cantidad de reservas ya tomadas. Se mantiene sincronizado mediante triggers. No se debe modificar directamente.
 - is_active: Indica si el bloque esta disponible.
 - created_at: Fecha de creación.
+- updated_at: Fecha de actualización.
 
 Relación principal:
 
@@ -368,6 +397,10 @@ Atributos:
 - created_at: Fecha de creación.
 - updated_at: Fecha de actualización.
 
+Nota de diseño — denormalización intencional:
+
+booking_date, start_time y end_time se repiten en la reserva aunque ya existen en availability_block_id. Esta redundancia es intencional. Si el bloque es eliminado o modificado en el futuro, la reserva conserva el registro historico exacto de la fecha y hora acordadas. Esto protege la integridad histórica de los datos sin depender de que el bloque exista.
+
 Relaciones principales:
 
 - tenants 1:N bookings
@@ -386,7 +419,7 @@ Atributos:
 - tracking_id: PK. Identificador único.
 - booking_id: FK hacia bookings.
 - tracking_code: Codigo único.
-- expires_at: Fecha opcional de expiracion.
+- expires_at: Fecha de expiración. Requerido. Default de 30 dias desde la creación de la reserva. Un codigo sin expiración permite consulta indefinida, lo cual no es deseable por seguridad.
 - is_active: Indica si el codigo sigue activo.
 - created_at: Fecha de creación.
 
@@ -407,14 +440,17 @@ Contiene acciones importantes realizadas en el sistema.
 Atributos:
 
 - audit_id: PK. Identificador único del registro de auditoría.
-- tenant_id: FK hacia tenants.
-- owner_id: FK opcional hacia tenant_owners.
+- tenant_id: FK hacia tenants. Nullable para acciones globales del superadmin.
+- owner_id: FK opcional hacia tenant_owners. Registra cuando la accion la ejecuta el business owner.
+- superadmin_id: FK opcional hacia superadmins. Registra cuando la accion la ejecuta un superadmin.
 - action: Accion realizada.
 - entity_name: Nombre de la entidad afectada.
 - entity_id: ID del registro afectado.
-- old_value: Valor anterior.
-- new_value: Valor nuevo.
+- old_value: Valor anterior en formato texto. NVARCHAR(MAX) para admitir representaciones largas.
+- new_value: Valor nuevo en formato texto. NVARCHAR(MAX).
 - created_at: Fecha del evento.
+
+Nota: owner_id y superadmin_id son mutuamente excluyentes en la práctica. Solo uno debe tener valor por registro.
 
 Ejemplos de acciones:
 
@@ -423,11 +459,13 @@ Ejemplos de acciones:
 - booking_rescheduled
 - service_created
 - tenant_activated
+- tenant_suspended
 
 Relación principal:
 
 - tenants 1:N audit_logs
 - tenant_owners 1:N audit_logs
+- superadmins 1:N audit_logs
 
 ## Relaciones principales del modelo
 
@@ -449,6 +487,8 @@ Relación principal:
 | booking_statuses -> bookings | 1:N | Un estado puede estar en muchas reservas. |
 | bookings -> tracking_codes | 1:1 | Cada reserva tiene un codigo de tracking. |
 | tenants -> audit_logs | 1:N | Un tenant puede tener muchos registros de auditoría. |
+| tenant_owners -> audit_logs | 1:N | Un owner puede generar muchos registros de auditoría. |
+| superadmins -> audit_logs | 1:N | Un superadmin puede generar muchos registros al gestionar tenants. |
 
 ## Normalización de la base de datos
 
@@ -519,7 +559,7 @@ database/
 
 El proyecto pide al menos 50 registros por tabla.
 
-Como el sistema tiene 14 tablas, se deben preparar scripts de inserción con datos de prueba para cada una.
+Como el sistema tiene 15 tablas, se deben preparar scripts de inserción con datos de prueba para cada una.
 
 Ejemplos de datos:
 
@@ -527,6 +567,8 @@ Ejemplos de datos:
   - Barberia, Salon, Spa, Veterinaria, Clinica, Consultorio, Centro Estetico.
 - tenant_statuses:
   - pending, active, suspended, inactive.
+- superadmins:
+  - Admin principal de MBM con email y password_hash. Para llegar a 50 registros se crean superadmins de prueba adicionales con datos ficticios.
 - tenants:
   - Barberia Elite, Spa Luna, Veterinaria Central, Salon Bella, Clinica Vida.
 - services:
@@ -636,6 +678,7 @@ El requisito general menciona 5 triggers, aunque en la entrega final se menciona
 | trg_bookings_audit_update | Registrar auditoría cuando cambia una reserva. |
 | trg_update_tenants_updated_at | Actualizar updated_at cuando cambia un tenant. |
 | trg_update_services_updated_at | Actualizar updated_at cuando cambia un servicio. |
-| trg_prevent_overbooking | Evitar que se reserven mas cupos que la capacidad del bloque. |
+| trg_prevent_overbooking | Evitar que se reserven mas cupos que la capacidad del bloque. Usa reserved_count contra capacity. |
+| trg_sync_reserved_count_on_cancel | Decrementar reserved_count en availability_blocks cuando una reserva se cancela o reagenda. |
 
-Se proponen 6 para tener margen.
+Se proponen 7 para tener margen. La entrega final pide mínimo 3, el requisito general pide 5.
