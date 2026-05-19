@@ -136,11 +136,11 @@ Actualiza los horarios generales del negocio.
 - PATCH /availability-blocks/{id}
 - DELETE /availability-blocks/{id}
 
-Lista bloques de disponibilidad del tenant.
+Lista bloques de disponibilidad calculados o almacenados por sede y fecha.
 
-Crea un bloque de disponibilidad.
+Este recurso no debe aparecer como una pestaña manual del owner en el frontend. La disponibilidad se obtiene desde los horarios configurados en `/business-hours`, las sedes configuradas en `/locations` y las reservas existentes. Si el backend decide persistir slots en `availability_blocks`, debe hacerlo como lógica interna o mediante scripts de prueba, no como una pantalla donde el usuario publique horarios manualmente.
 
-Actualiza un bloque.
+Actualiza un bloque almacenado, por ejemplo su estado activo/inactivo.
 
 Inactiva un bloque.
 
@@ -247,6 +247,7 @@ Area pública
 | /book/[slug]/datetime | Seleccion de fecha y hora. |
 | /book/[slug]/customer | Datos del cliente. |
 | /book/[slug]/confirmation | Confirmacion y tracking code. |
+| /track | Ingreso de codigo de tracking. |
 | /track/[code] | Consulta de reserva. |
 | /track/[code]/reschedule | Reagendar reserva. |
 | /track/[code]/cancel | Cancelar reserva. |
@@ -264,8 +265,7 @@ Area privada del business owner
 | /service-categories | Categorías de servicios. |
 | /services | Servicios. |
 | /locations | Ubicaciones. |
-| /business-hours | Horarios generales. |
-| /availability | Bloques de disponibilidad. |
+| /business-hours | Horarios generales por sede. |
 | /bookings | Gestion de reservas. |
 | /customers | Clientes. |
 | /reports | Reportes. |
@@ -287,8 +287,7 @@ Prioridad alta
 - Login del owner.
 - Dashboard.
 - Servicios.
-- Horarios.
-- Disponibilidad.
+- Horarios por sede.
 - Reservas.
 - Página pública de reserva.
 - Tracking público.

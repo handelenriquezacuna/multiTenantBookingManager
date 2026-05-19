@@ -296,34 +296,44 @@ Relación principal:
 
 ### Tabla business_hours
 
-Contiene el horario general del negocio.
+Contiene el horario general del negocio por sede. En el frontend esta configuracion corresponde a `/business-hours`.
+
+Un negocio puede tener dias activos o cerrados distintos a otros negocios. Por ejemplo, una clinica puede cerrar sabados y domingos, mientras una barberia puede abrir sabados. Tambien puede tener pausas durante el dia, como almuerzo. Para cubrir esto sin agregar tablas extra, `business_hours` puede tener mas de un registro por dia para la misma sede.
+
+Si el negocio tiene varias sedes, cada sede puede tener horarios distintos. Por eso `business_hours` incluye `location_id` y `/business-hours` debe permitir seleccionar una sede antes de editar su semana operativa.
 
 Atributos:
 
 - business_hour_id: PK. Identificador único del horario.
 - tenant_id: FK hacia tenants.
+- location_id: FK hacia locations.
 - day_of_week: Dia de la semana (0 = domingo, 6 = sabado).
 - open_time: Hora de apertura. NULL si is_closed es verdadero.
 - close_time: Hora de cierre. NULL si is_closed es verdadero.
 - is_closed: Indica si el negocio cierra ese dia.
 - updated_at: Fecha de actualización.
 
-Ejemplo:
+Ejemplos:
 
 - Lunes, 08:00, 17:00, No cerrado
+- Lunes, 08:00, 12:00, No cerrado
+- Lunes, 13:00, 17:00, No cerrado
 - Domingo, NULL, NULL, Cerrado
 
 Relación principal:
 
 - tenants 1:N business_hours
+- locations 1:N business_hours
 
-Un tenant tendra varios registros, normalmente uno por dia de la semana.
+Un tenant tendra varios registros por sede. Puede ser uno por dia si no hay pausas, o varios registros para el mismo dia y sede cuando existen bloques separados, como manana y tarde.
 
 ### Tabla availability_blocks
 
-Contiene bloques concretos disponibles para reservar.
+Contiene bloques concretos disponibles para reservar en una sede especifica. No debe existir una pantalla privada `/availability` para que el owner publique horarios manualmente.
 
-Esta tabla simplifica el MVP porque evita manejar empleados y agendas individuales. El negocio define espacios disponibles, y las reservas se asignan a esos bloques.
+Esta tabla simplifica el MVP porque evita manejar empleados y agendas individuales. El negocio define sedes en `/locations` y horarios por sede en `/business-hours`. Con esa informacion, el sistema puede calcular o generar internamente los bloques disponibles como 09:00-09:30, 09:30-10:00 y asi sucesivamente.
+
+Para efectos academicos y scripts SQL, estos bloques pueden insertarse manualmente como registros independientes en `availability_blocks`. En el frontend del owner no se editan como una pantalla separada; son resultado de horarios, sedes y reservas.
 
 Atributos:
 
@@ -333,8 +343,6 @@ Atributos:
 - block_date: Fecha disponible.
 - start_time: Hora de inicio.
 - end_time: Hora de fin.
-- capacity: Cantidad de reservas permitidas en ese bloque.
-- reserved_count: Cantidad de reservas ya tomadas. Se mantiene sincronizado mediante triggers. No se debe modificar directamente.
 - is_active: Indica si el bloque esta disponible.
 - created_at: Fecha de creación.
 - updated_at: Fecha de actualización.
@@ -343,7 +351,7 @@ Relación principal:
 
 - tenants 1:N availability_blocks
 - locations 1:N availability_blocks
-- availability_blocks 1:N bookings
+- availability_blocks 1:0..1 bookings
 
 Ejemplo:
 
@@ -351,8 +359,25 @@ Ejemplo:
 - Fecha: 2026-06-10
 - Hora inicio: 09:00
 - Hora fin: 09:30
-- Capacidad: 1
-- Reservados: 0
+- Estado: disponible
+
+Ejemplo de flujo entre frontend y datos:
+
+- `/business-hours`: Sede central, lunes abierto 09:00-12:00 y 13:00-17:00.
+- `/locations`: existe la sede Sede central.
+- Página publica: el cliente elige Sede central y fecha 2026-06-10.
+- Sistema: calcula los horarios disponibles desde `business_hours` y reservas existentes, o consulta bloques ya generados internamente en `availability_blocks`.
+
+Ejemplo de bloques generados:
+
+- Fecha: 2026-06-10
+- Rango: 09:00 a 11:00
+- Intervalo: 30 minutos
+- Bloques resultantes:
+  - 09:00 a 09:30
+  - 09:30 a 10:00
+  - 10:00 a 10:30
+  - 10:30 a 11:00
 
 ### Tabla booking_statuses
 
@@ -407,7 +432,7 @@ Relaciones principales:
 - customers 1:N bookings
 - services 1:N bookings
 - locations 1:N bookings
-- availability_blocks 1:N bookings
+- availability_blocks 1:0..1 bookings
 - booking_statuses 1:N bookings
 
 ### Tabla tracking_codes
@@ -481,7 +506,7 @@ Relación principal:
 | tenants -> locations | 1:N | Un negocio puede tener una o varias ubicaciones. |
 | tenants -> business_hours | 1:N | Un negocio tiene varios horarios por dia. |
 | locations -> availability_blocks | 1:N | Una ubicación puede tener muchos bloques disponibles. |
-| availability_blocks -> bookings | 1:N | Un bloque puede recibir una o varias reservas segun su capacidad. |
+| availability_blocks -> bookings | 1:0..1 | Un bloque representa un horario reservable y solo puede quedar asociado a una reserva activa. |
 | customers -> bookings | 1:N | Un cliente puede hacer varias reservas. |
 | services -> bookings | 1:N | Un servicio puede estar en muchas reservas. |
 | booking_statuses -> bookings | 1:N | Un estado puede estar en muchas reservas. |
@@ -610,11 +635,11 @@ Debe encargarse de:
 - Validar que el tenant este activo.
 - Validar que el servicio pertenezca al tenant.
 - Validar que el bloque de disponibilidad pertenezca al tenant.
-- Validar que el bloque tenga capacidad disponible.
+- Validar que el bloque este disponible y no tenga una reserva activa.
 - Crear o reutilizar el cliente.
 - Insertar la reserva.
 - Asignar estado pending o confirmed.
-- Actualizar reserved_count del bloque.
+- Marcar o tratar el bloque como reservado para que no vuelva a mostrarse publicamente.
 - Permitir que un trigger genere el tracking code o llamar una función para generarlo.
 
 sp_cancel_booking
@@ -623,7 +648,7 @@ Debe encargarse de:
 
 - Buscar la reserva.
 - Cambiar el estado a cancelled.
-- Liberar cupo en availability_blocks.
+- Liberar el bloque de disponibilidad asociado.
 - Registrar auditoría.
 
 sp_reschedule_booking
@@ -631,8 +656,8 @@ sp_reschedule_booking
 Debe encargarse de:
 
 - Validar nuevo bloque de disponibilidad.
-- Liberar cupo del bloque anterior.
-- Reservar cupo en el nuevo bloque.
+- Liberar el bloque anterior.
+- Asociar la reserva al nuevo bloque disponible.
 - Actualizar fecha y horas de la reserva.
 - Cambiar estado a rescheduled o confirmed.
 - Registrar auditoría.
@@ -645,7 +670,7 @@ El curso pide mínimo 5 funciones.
 | --- | --- |
 | fn_generate_tracking_code | Generar un codigo único para una reserva. |
 | fn_is_tenant_active | Validar si un tenant esta activo. |
-| fn_available_capacity | Calcular cupos disponibles de un bloque. |
+| fn_is_availability_block_available | Validar si un bloque puede reservarse. |
 | fn_total_bookings_by_tenant | Calcular total de reservas de un tenant. |
 | fn_total_bookings_by_service | Calcular total de reservas por servicio. |
 | fn_get_booking_duration | Obtener duración de una reserva segun el servicio. |
@@ -662,7 +687,7 @@ El curso pide mínimo 5 vistas que integren datos de multiples tablas.
 | vw_daily_agenda | Muestra agenda diaria de reservas por tenant. |
 | vw_public_services | Muestra servicios activos visibles para la página pública. |
 | vw_tenant_dashboard | Muestra resumen de reservas, servicios y clientes por tenant. |
-| vw_availability_status | Muestra bloques disponibles con capacidad y cupos restantes. |
+| vw_availability_status | Muestra horarios disponibles y reservados por sede y fecha. |
 | vw_customer_booking_history | Muestra historial de reservas por cliente. |
 
 Se proponen 6 para tener margen.
@@ -678,7 +703,7 @@ El requisito general menciona 5 triggers, aunque en la entrega final se menciona
 | trg_bookings_audit_update | Registrar auditoría cuando cambia una reserva. |
 | trg_update_tenants_updated_at | Actualizar updated_at cuando cambia un tenant. |
 | trg_update_services_updated_at | Actualizar updated_at cuando cambia un servicio. |
-| trg_prevent_overbooking | Evitar que se reserven mas cupos que la capacidad del bloque. Usa reserved_count contra capacity. |
-| trg_sync_reserved_count_on_cancel | Decrementar reserved_count en availability_blocks cuando una reserva se cancela o reagenda. |
+| trg_prevent_double_booking | Evitar que dos reservas activas usen el mismo availability_block. |
+| trg_release_block_on_cancel | Permitir que un bloque vuelva a estar disponible cuando una reserva se cancela o reagenda. |
 
 Se proponen 7 para tener margen. La entrega final pide mínimo 3, el requisito general pide 5.
