@@ -25,6 +25,7 @@ MBM es una plataforma de reservas multi tenant para negocios de servicios. La ba
 - [docs/overview.md](docs/overview.md) vision general, objetivos, alcance, actores y requerimientos
 - [docs/database-and-sql.md](docs/database-and-sql.md) diseño de base de datos, normalizacion y SQL requerido
 - [docs/api-and-frontend.md](docs/api-and-frontend.md) backend, endpoints y frontend
+- [docs/frontend-map.md](docs/frontend-map.md) mapa visual de rutas frontend y relacion con endpoints
 - [docs/structure-infra-workflow.md](docs/structure-infra-workflow.md) estructura del monorepo, carpetas, docker y git
 - [docs/plan-and-delivery.md](docs/plan-and-delivery.md) entregables, cronograma, demo y checklist
 
@@ -133,6 +134,7 @@ erDiagram
     business_hours {
         int business_hour_id PK
         int tenant_id FK
+        int location_id FK
         tinyint day_of_week
         time open_time
         time close_time
@@ -146,8 +148,6 @@ erDiagram
         date block_date
         time start_time
         time end_time
-        int capacity
-        int reserved_count
         bit is_active
         datetime created_at
         datetime updated_at
@@ -208,9 +208,10 @@ erDiagram
     tenant_owners ||--o{ audit_logs : "ejecuta accion"
     superadmins ||--o{ audit_logs : "ejecuta accion"
     service_categories ||--o{ services : "agrupa"
+    locations ||--o{ business_hours : "define horario"
     locations ||--o{ availability_blocks : "tiene bloques"
     locations ||--o{ bookings : "aloja"
-    availability_blocks ||--o{ bookings : "cubre"
+    availability_blocks ||--o| bookings : "cubre"
     customers ||--o{ bookings : "realiza"
     services ||--o{ bookings : "es reservado como"
     booking_statuses ||--o{ bookings : "clasifica estado"
