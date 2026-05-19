@@ -4,31 +4,33 @@ Mapa visual de rutas del frontend MBM para guiar implementacion, pruebas y conex
 
 ```mermaid
 flowchart TD
-  A[/\//] --> B[/book/[slug]/]
-  B --> C[/book/[slug]/service/]
-  C --> D[/book/[slug]/datetime/]
-  D --> E[/book/[slug]/customer/]
-  E --> F[/book/[slug]/confirmation/]
-  F --> Y[/track/]
-  Y --> G[/track/[code]/]
-  G --> H[/track/[code]/reschedule/]
-  G --> I[/track/[code]/cancel/]
+  A[/"\/"/] --> B[/"\/book\/[slug]\/"/]
+  B --> C[/"\/book\/[slug]\/service\/"/]
+  C --> D[/"\/book\/[slug]\/datetime\/"/]
+  D --> E[/"\/book\/[slug]\/customer\/"/]
+  E --> F[/"\/book\/[slug]\/confirmation\/"/]
 
-  A --> J[/login/]
-  A --> K[/register/]
-  J --> L[/dashboard/]
-  L --> M[/services/]
-  L --> N[/service-categories/]
-  L --> O[/locations/]
-  L --> P[/business-hours/]
-  L --> R[/bookings/]
-  L --> S[/customers/]
-  L --> T[/reports/]
-  L --> U[/settings/business/]
+  F --> Y[/"\/track\/"/]
+  Y --> G[/"\/track\/[code]\/"/]
+  G --> H[/"\/track\/[code]\/reschedule\/"/]
+  G --> I[/"\/track\/[code]\/cancel\/"/]
 
-  A --> V[/admin/login/]
-  V --> W[/admin/tenants/]
-  W --> X[/admin/tenants/[id]/]
+  A --> J[/"\/login\/"/]
+  A --> K[/"\/register\/"/]
+
+  J --> L[/"\/dashboard\/"/]
+  L --> M[/"\/services\/"/]
+  L --> N[/"\/service-categories\/"/]
+  L --> O[/"\/locations\/"/]
+  L --> P[/"\/business-hours\/"/]
+  L --> R[/"\/bookings\/"/]
+  L --> S[/"\/customers\/"/]
+  L --> T[/"\/reports\/"/]
+  L --> U[/"\/settings\/business\/"/]
+
+  A --> V[/"\/admin\/login\/"/]
+  V --> W[/"\/admin\/tenants\/"/]
+  W --> X[/"\/admin\/tenants\/[id]\/"/]
 ```
 
 ## Relacion frontend -> endpoint backend (objetivo)
