@@ -18,3 +18,5 @@ coverage/
 *.sqlite
 *.db
 AGENTS.md
+memory/
+.obsidian/
