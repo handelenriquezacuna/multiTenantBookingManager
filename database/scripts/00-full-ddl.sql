@@ -1,7 +1,7 @@
 -- ============================================================
 -- 00-full-ddl.sql
 -- Proyecto: MBM - Multi-Tenant Booking Manager
--- Motor: SQL Server 2022
+-- Motor: SQL Server 2025
 -- Contenido: creacion de la base de datos y de las 15 tablas.
 -- ============================================================
 
