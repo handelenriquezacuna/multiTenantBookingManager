@@ -1,149 +1,206 @@
 -- ============================================================
 -- 02-create-tables.sql
--- DDL completo para MBM — orden respeta dependencias FK
+-- Proyecto: MBM - Multi-Tenant Booking Manager
+-- Contenido: crea las 15 tablas y relaciones
 -- ============================================================
 
 USE mbm_booking;
 GO
 
--- Catálogos de referencia -----------------------------------
+-- Catalogos ---------------------------------------------------------------
 
 CREATE TABLE business_types (
-    id          INT           IDENTITY(1,1) PRIMARY KEY,
-    name        NVARCHAR(100) NOT NULL UNIQUE,
-    description NVARCHAR(255)
+    business_type_id INT IDENTITY(1,1) PRIMARY KEY,
+    name             NVARCHAR(100) NOT NULL UNIQUE,
+    description      NVARCHAR(500) NULL,
+    is_active        BIT NOT NULL DEFAULT 1
 );
 GO
 
 CREATE TABLE tenant_statuses (
-    id   INT           IDENTITY(1,1) PRIMARY KEY,
-    name NVARCHAR(50)  NOT NULL UNIQUE   -- active | suspended | pending
+    tenant_status_id INT IDENTITY(1,1) PRIMARY KEY,
+    name             NVARCHAR(50) NOT NULL UNIQUE,
+    description      NVARCHAR(200) NULL
 );
 GO
 
 CREATE TABLE booking_statuses (
-    id   INT           IDENTITY(1,1) PRIMARY KEY,
-    name NVARCHAR(50)  NOT NULL UNIQUE   -- pending | confirmed | cancelled | rescheduled
+    booking_status_id INT IDENTITY(1,1) PRIMARY KEY,
+    name              NVARCHAR(50) NOT NULL UNIQUE,
+    description       NVARCHAR(200) NULL
 );
 GO
 
--- Tenants ---------------------------------------------------
+-- Superadmins -------------------------------------------------------------
+
+CREATE TABLE superadmins (
+    superadmin_id INT IDENTITY(1,1) PRIMARY KEY,
+    full_name     NVARCHAR(200) NOT NULL,
+    email         NVARCHAR(254) NOT NULL UNIQUE,
+    password_hash NVARCHAR(512) NOT NULL,
+    is_active     BIT NOT NULL DEFAULT 1,
+    created_at    DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    updated_at    DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+GO
+
+-- Tenants y owners --------------------------------------------------------
 
 CREATE TABLE tenants (
-    id               INT            IDENTITY(1,1) PRIMARY KEY,
-    slug             NVARCHAR(100)  NOT NULL UNIQUE,
-    name             NVARCHAR(200)  NOT NULL,
-    business_type_id INT            NOT NULL REFERENCES business_types(id),
-    status_id        INT            NOT NULL REFERENCES tenant_statuses(id),
-    created_at       DATETIME2      NOT NULL DEFAULT GETUTCDATE(),
-    updated_at       DATETIME2      NOT NULL DEFAULT GETUTCDATE()
+    tenant_id        INT IDENTITY(1,1) PRIMARY KEY,
+    business_type_id INT NOT NULL REFERENCES business_types(business_type_id),
+    tenant_status_id INT NOT NULL REFERENCES tenant_statuses(tenant_status_id),
+    name             NVARCHAR(200) NOT NULL,
+    slug             NVARCHAR(100) NOT NULL UNIQUE,
+    email            NVARCHAR(254) NOT NULL,
+    phone            NVARCHAR(30) NULL,
+    description      NVARCHAR(MAX) NULL,
+    logo_url         NVARCHAR(500) NULL,
+    public_message   NVARCHAR(500) NULL,
+    is_active        BIT NOT NULL DEFAULT 1,
+    created_at       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    updated_at       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 GO
 
 CREATE TABLE tenant_owners (
-    id         INT           IDENTITY(1,1) PRIMARY KEY,
-    tenant_id  INT           NOT NULL REFERENCES tenants(id),
-    full_name  NVARCHAR(200) NOT NULL,
-    email      NVARCHAR(254) NOT NULL UNIQUE,
+    owner_id      INT IDENTITY(1,1) PRIMARY KEY,
+    tenant_id     INT NOT NULL REFERENCES tenants(tenant_id),
+    full_name     NVARCHAR(200) NOT NULL,
+    email         NVARCHAR(254) NOT NULL,
     password_hash NVARCHAR(512) NOT NULL,
-    created_at DATETIME2     NOT NULL DEFAULT GETUTCDATE()
+    phone         NVARCHAR(30) NULL,
+    is_active     BIT NOT NULL DEFAULT 1,
+    created_at    DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    updated_at    DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 GO
 
--- Customers -------------------------------------------------
+-- Clientes ---------------------------------------------------------------
 
 CREATE TABLE customers (
-    id         INT           IDENTITY(1,1) PRIMARY KEY,
-    tenant_id  INT           NOT NULL REFERENCES tenants(id),
-    full_name  NVARCHAR(200) NOT NULL,
-    email      NVARCHAR(254) NOT NULL,
-    phone      NVARCHAR(30),
-    created_at DATETIME2     NOT NULL DEFAULT GETUTCDATE(),
-    CONSTRAINT uq_customer_tenant_email UNIQUE (tenant_id, email)
+    customer_id INT IDENTITY(1,1) PRIMARY KEY,
+    tenant_id   INT NOT NULL REFERENCES tenants(tenant_id),
+    first_name  NVARCHAR(100) NOT NULL,
+    last_name   NVARCHAR(100) NOT NULL,
+    email       NVARCHAR(254) NOT NULL,
+    phone       NVARCHAR(30) NOT NULL,
+    notes       NVARCHAR(500) NULL,
+    created_at  DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    updated_at  DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 GO
 
--- Servicios -------------------------------------------------
+-- Servicios ---------------------------------------------------------------
 
 CREATE TABLE service_categories (
-    id        INT           IDENTITY(1,1) PRIMARY KEY,
-    tenant_id INT           NOT NULL REFERENCES tenants(id),
-    name      NVARCHAR(100) NOT NULL
+    category_id INT IDENTITY(1,1) PRIMARY KEY,
+    tenant_id   INT NOT NULL REFERENCES tenants(tenant_id),
+    name        NVARCHAR(150) NOT NULL,
+    description NVARCHAR(500) NULL,
+    is_active   BIT NOT NULL DEFAULT 1,
+    created_at  DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    updated_at  DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 GO
 
 CREATE TABLE services (
-    id          INT             IDENTITY(1,1) PRIMARY KEY,
-    tenant_id   INT             NOT NULL REFERENCES tenants(id),
-    category_id INT             NOT NULL REFERENCES service_categories(id),
-    name        NVARCHAR(200)   NOT NULL,
-    duration_min INT            NOT NULL,  -- duración en minutos
-    price       DECIMAL(10, 2)  NOT NULL DEFAULT 0,
-    is_active   BIT             NOT NULL DEFAULT 1
+    service_id       INT IDENTITY(1,1) PRIMARY KEY,
+    tenant_id        INT NOT NULL REFERENCES tenants(tenant_id),
+    category_id      INT NOT NULL REFERENCES service_categories(category_id),
+    name             NVARCHAR(200) NOT NULL,
+    description      NVARCHAR(MAX) NULL,
+    duration_minutes INT NOT NULL,
+    price            DECIMAL(10,2) NULL,
+    show_price       BIT NOT NULL DEFAULT 0,
+    is_active        BIT NOT NULL DEFAULT 1,
+    created_at       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    updated_at       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 GO
 
--- Ubicaciones y horarios ------------------------------------
+-- Ubicaciones y horarios --------------------------------------------------
 
 CREATE TABLE locations (
-    id        INT           IDENTITY(1,1) PRIMARY KEY,
-    tenant_id INT           NOT NULL REFERENCES tenants(id),
-    name      NVARCHAR(200) NOT NULL,
-    address   NVARCHAR(500)
+    location_id INT IDENTITY(1,1) PRIMARY KEY,
+    tenant_id   INT NOT NULL REFERENCES tenants(tenant_id),
+    name        NVARCHAR(200) NOT NULL,
+    address     NVARCHAR(500) NOT NULL,
+    phone       NVARCHAR(30) NULL,
+    is_main     BIT NOT NULL DEFAULT 0,
+    is_active   BIT NOT NULL DEFAULT 1,
+    created_at  DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    updated_at  DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 GO
 
 CREATE TABLE business_hours (
-    id          INT  IDENTITY(1,1) PRIMARY KEY,
-    tenant_id   INT  NOT NULL REFERENCES tenants(id),
-    day_of_week TINYINT NOT NULL,   -- 0=Sun … 6=Sat
-    open_time   TIME NOT NULL,
-    close_time  TIME NOT NULL
+    business_hour_id INT IDENTITY(1,1) PRIMARY KEY,
+    tenant_id        INT NOT NULL REFERENCES tenants(tenant_id),
+    location_id      INT NOT NULL REFERENCES locations(location_id),
+    day_of_week      TINYINT NOT NULL,
+    open_time        TIME NULL,
+    close_time       TIME NULL,
+    is_closed        BIT NOT NULL DEFAULT 0,
+    updated_at       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 GO
 
 CREATE TABLE availability_blocks (
-    id          INT       IDENTITY(1,1) PRIMARY KEY,
-    location_id INT       NOT NULL REFERENCES locations(id),
-    start_at    DATETIME2 NOT NULL,
-    end_at      DATETIME2 NOT NULL,
-    capacity    SMALLINT  NOT NULL DEFAULT 1
+    availability_block_id INT IDENTITY(1,1) PRIMARY KEY,
+    tenant_id             INT NOT NULL REFERENCES tenants(tenant_id),
+    location_id           INT NOT NULL REFERENCES locations(location_id),
+    block_date            DATE NOT NULL,
+    start_time            TIME NOT NULL,
+    end_time              TIME NOT NULL,
+    is_active             BIT NOT NULL DEFAULT 1,
+    created_at            DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    updated_at            DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 GO
 
--- Reservas --------------------------------------------------
+-- Reservas ---------------------------------------------------------------
 
 CREATE TABLE bookings (
-    id                    INT           IDENTITY(1,1) PRIMARY KEY,
-    tenant_id             INT           NOT NULL REFERENCES tenants(id),
-    customer_id           INT           NOT NULL REFERENCES customers(id),
-    service_id            INT           NOT NULL REFERENCES services(id),
-    availability_block_id INT           NOT NULL REFERENCES availability_blocks(id),
-    status_id             INT           NOT NULL REFERENCES booking_statuses(id),
-    notes                 NVARCHAR(1000),
-    created_at            DATETIME2     NOT NULL DEFAULT GETUTCDATE(),
-    updated_at            DATETIME2     NOT NULL DEFAULT GETUTCDATE()
+    booking_id            INT IDENTITY(1,1) PRIMARY KEY,
+    tenant_id             INT NOT NULL REFERENCES tenants(tenant_id),
+    customer_id           INT NOT NULL REFERENCES customers(customer_id),
+    service_id            INT NOT NULL REFERENCES services(service_id),
+    location_id           INT NOT NULL REFERENCES locations(location_id),
+    availability_block_id INT NULL REFERENCES availability_blocks(availability_block_id),
+    booking_status_id     INT NOT NULL REFERENCES booking_statuses(booking_status_id),
+    booking_date          DATE NOT NULL,
+    start_time            TIME NOT NULL,
+    end_time              TIME NOT NULL,
+    customer_notes        NVARCHAR(500) NULL,
+    internal_notes        NVARCHAR(500) NULL,
+    created_at            DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    updated_at            DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 GO
 
 CREATE TABLE tracking_codes (
-    id         INT           IDENTITY(1,1) PRIMARY KEY,
-    booking_id INT           NOT NULL UNIQUE REFERENCES bookings(id),
-    code       NVARCHAR(50)  NOT NULL UNIQUE,
-    expires_at DATETIME2     NOT NULL
+    tracking_id   INT IDENTITY(1,1) PRIMARY KEY,
+    booking_id    INT NOT NULL UNIQUE REFERENCES bookings(booking_id),
+    tracking_code NVARCHAR(50) NOT NULL UNIQUE,
+    expires_at    DATETIME2 NOT NULL,
+    is_active     BIT NOT NULL DEFAULT 1,
+    created_at    DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 GO
 
--- Auditoría -------------------------------------------------
+-- Auditoria ---------------------------------------------------------------
 
 CREATE TABLE audit_logs (
-    id         BIGINT        IDENTITY(1,1) PRIMARY KEY,
-    tenant_id  INT           NOT NULL REFERENCES tenants(id),
-    action     NVARCHAR(100) NOT NULL,
-    entity     NVARCHAR(100) NOT NULL,
-    entity_id  INT,
-    performed_by INT,
-    payload    NVARCHAR(MAX),
-    created_at DATETIME2     NOT NULL DEFAULT GETUTCDATE()
+    audit_id      BIGINT IDENTITY(1,1) PRIMARY KEY,
+    tenant_id     INT NULL REFERENCES tenants(tenant_id),
+    owner_id      INT NULL REFERENCES tenant_owners(owner_id),
+    superadmin_id INT NULL REFERENCES superadmins(superadmin_id),
+    action        NVARCHAR(100) NOT NULL,
+    entity_name   NVARCHAR(100) NOT NULL,
+    entity_id     INT NOT NULL,
+    old_value     NVARCHAR(MAX) NULL,
+    new_value     NVARCHAR(MAX) NULL,
+    created_at    DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 GO
