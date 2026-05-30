@@ -6,11 +6,14 @@
 USE master;
 GO
 
-IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'mbm_booking')
+IF EXISTS (SELECT name FROM sys.databases WHERE name = N'mbm_booking')
 BEGIN
-    CREATE DATABASE mbm_booking
-    COLLATE Latin1_General_CI_AI;
+    ALTER DATABASE mbm_booking SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE mbm_booking;
 END
+
+CREATE DATABASE mbm_booking
+COLLATE Latin1_General_CI_AI;
 GO
 
 USE mbm_booking;
