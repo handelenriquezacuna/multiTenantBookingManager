@@ -43,155 +43,155 @@ MBM es una plataforma de reservas multi tenant para negocios de servicios. La ba
 erDiagram
     business_types {
         int business_type_id PK
-        varchar name
-        varchar description
-        bit is_active
+        nvarchar_100 name "NOT NULL UNIQUE"
+        nvarchar_500 description "NULL"
+        bit is_active "NOT NULL DEFAULT 1"
     }
     tenant_statuses {
         int tenant_status_id PK
-        varchar name
-        varchar description
+        nvarchar_50 name "NOT NULL UNIQUE"
+        nvarchar_200 description "NULL"
     }
     superadmins {
         int superadmin_id PK
-        varchar full_name
-        varchar email
-        varchar password_hash
-        bit is_active
-        datetime created_at
-        datetime updated_at
+        nvarchar_200 full_name "NOT NULL"
+        nvarchar_254 email "NOT NULL UNIQUE"
+        nvarchar_512 password_hash "NOT NULL"
+        bit is_active "NOT NULL DEFAULT 1"
+        datetime2 created_at "NOT NULL DEFAULT SYSUTCDATETIME"
+        datetime2 updated_at "NOT NULL DEFAULT SYSUTCDATETIME"
     }
     tenants {
         int tenant_id PK
-        int business_type_id FK
-        int tenant_status_id FK
-        varchar name
-        varchar slug
-        varchar email
-        varchar phone
-        text description
-        varchar logo_url
-        varchar public_message
-        bit is_active
-        datetime created_at
-        datetime updated_at
+        int business_type_id FK "NOT NULL"
+        int tenant_status_id FK "NOT NULL"
+        nvarchar_200 name "NOT NULL"
+        nvarchar_100 slug "NOT NULL UNIQUE"
+        nvarchar_254 email "NOT NULL"
+        nvarchar_30 phone "NULL"
+        nvarchar_max description "NULL"
+        nvarchar_500 logo_url "NULL"
+        nvarchar_500 public_message "NULL"
+        bit is_active "NOT NULL DEFAULT 1"
+        datetime2 created_at "NOT NULL DEFAULT SYSUTCDATETIME"
+        datetime2 updated_at "NOT NULL DEFAULT SYSUTCDATETIME"
     }
     tenant_owners {
         int owner_id PK
-        int tenant_id FK
-        varchar full_name
-        varchar email
-        varchar password_hash
-        varchar phone
-        bit is_active
-        datetime created_at
-        datetime updated_at
+        int tenant_id FK "NOT NULL"
+        nvarchar_200 full_name "NOT NULL"
+        nvarchar_254 email "NOT NULL"
+        nvarchar_512 password_hash "NOT NULL"
+        nvarchar_30 phone "NULL"
+        bit is_active "NOT NULL DEFAULT 1"
+        datetime2 created_at "NOT NULL DEFAULT SYSUTCDATETIME"
+        datetime2 updated_at "NOT NULL DEFAULT SYSUTCDATETIME"
     }
     customers {
         int customer_id PK
-        int tenant_id FK
-        varchar first_name
-        varchar last_name
-        varchar email
-        varchar phone
-        varchar notes
-        datetime created_at
-        datetime updated_at
+        int tenant_id FK "NOT NULL"
+        nvarchar_100 first_name "NOT NULL"
+        nvarchar_100 last_name "NOT NULL"
+        nvarchar_254 email "NOT NULL"
+        nvarchar_30 phone "NOT NULL"
+        nvarchar_500 notes "NULL"
+        datetime2 created_at "NOT NULL DEFAULT SYSUTCDATETIME"
+        datetime2 updated_at "NOT NULL DEFAULT SYSUTCDATETIME"
     }
     service_categories {
         int category_id PK
-        int tenant_id FK
-        varchar name
-        varchar description
-        bit is_active
-        datetime created_at
-        datetime updated_at
+        int tenant_id FK "NOT NULL"
+        nvarchar_150 name "NOT NULL"
+        nvarchar_500 description "NULL"
+        bit is_active "NOT NULL DEFAULT 1"
+        datetime2 created_at "NOT NULL DEFAULT SYSUTCDATETIME"
+        datetime2 updated_at "NOT NULL DEFAULT SYSUTCDATETIME"
     }
     services {
         int service_id PK
-        int tenant_id FK
-        int category_id FK
-        varchar name
-        text description
-        int duration_minutes
-        decimal price
-        bit show_price
-        bit is_active
-        datetime created_at
-        datetime updated_at
+        int tenant_id FK "NOT NULL"
+        int category_id FK "NOT NULL"
+        nvarchar_200 name "NOT NULL"
+        nvarchar_max description "NULL"
+        int duration_minutes "NOT NULL"
+        decimal_10_2 price "NULL"
+        bit show_price "NOT NULL DEFAULT 0"
+        bit is_active "NOT NULL DEFAULT 1"
+        datetime2 created_at "NOT NULL DEFAULT SYSUTCDATETIME"
+        datetime2 updated_at "NOT NULL DEFAULT SYSUTCDATETIME"
     }
     locations {
         int location_id PK
-        int tenant_id FK
-        varchar name
-        varchar address
-        varchar phone
-        bit is_main
-        bit is_active
-        datetime created_at
-        datetime updated_at
+        int tenant_id FK "NOT NULL"
+        nvarchar_200 name "NOT NULL"
+        nvarchar_500 address "NOT NULL"
+        nvarchar_30 phone "NULL"
+        bit is_main "NOT NULL DEFAULT 0"
+        bit is_active "NOT NULL DEFAULT 1"
+        datetime2 created_at "NOT NULL DEFAULT SYSUTCDATETIME"
+        datetime2 updated_at "NOT NULL DEFAULT SYSUTCDATETIME"
     }
     business_hours {
         int business_hour_id PK
-        int tenant_id FK
-        int location_id FK
-        tinyint day_of_week
-        time open_time
-        time close_time
-        bit is_closed
-        datetime updated_at
+        int tenant_id FK "NOT NULL"
+        int location_id FK "NOT NULL"
+        tinyint day_of_week "NOT NULL"
+        time open_time "NULL"
+        time close_time "NULL"
+        bit is_closed "NOT NULL DEFAULT 0"
+        datetime2 updated_at "NOT NULL DEFAULT SYSUTCDATETIME"
     }
     availability_blocks {
         int availability_block_id PK
-        int tenant_id FK
-        int location_id FK
-        date block_date
-        time start_time
-        time end_time
-        bit is_active
-        datetime created_at
-        datetime updated_at
+        int tenant_id FK "NOT NULL"
+        int location_id FK "NOT NULL"
+        date block_date "NOT NULL"
+        time start_time "NOT NULL"
+        time end_time "NOT NULL"
+        bit is_active "NOT NULL DEFAULT 1"
+        datetime2 created_at "NOT NULL DEFAULT SYSUTCDATETIME"
+        datetime2 updated_at "NOT NULL DEFAULT SYSUTCDATETIME"
     }
     booking_statuses {
         int booking_status_id PK
-        varchar name
-        varchar description
+        nvarchar_50 name "NOT NULL UNIQUE"
+        nvarchar_200 description "NULL"
     }
     bookings {
         int booking_id PK
-        int tenant_id FK
-        int customer_id FK
-        int service_id FK
-        int location_id FK
-        int availability_block_id FK
-        int booking_status_id FK
-        date booking_date
-        time start_time
-        time end_time
-        varchar customer_notes
-        varchar internal_notes
-        datetime created_at
-        datetime updated_at
+        int tenant_id FK "NOT NULL"
+        int customer_id FK "NOT NULL"
+        int service_id FK "NOT NULL"
+        int location_id FK "NOT NULL"
+        int availability_block_id FK "NULL UNIQUE ON DELETE SET NULL"
+        int booking_status_id FK "NOT NULL"
+        date booking_date "NOT NULL"
+        time start_time "NOT NULL"
+        time end_time "NOT NULL"
+        nvarchar_500 customer_notes "NULL"
+        nvarchar_500 internal_notes "NULL"
+        datetime2 created_at "NOT NULL DEFAULT SYSUTCDATETIME"
+        datetime2 updated_at "NOT NULL DEFAULT SYSUTCDATETIME"
     }
     tracking_codes {
-        int tracking_id PK
-        int booking_id FK
-        varchar tracking_code
-        datetime expires_at
-        bit is_active
-        datetime created_at
+        bigint tracking_id PK
+        int booking_id FK "NOT NULL UNIQUE"
+        nvarchar_50 tracking_code "NOT NULL UNIQUE"
+        datetime2 expires_at "NOT NULL"
+        bit is_active "NOT NULL DEFAULT 1"
+        datetime2 created_at "NOT NULL DEFAULT SYSUTCDATETIME"
     }
     audit_logs {
-        int audit_id PK
-        int tenant_id FK
-        int owner_id FK
-        int superadmin_id FK
-        varchar action
-        varchar entity_name
-        int entity_id
-        nvarchar old_value
-        nvarchar new_value
-        datetime created_at
+        bigint audit_id PK
+        int tenant_id FK "NULL"
+        int owner_id FK "NULL"
+        int superadmin_id FK "NULL"
+        nvarchar_100 action "NOT NULL"
+        nvarchar_100 entity_name "NOT NULL"
+        int entity_id "NOT NULL"
+        nvarchar_max old_value "NULL"
+        nvarchar_max new_value "NULL"
+        datetime2 created_at "NOT NULL DEFAULT SYSUTCDATETIME"
     }
 
     business_types ||--o{ tenants : "clasifica"
@@ -211,7 +211,7 @@ erDiagram
     locations ||--o{ business_hours : "define horario"
     locations ||--o{ availability_blocks : "tiene bloques"
     locations ||--o{ bookings : "aloja"
-    availability_blocks ||--o| bookings : "cubre"
+    availability_blocks ||--o| bookings : "cubre 1 reserva"
     customers ||--o{ bookings : "realiza"
     services ||--o{ bookings : "es reservado como"
     booking_statuses ||--o{ bookings : "clasifica estado"
