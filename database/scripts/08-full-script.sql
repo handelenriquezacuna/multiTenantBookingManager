@@ -191,7 +191,7 @@ CREATE TABLE bookings (
     customer_id           INT NOT NULL REFERENCES customers(customer_id),
     service_id            INT NOT NULL REFERENCES services(service_id),
     location_id           INT NOT NULL REFERENCES locations(location_id),
-    availability_block_id INT NULL REFERENCES availability_blocks(availability_block_id),
+    availability_block_id INT NULL UNIQUE REFERENCES availability_blocks(availability_block_id) ON DELETE SET NULL,
     booking_status_id     INT NOT NULL REFERENCES booking_statuses(booking_status_id),
     booking_date          DATE NOT NULL,
     start_time            TIME NOT NULL,
