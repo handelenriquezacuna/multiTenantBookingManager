@@ -1,8 +1,8 @@
--- ============================================================
+﻿-- ============================================================
 -- 03-seed-data.sql
 -- Proyecto: MBM - Multi-Tenant Booking Manager
 -- Contenido: datos de prueba (>= 50 registros por tabla)
--- Todos los datos realistas — 50 filas genuinas por tabla
+-- Todos los datos realistas - 50 filas genuinas por tabla
 -- ============================================================
 
 USE mbm_booking;
@@ -82,66 +82,21 @@ OUTPUT inserted.booking_status_id INTO @bs (id)
 SELECT CONCAT(N'estado_reserva_', n), CONCAT(N'Estado reserva ', n) FROM @ns WHERE n > 5;
 
 -- ====================================================================
--- SUPERADMINS (50 realistas)
+-- SUPERADMINS (miembros del proyecto)
 -- ====================================================================
 
 INSERT INTO superadmins (full_name, email, password_hash, is_active)
 OUTPUT inserted.superadmin_id INTO @sa (id)
-SELECT name, email, N'$2a$10$' + CONVERT(NVARCHAR(50), NEWID()), 1 FROM (VALUES
-    (N'Fernando Quirós',      N'fquiros@mbm.admin'),
-    (N'Lucía Madrigal',       N'lmadrigal@mbm.admin'),
-    (N'Ricardo Gutiérrez',    N'rgutierrez@mbm.admin'),
-    (N'María José Rojas',     N'mjrojas@mbm.admin'),
-    (N'Carlos Monge',         N'cmonge@mbm.admin'),
-    (N'Ana Chinchilla',       N'achinchilla@mbm.admin'),
-    (N'Jorge Luis Campos',    N'jlcampos@mbm.admin'),
-    (N'Valentina Cordero',    N'vcordero@mbm.admin'),
-    (N'Diego Hernández',      N'dhernandez@mbm.admin'),
-    (N'Camila Vargas',        N'cvargas@mbm.admin'),
-    (N'Esteban Sanabria',     N'esanabria@mbm.admin'),
-    (N'Priscilla Marín',      N'pmarin@mbm.admin'),
-    (N'Luis Diego Solís',     N'ldsolis@mbm.admin'),
-    (N'Melany Bogarín',       N'mbogarin@mbm.admin'),
-    (N'Warner Ulloa',         N'wulloa@mbm.admin'),
-    (N'Rebeca Salazar',       N'rsalazar@mbm.admin'),
-    (N'Kendall Rodríguez',    N'krodriguez@mbm.admin'),
-    (N'Hillary Segura',       N'hsegura@mbm.admin'),
-    (N'Geovanny Araya',       N'garaya@mbm.admin'),
-    (N'Fiorella Campos',      N'fcampos@mbm.admin'),
-    (N'Kevin Arce',           N'karce@mbm.admin'),
-    (N'Marcela Granados',     N'mgranados@mbm.admin'),
-    (N'Fabián Obando',        N'fobando@mbm.admin'),
-    (N'Tatiana Marín',        N'tmarin@mbm.admin'),
-    (N'Bryan Zamora',         N'bzamora@mbm.admin'),
-    (N'Sharon Calvo',         N'scalvo@mbm.admin'),
-    (N'Yoselyn Murillo',      N'ymurillo@mbm.admin'),
-    (N'Joseph Arias',         N'jarias@mbm.admin'),
-    (N'Allan Quesada',        N'aquesada@mbm.admin'),
-    (N'Pablo Sibaja',         N'psibaja@mbm.admin'),
-    (N'María Fernanda Mora',  N'mfmora@mbm.admin'),
-    (N'Andrés Fallas',        N'afallas@mbm.admin'),
-    (N'Sofía Rodríguez',      N'srodriguez@mbm.admin'),
-    (N'Daniela Víquez',       N'dviquez@mbm.admin'),
-    (N'Santiago Arguedas',    N'sarguedas@mbm.admin'),
-    (N'Valeria Matamoros',    N'vmatamoros@mbm.admin'),
-    (N'Mario Zúñiga',         N'mzuniga@mbm.admin'),
-    (N'Alejandra Corrales',   N'acorrales@mbm.admin'),
-    (N'Juan Pablo Mena',      N'jpmena@mbm.admin'),
-    (N'Karina Rímolo',        N'krimolo@mbm.admin'),
-    (N'Óscar Bermúdez',       N'obermudez@mbm.admin'),
-    (N'Laura Vargas',         N'lvargas@mbm.admin'),
-    (N'Esteban Chavarría',    N'echavarria@mbm.admin'),
-    (N'Paola Carranza',       N'pcarranza@mbm.admin'),
-    (N'Luis Fernando León',   N'lfleon@mbm.admin'),
-    (N'Mónica Aguilar',       N'maguilar@mbm.admin'),
-    (N'Randall Segura',       N'rsegura@mbm.admin'),
-    (N'Adriana Ramírez',      N'aramirez@mbm.admin'),
-    (N'Cristian Barquero',    N'cbarquero@mbm.admin'),
-    (N'Melissa Cerdas',       N'mcerdas@mbm.admin')
+SELECT name, email, N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1 FROM (VALUES
+    (N'Campos Arias Melanie Yeonsuk',    N'melanie.campos@mbm.admin'),
+    (N'Chavez Zumbado Isaac',            N'isaac.chavez@mbm.admin'),
+    (N'Delgado Durango Luna',            N'luna.delgado@mbm.admin'),
+    (N'Enriquez Acuña Handel Simón',     N'handel.enriquez@mbm.admin'),
+    (N'Fuentes García Jeferson Andrew',  N'jeferson.fuentes@mbm.admin')
 ) t(name, email);
 
 -- ====================================================================
--- TENANTS (50 negocios ticos)
+-- TENANTS (50 negocios)
 -- ====================================================================
 
 INSERT INTO tenants (business_type_id, tenant_status_id, name, slug, email, phone, description, public_message, is_active)
@@ -200,7 +155,7 @@ SELECT bt, st, name, slug, email, phone, descr, msg, 1 FROM (VALUES
 ) t(bt, st, name, slug, email, phone, descr, msg);
 
 -- ====================================================================
--- TENANT OWNERS (50 ticos)
+-- TENANT OWNERS (50)
 -- ====================================================================
 
 WITH owner_list AS (
@@ -259,17 +214,17 @@ WITH owner_list AS (
 )
 INSERT INTO tenant_owners (tenant_id, full_name, email, password_hash, phone, is_active)
 OUTPUT inserted.owner_id INTO @ow (id)
-SELECT tn.id, ol.name, ol.email, N'$2a$10$' + CONVERT(NVARCHAR(50), NEWID()), ol.phone, 1
+SELECT tn.id, ol.name, ol.email, N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', ol.phone, 1
 FROM owner_list ol
 JOIN @tn tn ON tn.rid = ol.rn;
 
 -- ====================================================================
--- CUSTOMERS (50 ticos con notas realistas)
+-- CUSTOMERS (50 con notas realistas)
 -- ====================================================================
 
 WITH customer_list AS (
     SELECT t.fn, t.ln, t.em, t.ph, t.nota, ROW_NUMBER() OVER(ORDER BY t.fn) AS rn FROM (VALUES
-    (N'Juan',      N'Vargas',      N'juan.vargas@email.com',     N'8877-3001', N'Cliente frecuente — prefiere sábados'),
+    (N'Juan',      N'Vargas',      N'juan.vargas@email.com',     N'8877-3001', N'Cliente frecuente - prefiere sábados'),
     (N'María',     N'Cordero',     N'maria.cordero@email.com',   N'8877-3002', NULL),
     (N'Carlos',    N'Monge',       N'carlos.monge@email.com',    N'8877-3003', N'Alérgico a fragancias fuertes'),
     (N'Ana',       N'Chaves',      N'ana.chaves@email.com',      N'8877-3004', N'Prefiere atención con la misma estilista'),
@@ -277,28 +232,28 @@ WITH customer_list AS (
     (N'Laura',     N'Guillén',     N'laura.guillen@email.com',   N'8877-3006', N'Cliente desde 2024'),
     (N'José',      N'Pérez',       N'jose.perez@email.com',      N'8877-3007', NULL),
     (N'Sofía',     N'Álvarez',     N'sofia.alvarez@email.com',   N'8877-3008', N'Recomendó a 3 amigas'),
-    (N'Miguel',    N'Reyes',       N'miguel.reyes@email.com',    N'8877-3009', N'Le pagan con SINPE — dejar nota'),
+    (N'Miguel',    N'Reyes',       N'miguel.reyes@email.com',    N'8877-3009', N'Le pagan con SINPE - dejar nota'),
     (N'Carmen',    N'Morales',     N'carmen.morales@email.com',  N'8877-3010', NULL),
     (N'Luis',      N'Torres',      N'luis.torres@email.com',     N'8877-3011', N'Siempre pide el mismo barbero'),
-    (N'Valentina', N'Castro',      N'valentina.castro@email.com',N'8877-3012', N'Llega con su perro — permitir'),
+    (N'Valentina', N'Castro',      N'valentina.castro@email.com',N'8877-3012', N'Llega con su perro - permitir'),
     (N'Andrés',    N'Ortiz',       N'andres.ortiz@email.com',    N'8877-3013', NULL),
-    (N'Isabella',  N'Vargas',      N'isabella.vargas@email.com', N'8877-3014', N'Estudiante — descuento de jueves'),
+    (N'Isabella',  N'Vargas',      N'isabella.vargas@email.com', N'8877-3014', N'Estudiante - descuento de jueves'),
     (N'Diego',     N'Ruiz',        N'diego.ruiz@email.com',      N'8877-3015', NULL),
     (N'Camila',    N'Medina',      N'camila.medina@email.com',   N'8877-3016', N'Prefiere WhatsApp para recordatorios'),
     (N'Santiago',  N'Delgado',     N'santiago.delgado@email.com',N'8877-3017', NULL),
     (N'Luciana',   N'Rojas',       N'luciana.rojas@email.com',   N'8877-3018', N'Compra siempre el paquete completo'),
     (N'Manuel',    N'Silva',       N'manuel.silva@email.com',    N'8877-3019', N'Le gusta pagar en efectivo'),
     (N'Gabriela',  N'Peña',        N'gabriela.pena@email.com',   N'8877-3020', NULL),
-    (N'Alejandro', N'Campos',      N'alejandro.campos@email.com',N'8877-3021', N'Atleta — masajes descontracturantes'),
+    (N'Alejandro', N'Campos',      N'alejandro.campos@email.com',N'8877-3021', N'Atleta - masajes descontracturantes'),
     (N'Mariana',   N'Flores',      N'mariana.flores@email.com',  N'8877-3022', N'Lleva a sus 2 hijos también'),
     (N'Francisco', N'Aguilar',     N'francisco.aguilar@email.com',N'8877-3023', NULL),
-    (N'Antonella', N'Guzmán',      N'antonella.guzman@email.com',N'8877-3024', N'Celiaca — importante en notas'),
+    (N'Antonella', N'Guzmán',      N'antonella.guzman@email.com',N'8877-3024', N'Celiaca - importante en notas'),
     (N'Ricardo',   N'Mendoza',     N'ricardo.mendoza@email.com', N'8877-3025', NULL),
-    (N'Josefina',  N'Cruz',        N'josefina.cruz@email.com',   N'8877-3026', N'Vive en Grecia — prefiere tardes'),
+    (N'Josefina',  N'Cruz',        N'josefina.cruz@email.com',   N'8877-3026', N'Vive en Grecia - prefiere tardes'),
     (N'Eduardo',   N'Soto',        N'eduardo.soto@email.com',    N'8877-3027', NULL),
-    (N'Ximena',    N'Pacheco',     N'ximena.pacheco@email.com',  N'8877-3028', N'Luna de miel — dar trato especial'),
-    (N'Roberto',   N'Navarro',     N'roberto.navarro@email.com', N'8877-3029', N'Veterano — descuento adulto mayor'),
-    (N'Fernanda',  N'Vera',        N'fernanda.vera@email.com',   N'8877-3030', N'Embarazada — masajes prenatal'),
+    (N'Ximena',    N'Pacheco',     N'ximena.pacheco@email.com',  N'8877-3028', N'Luna de miel - dar trato especial'),
+    (N'Roberto',   N'Navarro',     N'roberto.navarro@email.com', N'8877-3029', N'Veterano - descuento adulto mayor'),
+    (N'Fernanda',  N'Vera',        N'fernanda.vera@email.com',   N'8877-3030', N'Embarazada - masajes prenatal'),
     (N'Kevin',     N'Arce',        N'kevin.arce@email.com',      N'8877-3031', NULL),
     (N'Priscilla', N'Sandí',       N'priscilla.sandi@email.com', N'8877-3032', N'Viene todos los viernes'),
     (N'Esteban',   N'Cordero',     N'esteban.cordero@email.com', N'8877-3033', N'Paga con tarjeta siempre'),
@@ -318,7 +273,7 @@ WITH customer_list AS (
     (N'Yoselyn',   N'Murillo',     N'yoselyn.murillo@email.com', N'8877-3047', N'Pide recordatorio por SMS'),
     (N'Joseph',    N'Arias',       N'joseph.arias@email.com',    N'8877-3048', N'Referido por la clínica'),
     (N'Luis Diego',N'Solís',       N'luisdiego.solis@email.com', N'8877-3049', NULL),
-    (N'Mónica',    N'Aguilar',     N'monica.aguilar@email.com',  N'8877-3050', N'Cliente nueva — dar bienvenida')
+    (N'Mónica',    N'Aguilar',     N'monica.aguilar@email.com',  N'8877-3050', N'Cliente nueva - dar bienvenida')
 ) AS t(fn, ln, em, ph, nota)
 )
 INSERT INTO customers (tenant_id, first_name, last_name, email, phone, notes)
@@ -541,7 +496,14 @@ SELECT
     DATEADD(DAY, n.n, CAST(GETUTCDATE() AS DATE)),
     CAST(DATEADD(MINUTE, 480 + (n.n % 8) * 30, '00:00') AS TIME),
     CAST(DATEADD(MINUTE, 510 + (n.n % 8) * 30, '00:00') AS TIME),
-    N'Prefiero en la mañana si es posible.',
+    CASE (n.n % 6)
+        WHEN 0 THEN N'Prefiero en la mañana'
+        WHEN 1 THEN N'Antes del mediodía por fa'
+        WHEN 2 THEN N'En la tarde después de las 2'
+        WHEN 3 THEN N'No tengo preferencia'
+        WHEN 4 THEN N'Llamar antes de confirmar'
+        WHEN 5 THEN N'Que no sea muy temprano'
+    END,
     NULL
 FROM @ns n
 JOIN @tn tn ON tn.rid = n.n
@@ -575,7 +537,7 @@ SELECT
     tn.id, ow.id, NULL,
     N'tenant_created', N'tenants', tn.id,
     NULL,
-    CONCAT(N'Negocio creado: ', t.name, N' — pura vida!')
+    CONCAT(N'Negocio creado: ', t.name, N' - pura vida!')
 FROM @tn tn
 JOIN @ow ow ON ow.rid = tn.rid
 JOIN tenants t ON t.tenant_id = tn.id;
