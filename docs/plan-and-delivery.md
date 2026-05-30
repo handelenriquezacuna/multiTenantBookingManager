@@ -197,8 +197,7 @@ Frontend
 - [ ] Configuración del negocio.
 - [ ] Categorías de servicios.
 - [ ] Servicios.
-- [ ] Horarios.
-- [ ] Disponibilidad.
+- [ ] Horarios por sede.
 - [ ] Reservas.
 - [ ] Página pública de reservas.
 - [ ] Tracking público.

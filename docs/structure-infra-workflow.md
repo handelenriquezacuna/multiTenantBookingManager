@@ -68,6 +68,8 @@ apps/frontend
 
 Contiene la aplicación web desarrollada con Next.js y TypeScript.
 
+Gestor de paquetes recomendado para frontend: pnpm.
+
 Debe incluir:
 
 - Pantallas públicas.
@@ -76,6 +78,12 @@ Debe incluir:
 - Tipos de TypeScript.
 - Funciones para consumir la API.
 - Estilos.
+
+Comandos base del frontend:
+
+- pnpm install
+- pnpm dev
+- pnpm build
 
 apps/api
 
@@ -185,7 +193,6 @@ apps/frontend/
 │   ├── service-categories/
 │   ├── locations/
 │   ├── business-hours/
-│   ├── availability/
 │   ├── bookings/
 │   ├── customers/
 │   ├── reports/
