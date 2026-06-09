@@ -43,7 +43,7 @@
         </mxGraphModel>
     </diagram>
     <diagram name="ER Model" id="er-model-chen">
-        <mxGraphModel dx="1054" dy="352" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3000" pageHeight="2200" math="0" shadow="0">
+        <mxGraphModel dx="404" dy="352" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3000" pageHeight="2200" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -693,7 +693,9 @@
                     <mxGeometry x="1260" y="918" width="140" height="18" as="geometry"/>
                 </mxCell>
                 <mxCell id="RE_ab_t_a" value="(1,1)" style="edgeStyle=none;html=1;endArrow=none;startArrow=none;fontSize=11;fontStyle=1;fontColor=#FF8000;" parent="1" source="E_ab" target="D_ab_t" edge="1">
-                    <mxGeometry x="-0.8" y="-14" relative="1" as="geometry"/>
+                    <mxGeometry x="-0.7118" y="2" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
                 </mxCell>
                 <mxCell id="RE_ab_t_b" value="(0,N)" style="edgeStyle=none;html=1;endArrow=none;startArrow=none;fontSize=11;fontStyle=1;fontColor=#FF8000;" parent="1" source="D_ab_t" target="E_t" edge="1">
                     <mxGeometry x="0.1785" y="-3" relative="1" as="geometry">
