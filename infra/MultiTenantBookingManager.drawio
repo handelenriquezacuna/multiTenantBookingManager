@@ -2881,7 +2881,7 @@
         <mxCell id="QrMwiUVNWIXaElmsZl64-76" parent="1" style="text;html=1;strokeColor=none;fillColor=#dae8fc;align=center;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;fontSize=13;fontStyle=1;rounded=1;" value="services" vertex="1">
           <mxGeometry height="30" width="210" x="520" y="710" as="geometry" />
         </mxCell>
-        <mxCell id="QrMwiUVNWIXaElmsZl64-77" edge="1" parent="1" source="QrMwiUVNWIXaElmsZl64-78" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=ERoneToMany;endFill=0;" target="QrMwiUVNWIXaElmsZl64-129">
+        <mxCell id="QrMwiUVNWIXaElmsZl64-77" edge="1" parent="1" source="QrMwiUVNWIXaElmsZl64-78" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=ERoneToMany;endFill=0;strokeWidth=2;" target="QrMwiUVNWIXaElmsZl64-129">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="QrMwiUVNWIXaElmsZl64-78" parent="1" style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;align=left;verticalAlign=middle;spacingLeft=8;overflow=hidden;rotatable=0;fontSize=12;" value="PK  service_id : INT" vertex="1">
