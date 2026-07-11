@@ -21,6 +21,11 @@ class TenantService:
     def get_tenant_by_slug(self, slug: str) -> dict | None:
         return self._repo.get_by_slug(slug)
 
+    def get_public_tenant(self, slug: str) -> dict | None:
+        """GET /public/{slug} (WP6): None means "doesn't exist or isn't
+        active" - the router turns that into a 404, per the WP6 brief."""
+        return self._repo.get_active_by_slug(slug)
+
     def list_tenants(self, *, page: int, page_size: int) -> list[dict]:
         return self._repo.list_tenants(page=page, page_size=page_size)
 

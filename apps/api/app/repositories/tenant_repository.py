@@ -46,7 +46,23 @@ class TenantRepository:
 
     def get_by_slug(self, slug: str) -> dict[str, Any] | None:
         sql = "SELECT * FROM dominios WHERE slug = ?"
-        rows = query_view(self._conn, sql, [slug])
+        rows = query_view(self._conn, sql, [slug], label="dominios")
+        return rows[0] if rows else None
+
+    def get_active_by_slug(self, slug: str) -> dict[str, Any] | None:
+        """GET /public/{slug} (WP6): only returns a row when the tenant
+        exists AND is active - `dbo.fn_dominio_activo` checks both
+        `dominios.activo = 1` and `estados_dominios.nombre = 'activo'` (see
+        docs/sql-signatures.md #3). Missing/inactive -> None -> 404 upstream.
+        Column list matches app.mappers.tenant_mapper.map_tenant 1:1 (no
+        aliasing needed - dominios' real column names already are
+        dominio_id/slug/nombre/descripcion/mensaje_publico)."""
+        sql = (
+            "SELECT dominio_id, slug, nombre, descripcion, mensaje_publico "
+            "FROM dominios d "
+            "WHERE d.slug = ? AND dbo.fn_dominio_activo(d.dominio_id) = 1"
+        )
+        rows = query_view(self._conn, sql, [slug], label="dominios(fn_dominio_activo)")
         return rows[0] if rows else None
 
     def list_tenants(self, *, page: int, page_size: int) -> list[dict[str, Any]]:

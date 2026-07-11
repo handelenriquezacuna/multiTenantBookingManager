@@ -14,6 +14,10 @@ COPY app ./app
 # The build-only packages (gcc/g++/curl/gnupg2/unixodbc-dev) are purged again
 # once the project is installed so the runtime image only keeps what it
 # actually needs to run (msodbcsql18 + unixodbc runtime libs).
+# libgssapi-krb5-2 must be installed EXPLICITLY (marked manual): msodbcsql18
+# dlopens it at connect time without declaring it as a package dependency,
+# and --auto-remove would otherwise purge it, breaking the driver with a
+# misleading "file not found" error.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         curl \
@@ -27,7 +31,7 @@ RUN apt-get update \
     && curl -fsSL https://packages.microsoft.com/config/debian/12/prod.list -o /etc/apt/sources.list.d/mssql-release.list \
     && sed -i 's#deb \[arch=amd64,armhf,arm64\]#deb [arch=amd64,armhf,arm64 signed-by=/usr/share/keyrings/microsoft-prod.gpg]#g' /etc/apt/sources.list.d/mssql-release.list \
     && apt-get update \
-    && ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql18 unixodbc \
+    && ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql18 unixodbc libgssapi-krb5-2 \
     && pip install --no-cache-dir . \
     && apt-get purge -y --auto-remove curl gnupg2 apt-transport-https gcc g++ unixodbc-dev \
     && rm -rf /var/lib/apt/lists/* /usr/share/doc /usr/share/man
