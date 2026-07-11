@@ -57,14 +57,21 @@ Write-Host "[setup] SQL Server está healthy."
 # ── 4. Ejecutar scripts en orden ────────────────────────────────────────────
 function Run-Script($fileName) {
     Write-Host "[setup] Ejecutando $fileName..."
+    # -I: QUOTED_IDENTIFIER ON (requerido por el indice unico FILTRADO
+    # ux_reservaciones_bloque de 02-create-tables.sql; sqlcmd lo deja OFF
+    # por defecto y CREATE INDEX de un indice filtrado falla sin esto).
     docker exec -i $CONTAINER `
-        $SQLCMD -S localhost -U sa -P "$SA_PASSWORD" -C `
+        $SQLCMD -S localhost -U sa -P "$SA_PASSWORD" -C -I `
         -i "/scripts/$fileName"
 }
 
 Run-Script "01-create-database.sql"
 Run-Script "02-create-tables.sql"
 Run-Script "03-seed-data.sql"
+Run-Script "04-procedures.sql"
+Run-Script "05-functions.sql"
+Run-Script "06-views.sql"
+Run-Script "07-triggers.sql"
 
 # ── 5. Listo ─────────────────────────────────────────────────────────────────
 Write-Host ""
