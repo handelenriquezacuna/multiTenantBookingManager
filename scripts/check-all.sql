@@ -1,37 +1,78 @@
--- ============================================
--- CHECK ALL TABLES - row counts & full data
--- ============================================
+﻿-- ============================================================
+-- check-all.sql
+-- Proyecto: MBM - Multi-Tenant Booking Manager
+-- Contenido: conteo de filas por tabla (schema en espanol) y
+--            matriz de requisitos R3/R4/R5/R6.
+-- Uso: sqlcmd -i check-all.sql (ver scripts/setup-db.sh para el
+--      patron docker exec ... sqlcmd ... -C)
+-- ============================================================
 
--- ROW COUNTS
-SELECT 'row_counts' AS section, 'business_types' AS tbl, COUNT(*) AS rows FROM business_types
-UNION ALL SELECT 'row_counts', 'tenant_statuses', COUNT(*) FROM tenant_statuses
-UNION ALL SELECT 'row_counts', 'booking_statuses', COUNT(*) FROM booking_statuses
-UNION ALL SELECT 'row_counts', 'superadmins', COUNT(*) FROM superadmins
-UNION ALL SELECT 'row_counts', 'tenants', COUNT(*) FROM tenants
-UNION ALL SELECT 'row_counts', 'tenant_owners', COUNT(*) FROM tenant_owners
-UNION ALL SELECT 'row_counts', 'customers', COUNT(*) FROM customers
-UNION ALL SELECT 'row_counts', 'service_categories', COUNT(*) FROM service_categories
-UNION ALL SELECT 'row_counts', 'services', COUNT(*) FROM services
-UNION ALL SELECT 'row_counts', 'locations', COUNT(*) FROM locations
-UNION ALL SELECT 'row_counts', 'business_hours', COUNT(*) FROM business_hours
-UNION ALL SELECT 'row_counts', 'availability_blocks', COUNT(*) FROM availability_blocks
-UNION ALL SELECT 'row_counts', 'bookings', COUNT(*) FROM bookings
-UNION ALL SELECT 'row_counts', 'tracking_codes', COUNT(*) FROM tracking_codes
-UNION ALL SELECT 'row_counts', 'audit_logs', COUNT(*) FROM audit_logs;
+USE mbm_booking;
+GO
 
--- FULL DATA
-SELECT '=== business_types ==' AS tbl, * FROM business_types;
-SELECT '=== tenant_statuses ==' AS tbl, * FROM tenant_statuses;
-SELECT '=== booking_statuses ==' AS tbl, * FROM booking_statuses;
-SELECT '=== superadmins ==' AS tbl, * FROM superadmins;
-SELECT '=== tenants ==' AS tbl, * FROM tenants ORDER BY tenant_id;
-SELECT '=== tenant_owners ==' AS tbl, * FROM tenant_owners ORDER BY owner_id;
-SELECT '=== customers ==' AS tbl, * FROM customers ORDER BY customer_id;
-SELECT '=== service_categories ==' AS tbl, * FROM service_categories ORDER BY category_id;
-SELECT '=== services ==' AS tbl, * FROM services ORDER BY service_id;
-SELECT '=== locations ==' AS tbl, * FROM locations ORDER BY location_id;
-SELECT '=== business_hours ==' AS tbl, * FROM business_hours ORDER BY business_hour_id;
-SELECT '=== availability_blocks ==' AS tbl, * FROM availability_blocks ORDER BY availability_block_id;
-SELECT '=== bookings ==' AS tbl, * FROM bookings ORDER BY booking_id;
-SELECT '=== tracking_codes ==' AS tbl, * FROM tracking_codes ORDER BY tracking_id;
-SELECT '=== audit_logs ==' AS tbl, * FROM audit_logs ORDER BY audit_id;
+SET NOCOUNT ON;
+
+PRINT '[check-all] conteo de filas por tabla (minimo 50):';
+
+DECLARE @c INT;
+
+SELECT @c = COUNT(*) FROM tipos_negocios;
+PRINT '[check-all] tipos_negocios ............... ' + CAST(@c AS VARCHAR(10)) + ' ' + CASE WHEN @c >= 50 THEN 'OK' ELSE 'FAIL' END;
+SELECT @c = COUNT(*) FROM estados_dominios;
+PRINT '[check-all] estados_dominios ............. ' + CAST(@c AS VARCHAR(10)) + ' ' + CASE WHEN @c >= 50 THEN 'OK' ELSE 'FAIL' END;
+SELECT @c = COUNT(*) FROM estados_reservaciones;
+PRINT '[check-all] estados_reservaciones ........ ' + CAST(@c AS VARCHAR(10)) + ' ' + CASE WHEN @c >= 50 THEN 'OK' ELSE 'FAIL' END;
+SELECT @c = COUNT(*) FROM superadmins;
+PRINT '[check-all] superadmins .................. ' + CAST(@c AS VARCHAR(10)) + ' ' + CASE WHEN @c >= 50 THEN 'OK' ELSE 'FAIL' END;
+SELECT @c = COUNT(*) FROM dominios;
+PRINT '[check-all] dominios ..................... ' + CAST(@c AS VARCHAR(10)) + ' ' + CASE WHEN @c >= 50 THEN 'OK' ELSE 'FAIL' END;
+SELECT @c = COUNT(*) FROM duenos_de_dominios;
+PRINT '[check-all] duenos_de_dominios ........... ' + CAST(@c AS VARCHAR(10)) + ' ' + CASE WHEN @c >= 50 THEN 'OK' ELSE 'FAIL' END;
+SELECT @c = COUNT(*) FROM clientes;
+PRINT '[check-all] clientes ..................... ' + CAST(@c AS VARCHAR(10)) + ' ' + CASE WHEN @c >= 50 THEN 'OK' ELSE 'FAIL' END;
+SELECT @c = COUNT(*) FROM categorias_servicios;
+PRINT '[check-all] categorias_servicios ......... ' + CAST(@c AS VARCHAR(10)) + ' ' + CASE WHEN @c >= 50 THEN 'OK' ELSE 'FAIL' END;
+SELECT @c = COUNT(*) FROM servicios;
+PRINT '[check-all] servicios .................... ' + CAST(@c AS VARCHAR(10)) + ' ' + CASE WHEN @c >= 50 THEN 'OK' ELSE 'FAIL' END;
+SELECT @c = COUNT(*) FROM localidades;
+PRINT '[check-all] localidades .................. ' + CAST(@c AS VARCHAR(10)) + ' ' + CASE WHEN @c >= 50 THEN 'OK' ELSE 'FAIL' END;
+SELECT @c = COUNT(*) FROM horarios;
+PRINT '[check-all] horarios ..................... ' + CAST(@c AS VARCHAR(10)) + ' ' + CASE WHEN @c >= 50 THEN 'OK' ELSE 'FAIL' END;
+SELECT @c = COUNT(*) FROM bloques_de_disponibilidad;
+PRINT '[check-all] bloques_de_disponibilidad .... ' + CAST(@c AS VARCHAR(10)) + ' ' + CASE WHEN @c >= 50 THEN 'OK' ELSE 'FAIL' END;
+SELECT @c = COUNT(*) FROM reservaciones;
+PRINT '[check-all] reservaciones ................ ' + CAST(@c AS VARCHAR(10)) + ' ' + CASE WHEN @c >= 50 THEN 'OK' ELSE 'FAIL' END;
+SELECT @c = COUNT(*) FROM codigos_de_rastreos;
+PRINT '[check-all] codigos_de_rastreos .......... ' + CAST(@c AS VARCHAR(10)) + ' ' + CASE WHEN @c >= 50 THEN 'OK' ELSE 'FAIL' END;
+SELECT @c = COUNT(*) FROM registros;
+PRINT '[check-all] registros .................... ' + CAST(@c AS VARCHAR(10)) + ' ' + CASE WHEN @c >= 50 THEN 'OK' ELSE 'FAIL' END;
+
+PRINT '';
+PRINT '[check-all] matriz de requisitos:';
+
+DECLARE @tablas INT, @tablas50 INT, @procs INT, @vistas INT;
+
+SELECT @tablas = COUNT(*) FROM sys.tables;
+
+SELECT @tablas50 = COUNT(*)
+FROM (
+    SELECT t.object_id, SUM(p.rows) AS filas
+    FROM sys.tables t
+    JOIN sys.partitions p
+      ON p.object_id = t.object_id AND p.index_id IN (0, 1)
+    GROUP BY t.object_id
+) x
+WHERE x.filas >= 50;
+
+SELECT @procs = COUNT(*) FROM sys.procedures;
+SELECT @vistas = COUNT(*) FROM sys.views;
+
+PRINT '[check-all] R3 tablas: ' + CAST(@tablas AS VARCHAR(10)) + ' (minimo 10) ............ '
+    + CASE WHEN @tablas >= 10 THEN 'OK' ELSE 'FAIL' END;
+PRINT '[check-all] R4 registros: ' + CAST(@tablas50 AS VARCHAR(10)) + '/15 tablas >= 50 ..... '
+    + CASE WHEN @tablas50 >= 15 THEN 'OK' ELSE 'FAIL' END;
+PRINT '[check-all] R5 procedimientos: ' + CAST(@procs AS VARCHAR(10)) + ' (minimo 10) .... '
+    + CASE WHEN @procs >= 10 THEN 'OK' ELSE 'PENDIENTE (WP2)' END;
+PRINT '[check-all] R6 vistas multi-tabla: ' + CAST(@vistas AS VARCHAR(10)) + ' (minimo 5) . '
+    + CASE WHEN @vistas >= 5 THEN 'OK' ELSE 'PENDIENTE (WP3)' END;
+GO
