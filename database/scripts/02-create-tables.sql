@@ -185,7 +185,7 @@ CREATE TABLE reservaciones (
     cliente_id               INT NOT NULL REFERENCES clientes(cliente_id),
     servicio_id              INT NOT NULL REFERENCES servicios(servicio_id),
     localidad_id             INT NOT NULL REFERENCES localidades(localidad_id),
-    bloque_disponibilidad_id INT NULL UNIQUE REFERENCES bloques_de_disponibilidad(bloque_disponibilidad_id) ON DELETE SET NULL,
+    bloque_disponibilidad_id INT NULL REFERENCES bloques_de_disponibilidad(bloque_disponibilidad_id) ON DELETE SET NULL,
     estado_reservacion_id    INT NOT NULL REFERENCES estados_reservaciones(estado_reservacion_id),
     fecha_inicio             DATETIME2 NOT NULL,
     fecha_final              DATETIME2 NOT NULL,
@@ -194,6 +194,14 @@ CREATE TABLE reservaciones (
     creado_en                DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
     actualizado_en           DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
+GO
+-- Indice unico FILTRADO (no constraint UNIQUE plano): un bloque solo puede
+-- estar tomado por una reservacion a la vez, pero multiples reservaciones
+-- canceladas/reagendadas pueden tener NULL (el trigger de liberacion pone
+-- la FK en NULL preservando el historial en fecha_inicio/fecha_final).
+CREATE UNIQUE INDEX ux_reservaciones_bloque
+    ON reservaciones(bloque_disponibilidad_id)
+    WHERE bloque_disponibilidad_id IS NOT NULL;
 PRINT '[02-create-tables] tabla reservaciones ... OK';
 GO
 
