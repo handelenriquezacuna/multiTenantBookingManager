@@ -21,10 +21,17 @@ def map_service(row: dict[str, Any]) -> dict[str, Any]:
 
 
 def map_service_category(row: dict[str, Any]) -> dict[str, Any]:
-    """Row from `categorias_servicios` -> ServiceCategory-shaped dict."""
+    """Row from `categorias_servicios` -> ServiceCategory-shaped dict.
+
+    WP7b correction: the WP5 stub assumed the PK/active-flag columns were
+    named `categoria_servicio_id`/`esta_activo`. Per the real DDL
+    (database/scripts/02-create-tables.sql) and docs/rename-map.csv the
+    columns are `categoria_id`/`activo` - the old names do not exist on
+    `categorias_servicios` and would fail at the ODBC layer.
+    """
     return {
-        "category_id": row["categoria_servicio_id"],
+        "category_id": row["categoria_id"],
         "name": row["nombre"],
         "description": row.get("descripcion"),
-        "is_active": bool(row["esta_activo"]),
+        "is_active": bool(row["activo"]),
     }

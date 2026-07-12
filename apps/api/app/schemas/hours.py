@@ -16,9 +16,18 @@ class BusinessHourResponse(CamelModel):
     is_closed: bool = False
 
 
-class BusinessHourUpsertRequest(CamelModel):
-    location_id: int
+class BusinessHourItem(CamelModel):
+    """One day's row within a PUT /business-hours full-week replacement."""
+
     day_of_week: int
     open_time: time | None = None
     close_time: time | None = None
     is_closed: bool = False
+
+
+class BusinessHourReplaceRequest(CamelModel):
+    """PUT /business-hours body: replaces the entire weekly set for one
+    location (see app.repositories.business_hours_repository.replace_week)."""
+
+    location_id: int
+    hours: list[BusinessHourItem]

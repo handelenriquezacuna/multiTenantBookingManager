@@ -53,10 +53,10 @@ def test_map_service_optional_fields_missing() -> None:
 
 def test_map_service_category() -> None:
     row = {
-        "categoria_servicio_id": 3,
+        "categoria_id": 3,
         "nombre": "Peluqueria",
         "descripcion": "Servicios de cabello",
-        "esta_activo": 1,
+        "activo": 1,
     }
 
     result = map_service_category(row)
@@ -75,7 +75,7 @@ def test_map_customer_combines_both_last_names() -> None:
         "nombre": "Maria",
         "apellido_1": "Gonzalez",
         "apellido_2": "Perez",
-        "email": "maria@example.com",
+        "correo": "maria@example.com",
         "telefono": "555-0100",
     }
 
@@ -92,7 +92,7 @@ def test_map_customer_handles_null_second_surname() -> None:
         "nombre": "Juan",
         "apellido_1": "Ramirez",
         "apellido_2": None,
-        "email": "juan@example.com",
+        "correo": "juan@example.com",
         "telefono": "555-0101",
     }
 
@@ -108,7 +108,7 @@ def test_map_customer_handles_missing_second_surname_key() -> None:
         "cliente_id": 44,
         "nombre": "Ana",
         "apellido_1": "Torres",
-        "email": "ana@example.com",
+        "correo": "ana@example.com",
         "telefono": "555-0102",
     }
 
@@ -125,7 +125,7 @@ def test_map_customer_preserves_accented_data() -> None:
         "nombre": "Jose",
         "apellido_1": "Nunez",
         "apellido_2": "Munoz",
-        "email": "jose@example.com",
+        "correo": "jose@example.com",
         "telefono": "555-0103",
         # Simulate genuinely accented data values coming back from SQL Server:
     }

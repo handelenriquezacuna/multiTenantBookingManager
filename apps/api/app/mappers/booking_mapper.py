@@ -36,10 +36,21 @@ _STATUS_ES_TO_EN: dict[str, str] = {
     "completada": "completed",
     "reagendada": "rescheduled",
 }
+_STATUS_EN_TO_ES: dict[str, str] = {en: es for es, en in _STATUS_ES_TO_EN.items()}
 
 
 def _translate_status(value: str) -> str:
     return _STATUS_ES_TO_EN.get(value, value)
+
+
+def translate_status_to_spanish(value: str) -> str:
+    """Inverse of `_translate_status` - used by app.services.booking_service
+    to translate the `?status=` query filter (English, per the API contract)
+    back into the Spanish value stored in `estados_reservaciones.nombre`
+    before it reaches the WHERE clause (WP7b, GET /bookings). Total/idempotent
+    mapping like its counterpart: an already-Spanish or unknown value passes
+    through unchanged."""
+    return _STATUS_EN_TO_ES.get(value, value)
 
 
 def map_booking_detail(row: dict[str, Any]) -> dict[str, Any]:

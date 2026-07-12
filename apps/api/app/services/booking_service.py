@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 from app.errors import InternalError, NotFoundError
+from app.mappers.booking_mapper import translate_status_to_spanish
 from app.repositories.booking_repository import BookingRepository
 
 
@@ -25,18 +26,81 @@ class BookingService:
     def __init__(self, repo: BookingRepository) -> None:
         self._repo = repo
 
-    # -- WP7 admin flow - untouched pass-throughs (not used by public.py/track.py)
+    # -- WP7b /bookings (owner-authenticated) - not used by public.py/track.py
+    def create_owner_booking(
+        self,
+        *,
+        tenant_id: int,
+        service_id: int,
+        location_id: int,
+        availability_block_id: int,
+        customer_id: int | None = None,
+        first_name: str | None = None,
+        last_name: str | None = None,
+        email: str | None = None,
+        phone: str | None = None,
+        customer_notes: str | None = None,
+    ) -> dict[str, Any]:
+        last_name_1, last_name_2 = (None, None)
+        if last_name is not None:
+            last_name_1, last_name_2 = _split_last_name(last_name)
+        booking_id = self._repo.create(
+            tenant_id=tenant_id,
+            service_id=service_id,
+            location_id=location_id,
+            availability_block_id=availability_block_id,
+            customer_id=customer_id,
+            first_name=first_name,
+            last_name_1=last_name_1,
+            last_name_2=last_name_2,
+            email=email,
+            phone=phone,
+            customer_notes=customer_notes,
+        )
+        return self._require(tenant_id, booking_id)
+
+    def get(self, tenant_id: int, booking_id: int) -> dict:
+        return self._require(tenant_id, booking_id)
+
+    def list_bookings(
+        self,
+        tenant_id: int,
+        *,
+        page: int,
+        page_size: int,
+        status: str | None = None,
+        booking_date: date | None = None,
+    ) -> tuple[list[dict], int]:
+        spanish_status = translate_status_to_spanish(status) if status else None
+        return self._repo.list_by_tenant(
+            tenant_id,
+            page=page,
+            page_size=page_size,
+            status=spanish_status,
+            booking_date=booking_date,
+        )
+
     def confirm(self, tenant_id: int, booking_id: int) -> dict:
-        return self._repo.confirm(tenant_id, booking_id)
+        self._repo.confirm(tenant_id, booking_id)
+        return self._require(tenant_id, booking_id)
 
     def complete(self, tenant_id: int, booking_id: int) -> dict:
-        return self._repo.complete(tenant_id, booking_id)
+        self._repo.complete(tenant_id, booking_id)
+        return self._require(tenant_id, booking_id)
 
-    def get(self, tenant_id: int, booking_id: int) -> dict | None:
-        return self._repo.get_by_id(tenant_id, booking_id)
+    def cancel(self, tenant_id: int, booking_id: int) -> dict:
+        self._repo.cancel(tenant_id, booking_id)
+        return self._require(tenant_id, booking_id)
 
-    def list_bookings(self, tenant_id: int) -> list[dict]:
-        return self._repo.list_by_tenant(tenant_id)
+    def reschedule(self, tenant_id: int, booking_id: int, *, availability_block_id: int) -> dict:
+        self._repo.reschedule(tenant_id, booking_id, availability_block_id=availability_block_id)
+        return self._require(tenant_id, booking_id)
+
+    def _require(self, tenant_id: int, booking_id: int) -> dict[str, Any]:
+        row = self._repo.get_by_id(tenant_id, booking_id)
+        if row is None:
+            raise NotFoundError(f"La reservacion {booking_id} no existe o no pertenece al dominio.")
+        return row
 
     # -- WP6 public storefront ----------------------------------------------------
     def create_public_booking(

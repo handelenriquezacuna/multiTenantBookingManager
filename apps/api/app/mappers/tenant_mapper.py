@@ -10,6 +10,11 @@ surfaced too, as email/phone/logoUrl. This is intentionally conditional (only
 added when the key is present) so the WP6 shape - and
 tests/unit/test_mappers.py::test_map_tenant, which asserts exact dict
 equality on a row without those keys - keeps passing unmodified.
+
+WP7b addition: GET /admin/tenants and GET /admin/tenants/{id} join
+estados_dominios and pass through `estado_nombre` (see
+app.repositories.tenant_repository.get_by_id/list_tenants) - surfaced here as
+`status`, same conditional-field technique.
 """
 
 from __future__ import annotations
@@ -31,4 +36,6 @@ def map_tenant(row: dict[str, Any]) -> dict[str, Any]:
         result["phone"] = row["telefono"]
     if "logo_url" in row:
         result["logo_url"] = row["logo_url"]
+    if "estado_nombre" in row:
+        result["status"] = row["estado_nombre"]
     return result
