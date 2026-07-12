@@ -32,6 +32,10 @@ services:
       SQLSERVER_USER: sa
       SQLSERVER_PASSWORD: ${SQLSERVER_PASSWORD}
       SQLSERVER_DB: mbm_booking
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_MIN: ${JWT_EXPIRES_MIN:-60}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      LOG_FORMAT: ${LOG_FORMAT:-json}
     depends_on:
       sqlserver:
         condition: service_healthy
@@ -44,9 +48,13 @@ services:
     build:
       context: ./apps/frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+        NEXT_PUBLIC_API_MODE: ${NEXT_PUBLIC_API_MODE:-api}
     container_name: mbm_frontend
     environment:
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+      NEXT_PUBLIC_API_MODE: ${NEXT_PUBLIC_API_MODE:-api}
     depends_on:
       - api
     ports:

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { clearAuthToken } from "@/lib/api";
 
 const navItems = [
   ["/dashboard", "Resumen"],
@@ -17,7 +18,13 @@ const navItems = [
 
 export function PrivateShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [profileOpen, setProfileOpen] = useState(false);
+
+  function logout() {
+    clearAuthToken();
+    router.push("/login");
+  }
 
   return (
     <div className="app-shell">
@@ -61,7 +68,7 @@ export function PrivateShell({ children }: { children: React.ReactNode }) {
                   <strong>Sofia Campos</strong>
                   <small>Responsable de Clinica Dental Sonrisa</small>
                   <Link href="/settings/business" role="menuitem">Configuracion del negocio</Link>
-                  <Link href="/login" role="menuitem" className="danger">Cerrar sesion</Link>
+                  <button type="button" role="menuitem" className="danger" onClick={logout}>Cerrar sesion</button>
                 </div>
               ) : null}
             </div>

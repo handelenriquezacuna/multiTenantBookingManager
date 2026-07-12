@@ -1027,14 +1027,22 @@ main {
   border-bottom: 1px solid var(--border);
 }
 
-.profile-popover a {
+.profile-popover a,
+.profile-popover button {
   border-radius: 11px;
   padding: 9px 10px;
   color: var(--text);
   font-size: 14px;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
 }
 
-.profile-popover a:hover {
+.profile-popover a:hover,
+.profile-popover button:hover {
   background: var(--surface-soft);
 }
 
