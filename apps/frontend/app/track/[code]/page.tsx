@@ -1,10 +1,28 @@
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BookingShell } from "@/components/layout/BookingShell";
+import { apiGet, isMockMode } from "@/lib/api";
+import { endpoints } from "@/lib/endpoints";
 import { mockBookings } from "@/lib/mock-data";
+import type { Booking } from "@/types/booking";
+
+async function loadBooking(code: string): Promise<Booking | null> {
+  if (isMockMode()) {
+    return mockBookings.find((item) => item.trackingCode === code) || mockBookings[0];
+  }
+  try {
+    return await apiGet<Booking>(endpoints.track.get(code));
+  } catch {
+    return null;
+  }
+}
 
 export default async function TrackPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
-  const booking = mockBookings.find((item) => item.trackingCode === code) || mockBookings[0];
+  const booking = await loadBooking(code);
+  if (!booking) {
+    notFound();
+  }
   return (
     <BookingShell>
       <section className="track-detail card">

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiGet, isMockMode } from "@/lib/api";
+import { endpoints } from "@/lib/endpoints";
 import { mockServices } from "@/lib/mock-data";
 import type { Service } from "@/types/service";
 
@@ -18,7 +19,7 @@ export function useServices(tenantSlug: string) {
         setLoading(false);
         return;
       }
-      const data = await apiGet<Service[]>(`/public/${tenantSlug}/services`);
+      const data = await apiGet<Service[]>(endpoints.public.services(tenantSlug));
       if (active) {
         setServices(data);
         setLoading(false);
