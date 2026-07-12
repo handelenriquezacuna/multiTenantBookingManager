@@ -15,8 +15,10 @@ class ReportService:
     def daily_agenda(self, tenant_id: int, agenda_date: date) -> list[dict]:
         return self._repo.daily_agenda(tenant_id, agenda_date)
 
-    def bookings_detail(self, tenant_id: int) -> list[dict]:
-        return self._repo.bookings_detail(tenant_id)
+    def bookings_detail(
+        self, tenant_id: int, *, page: int, page_size: int
+    ) -> tuple[list[dict], int]:
+        return self._repo.bookings_detail(tenant_id, page=page, page_size=page_size)
 
     def services_demand(self, tenant_id: int) -> list[dict]:
         return self._repo.services_demand(tenant_id)

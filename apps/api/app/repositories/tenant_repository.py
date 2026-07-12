@@ -55,8 +55,19 @@ class TenantRepository:
         )
 
     def get_by_id(self, tenant_id: int) -> dict[str, Any] | None:
-        sql = "SELECT * FROM dominios WHERE dominio_id = ?"
-        rows = query_view(self._conn, sql, [tenant_id], label="dominios")
+        """WP7b: joins estados_dominios to also surface `estado_nombre` (used
+        by GET /admin/tenants/{id} and the admin listing - see
+        app.mappers.tenant_mapper.map_tenant's conditional `status` field).
+        Existing callers (GET /tenant/current, /auth) simply ignore the extra
+        column, same conditional-field pattern already used for
+        correo/telefono/logo_url."""
+        sql = (
+            "SELECT d.*, ed.nombre AS estado_nombre "
+            "FROM dominios d "
+            "JOIN estados_dominios ed ON ed.dominio_estado_id = d.dominio_estado_id "
+            "WHERE d.dominio_id = ?"
+        )
+        rows = query_view(self._conn, sql, [tenant_id], label="dominios+estados_dominios")
         return rows[0] if rows else None
 
     def get_by_slug(self, slug: str) -> dict[str, Any] | None:
@@ -98,17 +109,47 @@ class TenantRepository:
         rows = query_view(self._conn, sql, [tenant_id], label="dominios+estados_dominios")
         return rows[0] if rows else None
 
-    def list_tenants(self, *, page: int, page_size: int) -> list[dict[str, Any]]:
-        sql = "SELECT * FROM dominios ORDER BY dominio_id OFFSET ? ROWS FETCH NEXT ? ROWS ONLY"
-        return query_view(self._conn, sql, [(page - 1) * page_size, page_size], label="dominios")
+    def list_tenants(self, *, page: int, page_size: int) -> tuple[list[dict[str, Any]], int]:
+        """GET /admin/tenants (WP7b): includes `estado_nombre` per row (same
+        join as get_by_id) and a total count for the pagination envelope."""
+        total_rows = query_view(
+            self._conn, "SELECT COUNT(*) AS total FROM dominios", [], label="dominios"
+        )
+        total = int(total_rows[0]["total"]) if total_rows else 0
+        sql = (
+            "SELECT d.*, ed.nombre AS estado_nombre "
+            "FROM dominios d "
+            "JOIN estados_dominios ed ON ed.dominio_estado_id = d.dominio_estado_id "
+            "ORDER BY d.dominio_id OFFSET ? ROWS FETCH NEXT ? ROWS ONLY"
+        )
+        rows = query_view(
+            self._conn,
+            sql,
+            [(page - 1) * page_size, page_size],
+            label="dominios+estados_dominios",
+        )
+        return rows, total
 
-    def activate(self, tenant_id: int) -> dict[str, Any]:
-        rows = exec_sp(self._conn, "sp_activar_dominio", {"dominio_id": tenant_id})
-        return rows[0] if rows else {}
+    def activate(self, tenant_id: int, superadmin_id: int) -> dict[str, Any] | None:
+        """WP7b correction: sp_activar_dominio requires `@superadmin_id` (the
+        WP5 stub omitted it) and reports nothing back (pure UPDATE, no SELECT/
+        OUTPUT), so this re-reads the tenant afterwards instead of trusting
+        exec_sp's (always empty) return value."""
+        exec_sp(
+            self._conn,
+            "sp_activar_dominio",
+            {"dominio_id": tenant_id, "superadmin_id": superadmin_id},
+        )
+        return self.get_by_id(tenant_id)
 
-    def suspend(self, tenant_id: int) -> dict[str, Any]:
-        rows = exec_sp(self._conn, "sp_suspender_dominio", {"dominio_id": tenant_id})
-        return rows[0] if rows else {}
+    def suspend(self, tenant_id: int, superadmin_id: int) -> dict[str, Any] | None:
+        """Same correction as activate() - see its docstring."""
+        exec_sp(
+            self._conn,
+            "sp_suspender_dominio",
+            {"dominio_id": tenant_id, "superadmin_id": superadmin_id},
+        )
+        return self.get_by_id(tenant_id)
 
     def update_tenant(
         self,

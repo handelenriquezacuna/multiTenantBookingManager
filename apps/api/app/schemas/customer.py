@@ -11,6 +11,7 @@ class CustomerResponse(CamelModel):
     last_name: str
     email: str
     phone: str
+    notes: str | None = None
 
 
 class CustomerCreateRequest(CamelModel):
@@ -18,4 +19,12 @@ class CustomerCreateRequest(CamelModel):
     last_name: str
     email: str
     phone: str
+    notes: str | None = None
+
+
+class CustomerUpdateRequest(CamelModel):
+    first_name: str | None = None
+    last_name: str | None = None
+    email: str | None = None
+    phone: str | None = None
     notes: str | None = None

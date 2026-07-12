@@ -12,14 +12,22 @@ class ServiceService:
     def create(self, **fields: Any) -> dict:
         return self._repo.create(**fields)
 
-    def update(self, tenant_id: int, service_id: int, **fields: Any) -> dict:
+    def update(self, tenant_id: int, service_id: int, **fields: Any) -> dict | None:
         return self._repo.update(tenant_id, service_id, **fields)
+
+    def delete(self, tenant_id: int, service_id: int) -> dict | None:
+        """Soft delete: activo = 0, via sp_actualizar_servicio."""
+        return self._repo.update(tenant_id, service_id, is_active=False)
 
     def get(self, tenant_id: int, service_id: int) -> dict | None:
         return self._repo.get_by_id(tenant_id, service_id)
 
-    def list_services(self, tenant_id: int) -> list[dict]:
-        return self._repo.list_by_tenant(tenant_id)
+    def list_services(
+        self, tenant_id: int, *, page: int, page_size: int, category_id: int | None = None
+    ) -> tuple[list[dict], int]:
+        return self._repo.list_by_tenant(
+            tenant_id, page=page, page_size=page_size, category_id=category_id
+        )
 
     def list_public(self, slug: str) -> list[dict]:
         return self._repo.list_public_by_slug(slug)

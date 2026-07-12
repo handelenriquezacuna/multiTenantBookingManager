@@ -32,30 +32,42 @@ class BookingDetailResponse(BookingResponse):
     customer_notes: str | None = None
 
 
-class BookingCreateRequest(CamelModel):
-    customer_id: int
-    service_id: int
-    location_id: int
-    availability_block_id: int | None = None
-    booking_date: date
-    start_time: time
-    customer_notes: str | None = None
-
-
-class BookingRescheduleRequest(CamelModel):
-    availability_block_id: int
-    booking_date: date
-    start_time: time
-
-
 class BookingCustomerContact(CamelModel):
-    """Nested `customer` object of PublicBookingCreateRequest - the public
-    flow never has a pre-existing customer_id, only contact info."""
+    """Nested `customer` object of PublicBookingCreateRequest/
+    BookingCreateRequest - contact info for a customer that does not exist
+    yet (the public flow never has a pre-existing customer_id; the owner
+    flow may use either this or an existing customerId - see
+    BookingCreateRequest)."""
 
     first_name: str
     last_name: str
     email: str
     phone: str
+
+
+class BookingCreateRequest(CamelModel):
+    """POST /bookings (WP7b, owner-authenticated internal creation):
+    sp_crear_reservacion takes either an existing `customerId` OR a full
+    `customer` contact block (never both, never neither) - see
+    docs/sql-signatures.md #9. The SP itself enforces that rule (THROW 50005
+    -> 400) rather than duplicating it here. `bookingDate`/`startTime` are
+    not accepted: like the WP6 public flow, the booking's schedule always
+    comes from `availabilityBlockId`'s own block."""
+
+    service_id: int
+    location_id: int
+    availability_block_id: int
+    customer_id: int | None = None
+    customer: BookingCustomerContact | None = None
+    customer_notes: str | None = None
+
+
+class BookingRescheduleRequest(CamelModel):
+    """POST /bookings/{id}/reschedule body (WP7b): `{ newAvailabilityBlockId }`
+    - same shape as TrackRescheduleRequest, kept as its own class so the
+    owner-facing and public-facing contracts can evolve independently."""
+
+    new_availability_block_id: int
 
 
 class PublicBookingCreateRequest(CamelModel):

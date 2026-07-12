@@ -20,6 +20,9 @@ class TenantResponse(CamelModel):
     email: str | None = None
     phone: str | None = None
     logo_url: str | None = None
+    # WP7b: only present on GET /admin/tenants and GET /admin/tenants/{id}
+    # (see app.mappers.tenant_mapper.map_tenant's conditional field).
+    status: str | None = None
 
 
 class TenantCreateRequest(CamelModel):

@@ -28,14 +28,14 @@ class TenantService:
         active" - the router turns that into a 404, per the WP6 brief."""
         return self._repo.get_active_by_slug(slug)
 
-    def list_tenants(self, *, page: int, page_size: int) -> list[dict]:
+    def list_tenants(self, *, page: int, page_size: int) -> tuple[list[dict], int]:
         return self._repo.list_tenants(page=page, page_size=page_size)
 
-    def activate_tenant(self, tenant_id: int) -> dict:
-        return self._repo.activate(tenant_id)
+    def activate_tenant(self, tenant_id: int, superadmin_id: int) -> dict | None:
+        return self._repo.activate(tenant_id, superadmin_id)
 
-    def suspend_tenant(self, tenant_id: int) -> dict:
-        return self._repo.suspend(tenant_id)
+    def suspend_tenant(self, tenant_id: int, superadmin_id: int) -> dict | None:
+        return self._repo.suspend(tenant_id, superadmin_id)
 
     def update_tenant(self, tenant_id: int, **fields: Any) -> dict | None:
         """PATCH /tenant/current (WP7a)."""

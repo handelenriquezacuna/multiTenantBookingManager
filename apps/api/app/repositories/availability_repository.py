@@ -49,25 +49,82 @@ class AvailabilityRepository:
             output_param="bloque_id",
         )
 
-    def list_status(
-        self, tenant_id: int, location_id: int, block_date: date
-    ) -> list[dict[str, Any]]:
-        """Owner/admin availability view (WP7 scope - not used by
-        /public or /track). Left as a `SELECT *` pass-through; only the
-        WHERE clause's `fecha_de_bloque` column name (previously
-        `fecha_bloque`, which does not exist on the view) is fixed here so
-        this at least runs, since it lives in the same file as list_public.
-        """
-        sql = (
-            "SELECT * FROM vw_estado_disponibilidad "
-            "WHERE dominio_id = ? AND localidad_id = ? AND fecha_de_bloque = ?"
-        )
-        return query_view(
+    # -- WP7b /availability-blocks (owner-authenticated) --------------------
+    _OWNER_SELECT = (
+        "SELECT "
+        "bloque_id AS bloque_disponibilidad_id, "
+        "CAST(fecha_de_bloque AS DATE) AS fecha_bloque, "
+        "CAST(fecha_inicio AS TIME) AS hora_inicio, "
+        "CAST(fecha_final AS TIME) AS hora_fin, "
+        "reservado AS esta_reservado "
+        "FROM vw_estado_disponibilidad"
+    )
+
+    def get_by_id(self, tenant_id: int, block_id: int) -> dict[str, Any] | None:
+        sql = self._OWNER_SELECT + " WHERE dominio_id = ? AND bloque_id = ?"
+        rows = query_view(self._conn, sql, [tenant_id, block_id], label="vw_estado_disponibilidad")
+        return rows[0] if rows else None
+
+    def list_owner(
+        self,
+        tenant_id: int,
+        *,
+        page: int,
+        page_size: int,
+        block_date: date | None = None,
+        location_id: int | None = None,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """GET /availability-blocks: paginated, with optional ?date/
+        ?locationId filters (WP7b brief)."""
+        conditions = ["dominio_id = ?"]
+        params: list[Any] = [tenant_id]
+        if block_date is not None:
+            conditions.append("fecha_de_bloque = ?")
+            params.append(block_date)
+        if location_id is not None:
+            conditions.append("localidad_id = ?")
+            params.append(location_id)
+        where = " AND ".join(conditions)
+
+        total_rows = query_view(
             self._conn,
-            sql,
-            [tenant_id, location_id, block_date],
+            f"SELECT COUNT(*) AS total FROM vw_estado_disponibilidad WHERE {where}",
+            params,
             label="vw_estado_disponibilidad",
         )
+        total = int(total_rows[0]["total"]) if total_rows else 0
+
+        sql = (
+            self._OWNER_SELECT
+            + f" WHERE {where} ORDER BY fecha_de_bloque, fecha_inicio, bloque_id "
+            "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY"
+        )
+        rows = query_view(
+            self._conn,
+            sql,
+            [*params, (page - 1) * page_size, page_size],
+            label="vw_estado_disponibilidad",
+        )
+        return rows, total
+
+    def deactivate(self, tenant_id: int, block_id: int) -> None:
+        """Soft delete: activo = 0. No SP exists for this - callers must
+        have already checked for an active reservation (see
+        app.services.availability_service.AvailabilityService.delete_block)
+        since this table has no CHECK against that on its own."""
+        cursor = self._conn.cursor()
+        try:
+            cursor.execute(
+                "UPDATE bloques_de_disponibilidad SET activo = 0, actualizado_en = SYSUTCDATETIME() "
+                "WHERE dominio_id = ? AND bloque_disponibilidad_id = ?",
+                [tenant_id, block_id],
+            )
+            self._conn.commit()
+        except Exception:
+            self._conn.rollback()
+            raise
+        finally:
+            cursor.close()
 
     def list_public(
         self,
