@@ -1,16 +1,17 @@
 """Shared FastAPI dependencies: DB connection-per-request and JWT auth guards.
 
-CurrentOwner / CurrentSuperadmin are Annotated dependency aliases (the
-"Annotated[..., Depends(...)]" pattern) that routers use as parameter type
-hints, e.g.:
+CurrentOwner / CurrentSuperadmin / CurrentUser are Annotated dependency
+aliases (the "Annotated[..., Depends(...)]" pattern) that routers use as
+parameter type hints, e.g.:
 
     @router.get("/bookings")
     def list_bookings(owner: CurrentOwner) -> ...:
         ...
 
-They are functional today (they really decode and validate the JWT); the
-business use of the resulting TokenPayload (tenant scoping, etc.) is wired
-into routers in later WPs.
+CurrentOwner and CurrentSuperadmin additionally enforce the matching role;
+CurrentUser (WP7a, used by GET /auth/me) accepts either role. INVARIANT:
+the tenant/dominio_id a router acts on always comes from CurrentOwner's
+`tenantId` JWT claim - it is never read from the request path/body/query.
 """
 
 from __future__ import annotations
@@ -56,6 +57,11 @@ def get_current_owner(
     payload = _decode_bearer_token(authorization, settings)
     if payload.role != "owner":
         raise HTTPException(status_code=403, detail="owner role required")
+    if payload.tenant_id is None:
+        # Defense in depth: create_access_token always stamps tenantId for
+        # role "owner", so this only fires for a hand-crafted/malformed
+        # token - never trust a request-supplied tenant id as a fallback.
+        raise HTTPException(status_code=401, detail="token missing tenantId claim")
     return payload
 
 
@@ -70,5 +76,16 @@ def get_current_superadmin(
     return payload
 
 
+def get_current_user(
+    *,
+    authorization: Annotated[str | None, Header()] = None,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> TokenPayload:
+    """Accepts either role - used by GET /auth/me, which reports on whoever
+    the token belongs to instead of requiring a specific role."""
+    return _decode_bearer_token(authorization, settings)
+
+
 CurrentOwner = Annotated[TokenPayload, Depends(get_current_owner)]
 CurrentSuperadmin = Annotated[TokenPayload, Depends(get_current_superadmin)]
+CurrentUser = Annotated[TokenPayload, Depends(get_current_user)]

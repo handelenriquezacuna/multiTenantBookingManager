@@ -1,4 +1,10 @@
-"""Matches apps/frontend/types/tenant.ts."""
+"""Matches apps/frontend/types/tenant.ts's core fields
+({ tenantId, slug, name, description, publicMessage }), plus the additional
+editable `dominios` columns GET/PATCH /tenant/current also expose
+(email/phone/logoUrl - WP7a). Those three are not part of the frontend
+Tenant type yet but the owner can read and edit them, so they are carried as
+optional fields (see app.mappers.tenant_mapper for why they stay absent on
+the WP6 public endpoint's response)."""
 
 from __future__ import annotations
 
@@ -11,6 +17,9 @@ class TenantResponse(CamelModel):
     name: str
     description: str | None = None
     public_message: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    logo_url: str | None = None
 
 
 class TenantCreateRequest(CamelModel):
@@ -28,4 +37,5 @@ class TenantUpdateRequest(CamelModel):
     email: str | None = None
     phone: str | None = None
     description: str | None = None
+    logo_url: str | None = None
     public_message: str | None = None

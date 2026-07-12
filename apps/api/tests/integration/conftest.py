@@ -59,6 +59,96 @@ def client() -> TestClient:
     return TestClient(app)
 
 
+# WP7a: every seed owner shares the same bcrypt hash of "bowner123", and
+# every seed superadmin shares the same bcrypt hash of "Admin123" - see
+# database/docs/PASSWORDS.md.
+SEED_OWNER_PASSWORD = "bowner123"
+SEED_SUPERADMIN_PASSWORD = "Admin123"
+
+
+@pytest.fixture(scope="session")
+def seed_owner(db_factory: ConnectionFactory) -> dict:
+    """One active owner (active account + active tenant) from the seed, used
+    by the WP7a /auth and /tenant integration tests."""
+    conn = db_factory.new_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT TOP 1 o.dueno_id, o.dominio_id, o.correo, o.nombre
+            FROM duenos_de_dominios o
+            WHERE o.activo = 1 AND dbo.fn_dominio_activo(o.dominio_id) = 1
+            ORDER BY o.dueno_id
+            """
+        )
+        row = cursor.fetchone()
+        if row is None:
+            pytest.skip("seed data has no active owner with an active tenant")
+        return {
+            "owner_id": row.dueno_id,
+            "tenant_id": row.dominio_id,
+            "email": row.correo,
+            "password": SEED_OWNER_PASSWORD,
+            "first_name": row.nombre,
+        }
+    finally:
+        conn.close()
+
+
+@pytest.fixture(scope="session")
+def seed_superadmin(db_factory: ConnectionFactory) -> dict:
+    """One active superadmin from the seed."""
+    conn = db_factory.new_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT TOP 1 superadmin_id, correo, nombre FROM superadmins "
+            "WHERE activo = 1 ORDER BY superadmin_id"
+        )
+        row = cursor.fetchone()
+        if row is None:
+            pytest.skip("seed data has no active superadmin")
+        return {
+            "superadmin_id": row.superadmin_id,
+            "email": row.correo,
+            "password": SEED_SUPERADMIN_PASSWORD,
+            "first_name": row.nombre,
+        }
+    finally:
+        conn.close()
+
+
+@pytest.fixture(scope="session")
+def seed_business_type(db_factory: ConnectionFactory) -> dict:
+    """One active business type from the seed, used by
+    POST /auth/register-owner."""
+    conn = db_factory.new_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT TOP 1 tipo_negocio_id, nombre FROM tipos_negocios "
+            "WHERE activo = 1 ORDER BY tipo_negocio_id"
+        )
+        row = cursor.fetchone()
+        if row is None:
+            pytest.skip("seed data has no active business type")
+        return {"business_type_id": row.tipo_negocio_id, "name": row.nombre}
+    finally:
+        conn.close()
+
+
+def owner_auth_headers(client: TestClient, *, email: str, password: str) -> dict[str, str]:
+    """Logs in and returns an `Authorization: Bearer ...` header dict, for
+    tests that need an authenticated owner session."""
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"email": email, "password": password, "role": "owner"},
+    )
+    assert response.status_code == 200, response.text
+    token = response.json()["accessToken"]
+    return {"Authorization": f"Bearer {token}"}
+
+
 @pytest.fixture(scope="session")
 def seed_tenant(db_factory: ConnectionFactory) -> dict:
     """Finds one active tenant from the seed (50 dominios, slugs like

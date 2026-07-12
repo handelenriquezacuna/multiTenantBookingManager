@@ -12,7 +12,9 @@ class TenantService:
     def __init__(self, repo: TenantRepository) -> None:
         self._repo = repo
 
-    def create_tenant(self, **fields: Any) -> dict:
+    def create_tenant(self, **fields: Any) -> int:
+        """Returns the new dominio_id (see TenantRepository.create_tenant -
+        sp_crear_dominio only reports it via an OUTPUT param)."""
         return self._repo.create_tenant(**fields)
 
     def get_tenant(self, tenant_id: int) -> dict | None:
@@ -34,3 +36,7 @@ class TenantService:
 
     def suspend_tenant(self, tenant_id: int) -> dict:
         return self._repo.suspend(tenant_id)
+
+    def update_tenant(self, tenant_id: int, **fields: Any) -> dict | None:
+        """PATCH /tenant/current (WP7a)."""
+        return self._repo.update_tenant(tenant_id, **fields)
