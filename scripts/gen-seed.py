@@ -665,12 +665,18 @@ def build_sql():
     # -- reservaciones (reserva i: mismo dominio en cliente/servicio/localidad/
     # -- bloque; fechas identicas a las del bloque i) -------------------------
     rows = []
+    estado_cancelada = 1 + [n for n, _ in ESTADOS_RESERVACIONES_REALES].index("cancelada")
     for i in range(1, ROWS_PER_TABLE + 1):
         _, inicio, final = bloque_de(i)
         estado = 1 + ((i - 1) % len(ESTADOS_RESERVACIONES_REALES))
         nota_cli = NOTAS_CLIENTE_RESERVA[(i - 1) % len(NOTAS_CLIENTE_RESERVA)]
         nota_int = "Cliente frecuente, dar seguimiento" if i % 7 == 0 else None
-        rows.append([str(i), str(i), str(i), str(i), str(i), str(estado),
+        # Reservas canceladas: bloque liberado (FK NULL), igual que hace
+        # trg_liberar_bloque_al_cancelar en runtime. El seed inserta directo
+        # y no dispara ese trigger (es de UPDATE); sin esto, el bloque queda
+        # retenido por el indice unico filtrado y reservarlo daria conflicto.
+        bloque = "NULL" if estado == estado_cancelada else str(i)
+        rows.append([str(i), str(i), str(i), str(i), bloque, str(estado),
                      qdt(inicio), qdt(final), qs(nota_cli), qs(nota_int)])
     emit_insert(
         lines, "reservaciones",
