@@ -4,11 +4,82 @@
 
 - [Trabajo del equipo](#trabajo-del-equipo)
   - [Indice](#indice)
+  - [Matriz de cumplimiento de requisitos (R1-R6)](#matriz-de-cumplimiento-de-requisitos-r1-r6)
   - [Entregables del curso](#entregables-del-curso)
   - [Cronograma recomendado](#cronograma-recomendado)
   - [Demo minima para la defensa](#demo-minima-para-la-defensa)
   - [Checklist de cumplimiento](#checklist-de-cumplimiento)
   - [Recap final del proyecto](#recap-final-del-proyecto)
+
+## Matriz de cumplimiento de requisitos (R1-R6)
+
+Los seis requisitos oficiales del curso (Avance II, semana 12) y su
+evidencia verificable en este repositorio:
+
+| Requisito | Evidencia | Comando de verificacion | Estado |
+| --- | --- | --- | --- |
+| R1 — normalizacion hasta 3FN documentada | [docs/database-and-sql.md](database-and-sql.md), seccion "Normalización de la base de datos" (1FN/2FN/3FN explicadas tabla por tabla) | lectura del documento | [x] DONE |
+| R2 — DDL completo | `database/scripts/02-create-tables.sql` (15 tablas, PK/FK) + `database/scripts/08-full-script.sql` (script unico, una sola pasada) | `bash scripts/setup-db.sh` (ejecuta 01-07 en orden) o `sqlcmd -i database/scripts/08-full-script.sql` | [x] DONE |
+| R3 — minimo 10 tablas | 15 tablas en español ASCII (ver `docs/rename-map.csv` para la equivalencia con los nombres en ingles del diseño original) | `scripts/check-all.sql` (matriz de abajo) o `SELECT COUNT(*) FROM sys.tables` | [x] DONE (15/10) |
+| R4 — minimo 50 registros por tabla, datos coherentes | Seed data en `database/scripts/03-seed-data.sql`, generado por `scripts/gen-seed.py`; coherencia de FKs verificada por `scripts/smoke-db.sql` (12 casos) | `scripts/check-all.sql` (matriz de abajo) | [x] DONE (15/15 tablas >= 50) |
+| R5 — minimo 10 stored procedures | 13 SPs en `database/scripts/04-procedures.sql`, documentados en [docs/sql-signatures.md](sql-signatures.md) seccion 1 | `SELECT COUNT(*) FROM sys.procedures;` | [x] DONE (13/10) |
+| R6 — minimo 5 vistas multi-tabla | 7 vistas en `database/scripts/06-views.sql` (cada una referencia 2+ tablas base), documentadas en [docs/sql-signatures.md](sql-signatures.md) seccion 2 | `SELECT COUNT(*) FROM sys.views;` | [x] DONE (7/5) |
+
+Adicional a los seis requisitos minimos: 6 funciones escalares
+(`database/scripts/05-functions.sql`) y 7 triggers
+(`database/scripts/07-triggers.sql`), tambien documentados en
+`docs/sql-signatures.md`.
+
+### Salida real de `scripts/check-all.sql`
+
+Ejecutado contra el contenedor `mbm_sqlserver` (schema + seed aplicados via
+`scripts/setup-db.sh`):
+
+```bash
+source .env
+docker cp scripts/check-all.sql mbm_sqlserver:/tmp/ca.sql
+docker exec mbm_sqlserver /opt/mssql-tools18/bin/sqlcmd \
+  -S localhost -U sa -P "$SQLSERVER_PASSWORD" -C -I -d mbm_booking -i /tmp/ca.sql
+```
+
+Muestra de conteos por tabla (las 15 tablas, minimo 50 filas cada una;
+salida de un rebuild limpio desde cero con `docker compose down -v &&
+bash scripts/setup-db.sh`):
+
+```
+ conteo de filas por tabla (minimo 50):
+ tipos_negocios ............... 50 OK
+ estados_dominios ............. 50 OK
+ estados_reservaciones ........ 50 OK
+ superadmins .................. 50 OK
+ dominios ..................... 50 OK
+ duenos_de_dominios ........... 50 OK
+ clientes ..................... 50 OK
+ categorias_servicios ......... 50 OK
+ servicios .................... 50 OK
+ localidades .................. 50 OK
+ horarios ..................... 50 OK
+ bloques_de_disponibilidad .... 50 OK
+ reservaciones ................ 50 OK
+ codigos_de_rastreos .......... 50 OK
+ registros .................... 50 OK
+```
+
+Matriz R3-R6 (salida literal):
+
+```
+ matriz de requisitos:
+ R3 tablas: 15 (minimo 10) ............ OK
+ R4 registros: 15/15 tablas >= 50 ..... OK
+ R5 procedimientos: 13 (minimo 10) .... OK
+ R6 vistas multi-tabla: 7 (minimo 5) . OK
+```
+
+Nota de coherencia del seed: las 10 reservaciones canceladas del seed tienen
+su bloque liberado (`bloque_disponibilidad_id = NULL`), replicando el efecto
+del trigger `trg_liberar_bloque_al_cancelar`; sus fechas historicas se
+conservan en las columnas denormalizadas. Asi los bloques de esas reservas
+son reservables de nuevo, igual que en operacion real.
 
 El trabajo se organiza por tareas y no por personas, para que todo el equipo participe en cada fase y todos conozcan el proyecto completo.
 
@@ -160,57 +231,57 @@ El sistema debe poder demostrar este flujo:
 
 Base de datos
 
-- [ ] Base de datos creada en SQL Server.
-- [ ] Mínimo 10 tablas.
-- [ ] 14 tablas propuestas creadas.
-- [ ] Llaves primarias definidas.
-- [ ] Llaves foraneas definidas.
-- [ ] Relaciones documentadas.
-- [ ] Diagrama Entidad-Relación creado.
-- [ ] Modelo relacional creado.
-- [ ] Normalización hasta 3FN explicada.
-- [ ] 50 registros por tabla.
-- [ ] 10 procedimientos almacenados.
-- [ ] 5 funciones SQL.
-- [ ] 5 vistas SQL.
-- [ ] 5 triggers.
-- [ ] Archivo full-script.sql creado.
+- [x] Base de datos creada en SQL Server.
+- [x] Mínimo 10 tablas.
+- [x] 15 tablas propuestas creadas.
+- [x] Llaves primarias definidas.
+- [x] Llaves foraneas definidas.
+- [x] Relaciones documentadas.
+- [x] Diagrama Entidad-Relación creado.
+- [x] Modelo relacional creado.
+- [x] Normalización hasta 3FN explicada.
+- [x] 50 registros por tabla.
+- [x] 10 procedimientos almacenados (13).
+- [x] 5 funciones SQL (6).
+- [x] 5 vistas SQL (7).
+- [x] 5 triggers (7).
+- [x] Archivo full-script.sql creado.
 
 Backend
 
-- [ ] FastAPI configurado.
-- [ ] Uvicorn funcionando.
-- [ ] Conexión a SQL Server.
-- [ ] Endpoints privados.
-- [ ] Endpoints públicos.
-- [ ] Validaciones básicas.
-- [ ] Manejo de errores.
-- [ ] Filtro por tenant.
-- [ ] Documentación automatica disponible en /docs.
+- [x] FastAPI configurado.
+- [x] Uvicorn funcionando.
+- [x] Conexión a SQL Server.
+- [x] Endpoints privados.
+- [x] Endpoints públicos.
+- [x] Validaciones básicas.
+- [x] Manejo de errores (RFC 7807 en toda la API).
+- [x] Filtro por tenant (via `tenantId` del JWT, nunca desde la request).
+- [x] Documentación automatica disponible en /docs.
 
 Frontend
 
-- [ ] Landing simple.
-- [ ] Login.
-- [ ] Registro o solicitud de tenant.
-- [ ] Dashboard.
-- [ ] Configuración del negocio.
-- [ ] Categorías de servicios.
-- [ ] Servicios.
-- [ ] Horarios por sede.
-- [ ] Reservas.
-- [ ] Página pública de reservas.
-- [ ] Tracking público.
-- [ ] Reportes básicos.
+- [x] Landing simple.
+- [x] Login.
+- [x] Registro o solicitud de tenant.
+- [ ] Dashboard (conectado a la API real; el resto de pantallas privadas siguen en mock, ver docs/api-handover.md).
+- [ ] Configuración del negocio (mock, pendiente de cablear).
+- [ ] Categorías de servicios (mock, pendiente de cablear).
+- [ ] Servicios (mock, pendiente de cablear).
+- [ ] Horarios por sede (mock, pendiente de cablear).
+- [ ] Reservas (mock, pendiente de cablear).
+- [x] Página pública de reservas (flujo publico SSR conectado a la API; falta cablear el submit del booking, ver docs/api-handover.md).
+- [x] Tracking público (consulta conectada; reagendar pendiente de cablear).
+- [ ] Reportes básicos (mock, pendiente de cablear).
 
 Docker
 
-- [ ] SQL Server en contenedor.
-- [ ] API en contenedor.
-- [ ] Frontend en contenedor.
-- [ ] Docker Compose funcional.
-- [ ] Variables de entorno documentadas.
-- [ ] README con pasos de instalacion.
+- [x] SQL Server en contenedor.
+- [x] API en contenedor.
+- [x] Frontend en contenedor.
+- [x] Docker Compose funcional.
+- [x] Variables de entorno documentadas.
+- [x] README con pasos de instalacion.
 - [ ] Proyecto probado en mas de una computadora.
 
 Defensa
