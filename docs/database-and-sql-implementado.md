@@ -342,12 +342,23 @@ Acciones que la implementacion genera en la tabla registros:
 
 ## Verificacion rapida
 
+OJO con el contexto de base: las vistas de catalogo (sys.tables, sys.views...)
+son POR base de datos. Si tu editor (DBeaver/SSMS/ADS) esta parado en `master`
+— el default de la conexion sa — todos los conteos dan 0 aunque el script haya
+corrido bien. Por eso estas consultas van calificadas con `mbm_booking.`:
+funcionan sin importar el contexto. Alternativa: cambiar la base activa en el
+dropdown del editor (o `USE mbm_booking;`) y consultar sin calificar.
+
 ```sql
--- conteos y matriz R3-R6
--- (o ejecutar scripts/check-all.sql completo)
-SELECT COUNT(*) FROM sys.tables;      -- 15
-SELECT COUNT(*) FROM sys.procedures;  -- 13
-SELECT COUNT(*) FROM sys.views;       -- 7
-SELECT COUNT(*) FROM sys.triggers;    -- 7
-SELECT COUNT(*) FROM sys.objects WHERE type IN ('FN','IF','TF');  -- 6
+-- 0. La base existe?
+SELECT name FROM sys.databases WHERE name = 'mbm_booking';
+
+-- conteos esperados (o ejecutar scripts/check-all.sql completo,
+-- con el editor parado en mbm_booking)
+SELECT COUNT(*) AS tablas    FROM mbm_booking.sys.tables;                              -- 15
+SELECT COUNT(*) AS sps       FROM mbm_booking.sys.procedures;                          -- 13
+SELECT COUNT(*) AS vistas    FROM mbm_booking.sys.views;                               -- 7
+SELECT COUNT(*) AS triggers  FROM mbm_booking.sys.triggers;                            -- 7
+SELECT COUNT(*) AS funciones FROM mbm_booking.sys.objects WHERE type IN ('FN','IF','TF'); -- 6
+SELECT COUNT(*) AS reservas  FROM mbm_booking.dbo.reservaciones;                       -- 50
 ```
