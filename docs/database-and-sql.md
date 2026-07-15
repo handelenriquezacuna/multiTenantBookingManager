@@ -1,5 +1,9 @@
 # Diseño simplificado de la base de datos
 
+> PROPUESTA DE DISEÑO (se conserva como referencia historica). El estado real
+> construido esta en [database-and-sql-implementado.md](database-and-sql-implementado.md),
+> que abre con la tabla de diferencias propuesta vs construido.
+
 ## Indice
 
 - [Diseño simplificado de la base de datos](#diseño-simplificado-de-la-base-de-datos)

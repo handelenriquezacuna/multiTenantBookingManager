@@ -31,12 +31,12 @@ GO
 
 IF EXISTS (SELECT name FROM sys.databases WHERE name = N'mbm_booking')
 BEGIN
-    ALTER DATABASE mbm_booking SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    ALTER DATABASE mbm_booking SET SINGLE_USER WITH ROLLBACK IMMEDIATE; -- Solo una conexion mientras se construye
     DROP DATABASE mbm_booking;
 END
 
 CREATE DATABASE mbm_booking
-COLLATE Latin1_General_CI_AI;
+COLLATE Latin1_General_CI_AI; -- Para trabajar con caracteres en espanol CI busquedas sensitivas en caracteres y AI para quitar accentos en busquedas
 GO
 
 USE mbm_booking;
