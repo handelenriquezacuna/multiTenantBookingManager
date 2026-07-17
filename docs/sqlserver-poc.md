@@ -82,7 +82,7 @@ bash scripts/setup-db.sh
 | 2 | Ejecuta `docker compose up -d` |
 | 3 | Espera a que el healthcheck reporte `healthy` (polling cada 5s, máx. 100s) |
 | 4 | Ejecuta `01-create-database.sql` → crea `mbm_booking` |
-| 5 | Ejecuta `02-create-tables.sql` → crea las 14 tablas |
+| 5 | Ejecuta `02-create-tables.sql` → crea las 15 tablas |
 | 6 | Ejecuta `03-seed-data.sql` → inserta catálogos y tenant demo |
 | 7 | Imprime los datos de conexión para DBeaver |
 
@@ -150,7 +150,7 @@ mbm_booking
                     ├── services         ← 3 servicios de barbería
                     ├── service_categories
                     ├── bookings
-                    └── ...              ← 14 tablas en total
+                    └── ...              ← 15 tablas en total
 ```
 
 Click derecho sobre cualquier tabla → **View Data** para explorar los registros.
@@ -266,7 +266,7 @@ Docker Desktop → Settings → Resources → File Sharing → agrega el disco d
 | Archivo | Propósito |
 |---|---|
 | 01-create-database.sql | Crea mbm_booking |
-| 02-create-tables.sql | DDL completo (14 tablas) |
+| 02-create-tables.sql | DDL completo (15 tablas) |
 | 03-seed-data.sql | Catálogos + tenant demo |
 | 04-example-queries.sql | 6 queries de referencia |
 
@@ -294,7 +294,7 @@ multiTenantBookingManager/
 └── database/
     └── scripts/
         ├── 01-create-database.sql      ← crea mbm_booking
-        ├── 02-create-tables.sql        ← DDL completo, 14 tablas
+        ├── 02-create-tables.sql        ← DDL completo, 15 tablas
         ├── 03-seed-data.sql            ← catálogos + tenant demo
         └── 04-example-queries.sql      ← 6 queries documentadas
 ```
