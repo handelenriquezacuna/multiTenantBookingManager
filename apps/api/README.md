@@ -6,10 +6,13 @@ Layers: Router (HTTP only) -> Service (orchestration) -> Repository (the only
 layer that knows SQL/stored procedures) -> pyodbc, running on FastAPI's
 threadpool. No ORM, no async DB drivers.
 
-As of this work package (WP5) only `GET /health` and `GET /ready` are fully
-functional; every other route is scaffolded (schemas, routers, services,
-repositories, mappers all exist) but answers `501 Not Implemented` until its
-SP/view lands and the repository body is wired up in WP6/WP7.
+The full API surface is implemented: public booking/tracking flow, JWT auth
+(owner/superadmin roles), owner CRUD, admin, reports and audit logs. Each route
+delegates to its stored procedure or view; tenant isolation is derived from the
+JWT claim and enforced down through the repository and SQL layers. `GET /health`
+and `GET /ready` are the only routes that require no auth (`/ready` checks the DB
+with a simple `SELECT 1`). The one intentional exception is `POST /admin/tenants`,
+left as `501` on purpose — tenants are created via `POST /auth/register-owner`.
 
 ## Run locally
 
@@ -37,8 +40,10 @@ SQL Server succeeds, otherwise HTTP 503.
 ```
 
 `tests/unit` has no database dependency (mappers, errors, security, logging
-formatters). `tests/integration` (added in a later WP) will run against a
-real SQL Server instance.
+formatters). `tests/integration` runs against a real SQL Server instance,
+seeding and cleaning up its own rows, and includes cross-tenant isolation checks
+(a foreign tenant's resources must return 404, never leak). Run them with
+`.venv/bin/pytest tests/integration -q` once the DB is up and seeded.
 
 ## Lint / type-check
 

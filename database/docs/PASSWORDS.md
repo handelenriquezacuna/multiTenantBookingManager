@@ -10,8 +10,8 @@ Las columnas de nombre son `nombre`, `apellido_1` y `apellido_2` (opcional).
 
 | Nombre | Apellido 1 | Apellido 2 | Correo | Password |
 |--------|------------|------------|--------|----------|
-| Melanie Yeonsuk | Campos | Arias | melanie.campos@mbm.admin | Admin123 |
-| Isaac | Chavez | Zumbado | isaac.chavez@mbm.admin | Admin123 |
+| Melannie Yeonsuk | Campos | Arias | melanie.campos@mbm.admin | Admin123 |
+| Isaac | Chaves | Zumbado | isaac.chavez@mbm.admin | Admin123 |
 | Luna | Delgado | Durango | luna.delgado@mbm.admin | Admin123 |
 | Handel Simón | Enriquez | Acuña | handel.enriquez@mbm.admin | Admin123 |
 | Jeferson Andrew | Fuentes | García | jeferson.fuentes@mbm.admin | Admin123 |

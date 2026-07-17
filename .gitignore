@@ -17,6 +17,11 @@ coverage/
 *.log
 *.sqlite
 *.db
+
+# draw.io / diagrams.net autosave and lock artifacts (e.g. infra/.$*.drawio.bkp)
+.$*.bkp
+*.drawio.bkp
+*.drawio.dtmp
 AGENTS.md
 memory/
 .obsidian/
