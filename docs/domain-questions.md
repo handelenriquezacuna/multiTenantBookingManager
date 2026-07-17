@@ -13,7 +13,7 @@ Preguntas clave sobre el negocio y sus datos para guiar decisiones de diseño de
   - No. Cada owner pertenece a un único tenant.
 
 - ¿Los clientes se identifican solo por email y teléfono, o necesitan un identificador único propio?
-  - Tienen su propio ID en la tabla `customers`, pero se identifican públicamente por email dentro de su tenant.
+  - Tienen su propio ID en la tabla `clientes`, pero se identifican públicamente por email dentro de su tenant.
 
 - ¿El sistema necesita guardar intentos de login fallidos o sesiones activas?
   - No para el MVP.
@@ -54,17 +54,17 @@ Preguntas clave sobre el negocio y sus datos para guiar decisiones de diseño de
 
 ## Disponibilidad y horarios
 
-- ¿Los bloques de disponibilidad se generan automáticamente desde `business_hours` o los crea el owner manualmente?
-  - Para el MVP se insertan mediante scripts de prueba. En producción se generarían desde `business_hours`, pero esa lógica automática queda fuera del alcance del curso.(NO CONCRETADO POR EL MOMENTO, SE DEFINIRÁ EN LLAMADA)
+- ¿Los bloques de disponibilidad se generan automáticamente desde `horarios` o los crea el owner manualmente?
+  - Para el MVP se insertan mediante scripts de seed (`scripts/gen-seed.py`). En producción se generarían desde `horarios`, pero esa lógica automática queda fuera del alcance del curso.
 
 - ¿Un bloque puede tener capacidad para más de un cliente a la vez?
   - No para el MVP. Cada bloque admite una sola reserva activa.
 
 - ¿Existen excepciones al horario general, como días festivos o cierres especiales?
-  - No para el MVP. El horario semanal en `business_hours` es fijo.
+  - No para el MVP. El horario semanal en `horarios` es fijo.
 
 - ¿Cuál es el intervalo mínimo de duración de un bloque?
-  - 30 minutos.(NO CONCRETADO POR EL MOMENTO, SE DEFINIRÁ EN LLAMADA)
+  - 30 minutos.
 
 - ¿Los horarios pueden variar por temporada?
   - No para el MVP. 
@@ -79,7 +79,7 @@ Preguntas clave sobre el negocio y sus datos para guiar decisiones de diseño de
   - No para el MVP.
 
 - ¿El historial de cambios de estado de una reserva necesita guardarse?
-  - El estado actual se guarda en `bookings`. Los cambios importantes quedan en `audit_logs`.
+  - El estado actual se guarda en `reservaciones`. Los cambios importantes quedan en `registros`.
 
 - ¿Una reserva cancelada libera automáticamente su bloque de disponibilidad?
   - Sí. Un trigger o el procedimiento de cancelación marca el bloque como disponible nuevamente.
@@ -108,7 +108,7 @@ Preguntas clave sobre el negocio y sus datos para guiar decisiones de diseño de
   - Sí. Los clientes son independientes por tenant. El mismo email puede existir en múltiples negocios sin relación entre sí.
 
 - ¿Existen datos compartidos entre tenants?
-  - Solo los catálogos globales: `business_types`, `tenant_statuses` y `booking_statuses`.
+  - Solo los catálogos globales: `tipos_negocios`, `estados_dominios` y `estados_reservaciones`.
 
 - ¿El superadmin puede ver las reservas individuales de un tenant?
   - No para el MVP.

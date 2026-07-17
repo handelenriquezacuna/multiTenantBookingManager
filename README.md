@@ -22,15 +22,26 @@ MBM es una plataforma de reservas multi tenant para negocios de servicios. La ba
 
 ## Documentacion
 
+**Curso / base de datos (fuente de verdad para la entrega):**
+
 - [docs/overview.md](docs/overview.md) vision general, objetivos, alcance, actores y requerimientos
-- [docs/database-and-sql.md](docs/database-and-sql.md) diseño de base de datos, normalizacion y SQL requerido
-- [docs/api-and-frontend.md](docs/api-and-frontend.md) backend, endpoints y frontend
-- [docs/api-handover.md](docs/api-handover.md) handover de la API para el equipo frontend: convenciones, tabla completa de endpoints, ejemplos curl, estados y pendientes de cableado
-- [docs/frontend-map.md](docs/frontend-map.md) mapa visual de rutas frontend y relacion con endpoints
-- [docs/structure-infra-workflow.md](docs/structure-infra-workflow.md) estructura del monorepo, carpetas, docker y git
-- [docs/plan-and-delivery.md](docs/plan-and-delivery.md) entregables, cronograma, demo y checklist
+- [docs/database-and-sql-implementado.md](docs/database-and-sql-implementado.md) base de datos **construida** (as-built): 15 tablas, ER, ciclo de vida, seed, e inventario de procedures/vistas/funciones/triggers
 - [docs/sql-signatures.md](docs/sql-signatures.md) referencia de stored procedures, vistas, funciones, triggers y codigos THROW
+- [docs/rename-map.csv](docs/rename-map.csv) equivalencia de nombres ingles / modelo (con ñ) / fisico ASCII
+- [docs/plan-and-delivery.md](docs/plan-and-delivery.md) entregables, cronograma, demo y matriz de requisitos R1-R6
+- [docs/domain-questions.md](docs/domain-questions.md) decisiones de dominio que guiaron el diseño
+- [docs/database-and-sql.md](docs/database-and-sql.md) propuesta de diseño original (referencia historica; los nombres en ingles quedaron superados por la version construida)
+
+**Aplicacion (API + frontend):**
+
+- [docs/api-handover.md](docs/api-handover.md) handover de la API: convenciones, tabla completa de endpoints, ejemplos curl, estados y pendientes de cableado
+- [docs/arquitectura-visual.md](docs/arquitectura-visual.md) arquitectura visual, puertos, secuencia de login JWT y bootstrap
+- [docs/frontend-map.md](docs/frontend-map.md) mapa de rutas frontend y su relacion con endpoints
+
+**Otros:**
+
 - [database/docs/PASSWORDS.md](database/docs/PASSWORDS.md) credenciales de desarrollo (seed data)
+- [docs/archive/](docs/archive/) documentos historicos superados (no son fuente de verdad)
 
 ## Estructura rapida
 
