@@ -3,29 +3,44 @@
 > Esquema logico de la base de datos `mbm_booking`. 15 tablas normalizadas.
 > PK = PRIMARY KEY, FK = FOREIGN KEY, UQ = UNIQUE, NN = NOT NULL
 
+## Transliteracion
+
+El modelo MR del drawio (`infra/MultiTenantBookingManager.drawio`, tab MR) usa
+enie en algunos identificadores; el schema fisico en SQL Server usa ASCII puro.
+Las equivalencias son:
+
+| Modelo MR (con enie) | Fisico (ASCII) |
+|---|---|
+| dueños_de_dominios | duenos_de_dominios |
+| dueño_id | dueno_id |
+| contraseña_encriptada | contrasena_encriptada |
+
+El resto de identificadores no lleva enie ni acentos. La fuente unica de
+equivalencias (ingles -> MR -> fisico) es `docs/rename-map.csv`.
+
 ## Catalogos
 
-### business_types
+### tipos_negocios
 | Columna | Tipo | Restricciones |
 |---|---|---|
-| business_type_id | INT | **PK** IDENTITY(1,1) |
-| name | NVARCHAR(100) | NN, UQ |
-| description | NVARCHAR(500) | NULL |
-| is_active | BIT | NN DEFAULT 1 |
+| tipo_negocio_id | INT | **PK** IDENTITY(1,1) |
+| nombre | NVARCHAR(100) | NN, UQ |
+| descripcion | NVARCHAR(500) | NULL |
+| activo | BIT | NN DEFAULT 1 |
 
-### tenant_statuses
+### estados_dominios
 | Columna | Tipo | Restricciones |
 |---|---|---|
-| tenant_status_id | INT | **PK** IDENTITY(1,1) |
-| name | NVARCHAR(50) | NN, UQ |
-| description | NVARCHAR(200) | NULL |
+| dominio_estado_id | INT | **PK** IDENTITY(1,1) |
+| nombre | NVARCHAR(50) | NN, UQ |
+| descripcion | NVARCHAR(200) | NULL |
 
-### booking_statuses
+### estados_reservaciones
 | Columna | Tipo | Restricciones |
 |---|---|---|
-| booking_status_id | INT | **PK** IDENTITY(1,1) |
-| name | NVARCHAR(50) | NN, UQ |
-| description | NVARCHAR(200) | NULL |
+| estado_reservacion_id | INT | **PK** IDENTITY(1,1) |
+| nombre | NVARCHAR(50) | NN, UQ |
+| descripcion | NVARCHAR(200) | NULL |
 
 ---
 
@@ -35,185 +50,189 @@
 | Columna | Tipo | Restricciones |
 |---|---|---|
 | superadmin_id | INT | **PK** IDENTITY(1,1) |
-| full_name | NVARCHAR(200) | NN |
-| email | NVARCHAR(254) | NN, UQ |
-| password_hash | NVARCHAR(512) | NN |
-| is_active | BIT | NN DEFAULT 1 |
-| created_at | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
-| updated_at | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
+| nombre | NVARCHAR(100) | NN |
+| apellido_1 | NVARCHAR(100) | NN |
+| apellido_2 | NVARCHAR(100) | NULL |
+| correo | NVARCHAR(254) | NN, UQ |
+| contrasena_encriptada | NVARCHAR(512) | NN |
+| activo | BIT | NN DEFAULT 1 |
+| creado_en | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
+| actualizado_en | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
 
 ---
 
-## Tenants y Owners
+## Dominios y Duenos
 
-### tenants
+### dominios
 | Columna | Tipo | Restricciones |
 |---|---|---|
-| tenant_id | INT | **PK** IDENTITY(1,1) |
-| business_type_id | INT | **FK** → business_types(business_type_id), NN |
-| tenant_status_id | INT | **FK** → tenant_statuses(tenant_status_id), NN |
-| name | NVARCHAR(200) | NN |
+| dominio_id | INT | **PK** IDENTITY(1,1) |
+| tipo_negocio_id | INT | **FK** → tipos_negocios(tipo_negocio_id), NN |
+| dominio_estado_id | INT | **FK** → estados_dominios(dominio_estado_id), NN |
+| nombre | NVARCHAR(200) | NN |
 | slug | NVARCHAR(100) | NN, UQ |
-| email | NVARCHAR(254) | NN |
-| phone | NVARCHAR(30) | NULL |
-| description | NVARCHAR(MAX) | NULL |
+| correo | NVARCHAR(254) | NN |
+| telefono | NVARCHAR(30) | NULL |
+| descripcion | NVARCHAR(MAX) | NULL |
 | logo_url | NVARCHAR(500) | NULL |
-| public_message | NVARCHAR(500) | NULL |
-| is_active | BIT | NN DEFAULT 1 |
-| created_at | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
-| updated_at | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
+| mensaje_publico | NVARCHAR(500) | NULL |
+| activo | BIT | NN DEFAULT 1 |
+| creado_en | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
+| actualizado_en | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
 
-### tenant_owners
+### duenos_de_dominios
 | Columna | Tipo | Restricciones |
 |---|---|---|
-| owner_id | INT | **PK** IDENTITY(1,1) |
-| tenant_id | INT | **FK** → tenants(tenant_id), NN |
-| full_name | NVARCHAR(200) | NN |
-| email | NVARCHAR(254) | NN |
-| password_hash | NVARCHAR(512) | NN |
-| phone | NVARCHAR(30) | NULL |
-| is_active | BIT | NN DEFAULT 1 |
-| created_at | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
-| updated_at | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
+| dueno_id | INT | **PK** IDENTITY(1,1) |
+| dominio_id | INT | **FK** → dominios(dominio_id), NN |
+| nombre | NVARCHAR(100) | NN |
+| apellido_1 | NVARCHAR(100) | NN |
+| apellido_2 | NVARCHAR(100) | NULL |
+| correo | NVARCHAR(254) | NN |
+| contrasena_encriptada | NVARCHAR(512) | NN |
+| telefono | NVARCHAR(30) | NULL |
+| activo | BIT | NN DEFAULT 1 |
+| creado_en | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
+| actualizado_en | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
 
 ---
 
 ## Clientes
 
-### customers
+### clientes
 | Columna | Tipo | Restricciones |
 |---|---|---|
-| customer_id | INT | **PK** IDENTITY(1,1) |
-| tenant_id | INT | **FK** → tenants(tenant_id), NN |
-| first_name | NVARCHAR(100) | NN |
-| last_name | NVARCHAR(100) | NN |
-| email | NVARCHAR(254) | NN |
-| phone | NVARCHAR(30) | NN |
-| notes | NVARCHAR(500) | NULL |
-| created_at | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
-| updated_at | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
+| cliente_id | INT | **PK** IDENTITY(1,1) |
+| dominio_id | INT | **FK** → dominios(dominio_id), NN |
+| nombre | NVARCHAR(100) | NN |
+| apellido_1 | NVARCHAR(100) | NN |
+| apellido_2 | NVARCHAR(100) | NULL |
+| correo | NVARCHAR(254) | NN |
+| telefono | NVARCHAR(30) | NN |
+| notas | NVARCHAR(500) | NULL |
+| creado_en | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
+| actualizado_en | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
 
 ---
 
 ## Servicios
 
-### service_categories
+### categorias_servicios
 | Columna | Tipo | Restricciones |
 |---|---|---|
-| category_id | INT | **PK** IDENTITY(1,1) |
-| tenant_id | INT | **FK** → tenants(tenant_id), NN |
-| name | NVARCHAR(150) | NN |
-| description | NVARCHAR(500) | NULL |
-| is_active | BIT | NN DEFAULT 1 |
-| created_at | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
-| updated_at | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
+| categoria_id | INT | **PK** IDENTITY(1,1) |
+| dominio_id | INT | **FK** → dominios(dominio_id), NN |
+| nombre | NVARCHAR(150) | NN |
+| descripcion | NVARCHAR(500) | NULL |
+| activo | BIT | NN DEFAULT 1 |
+| creado_en | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
+| actualizado_en | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
 
-### services
+### servicios
 | Columna | Tipo | Restricciones |
 |---|---|---|
-| service_id | INT | **PK** IDENTITY(1,1) |
-| tenant_id | INT | **FK** → tenants(tenant_id), NN |
-| category_id | INT | **FK** → service_categories(category_id), NN |
-| name | NVARCHAR(200) | NN |
-| description | NVARCHAR(MAX) | NULL |
-| duration_minutes | INT | NN |
-| price | DECIMAL(10,2) | NULL |
-| show_price | BIT | NN DEFAULT 0 |
-| is_active | BIT | NN DEFAULT 1 |
-| created_at | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
-| updated_at | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
+| servicio_id | INT | **PK** IDENTITY(1,1) |
+| dominio_id | INT | **FK** → dominios(dominio_id), NN |
+| categoria_id | INT | **FK** → categorias_servicios(categoria_id), NN |
+| nombre | NVARCHAR(200) | NN |
+| descripcion | NVARCHAR(MAX) | NULL |
+| duracion_minutos | INT | NN |
+| precio | DECIMAL(10,2) | NULL |
+| mostrar_precio | BIT | NN DEFAULT 0 |
+| activo | BIT | NN DEFAULT 1 |
+| creado_en | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
+| actualizado_en | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
 
 ---
 
-## Ubicaciones y Horarios
+## Localidades y Horarios
 
-### locations
+### localidades
 | Columna | Tipo | Restricciones |
 |---|---|---|
-| location_id | INT | **PK** IDENTITY(1,1) |
-| tenant_id | INT | **FK** → tenants(tenant_id), NN |
-| name | NVARCHAR(200) | NN |
-| address | NVARCHAR(500) | NN |
-| phone | NVARCHAR(30) | NULL |
-| is_main | BIT | NN DEFAULT 0 |
-| is_active | BIT | NN DEFAULT 1 |
-| created_at | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
-| updated_at | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
+| localidad_id | INT | **PK** IDENTITY(1,1) |
+| dominio_id | INT | **FK** → dominios(dominio_id), NN |
+| nombre | NVARCHAR(200) | NN |
+| direccion | NVARCHAR(500) | NN |
+| telefono | NVARCHAR(30) | NULL |
+| principal | BIT | NN DEFAULT 0 |
+| activo | BIT | NN DEFAULT 1 |
+| creado_en | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
+| actualizado_en | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
 
-### business_hours
+### horarios
 | Columna | Tipo | Restricciones |
 |---|---|---|
-| business_hour_id | INT | **PK** IDENTITY(1,1) |
-| tenant_id | INT | **FK** → tenants(tenant_id), NN |
-| location_id | INT | **FK** → locations(location_id), NN |
-| day_of_week | TINYINT | NN (0=Domingo .. 6=Sabado) |
-| open_time | TIME | NULL |
-| close_time | TIME | NULL |
-| is_closed | BIT | NN DEFAULT 0 |
-| updated_at | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
+| horario_id | INT | **PK** IDENTITY(1,1) |
+| dominio_id | INT | **FK** → dominios(dominio_id), NN |
+| localidad_id | INT | **FK** → localidades(localidad_id), NN |
+| dia_semana | TINYINT | NN (0=Domingo .. 6=Sabado) |
+| hora_apertura | TIME | NULL |
+| hora_cerrado | TIME | NULL |
+| cerrado | BIT | NN DEFAULT 0 |
+| actualizado_en | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
 
-### availability_blocks
+### bloques_de_disponibilidad
 | Columna | Tipo | Restricciones |
 |---|---|---|
-| availability_block_id | INT | **PK** IDENTITY(1,1) |
-| tenant_id | INT | **FK** → tenants(tenant_id), NN |
-| location_id | INT | **FK** → locations(location_id), NN |
-| block_date | DATE | NN |
-| start_time | TIME | NN |
-| end_time | TIME | NN |
-| is_active | BIT | NN DEFAULT 1 |
-| created_at | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
-| updated_at | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
+| bloque_disponibilidad_id | INT | **PK** IDENTITY(1,1) |
+| dominio_id | INT | **FK** → dominios(dominio_id), NN |
+| localidad_id | INT | **FK** → localidades(localidad_id), NN |
+| fecha_de_bloque | DATE | NN |
+| fecha_inicio | DATETIME2 | NN |
+| fecha_final | DATETIME2 | NN |
+| activo | BIT | NN DEFAULT 1 |
+| creado_en | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
+| actualizado_en | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
 
 ---
 
-## Reservas
+## Reservaciones
 
-### bookings
+### reservaciones
 | Columna | Tipo | Restricciones |
 |---|---|---|
-| booking_id | INT | **PK** IDENTITY(1,1) |
-| tenant_id | INT | **FK** → tenants(tenant_id), NN |
-| customer_id | INT | **FK** → customers(customer_id), NN |
-| service_id | INT | **FK** → services(service_id), NN |
-| location_id | INT | **FK** → locations(location_id), NN |
-| availability_block_id | INT | **FK** → availability_blocks(availability_block_id), NULL, UQ, ON DELETE SET NULL |
-| booking_status_id | INT | **FK** → booking_statuses(booking_status_id), NN |
-| booking_date | DATE | NN |
-| start_time | TIME | NN |
-| end_time | TIME | NN |
-| customer_notes | NVARCHAR(500) | NULL |
-| internal_notes | NVARCHAR(500) | NULL |
-| created_at | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
-| updated_at | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
+| reserva_id | INT | **PK** IDENTITY(1,1) |
+| dominio_id | INT | **FK** → dominios(dominio_id), NN |
+| cliente_id | INT | **FK** → clientes(cliente_id), NN |
+| servicio_id | INT | **FK** → servicios(servicio_id), NN |
+| localidad_id | INT | **FK** → localidades(localidad_id), NN |
+| bloque_disponibilidad_id | INT | **FK** → bloques_de_disponibilidad(bloque_disponibilidad_id), NULL, UQ, ON DELETE SET NULL |
+| estado_reservacion_id | INT | **FK** → estados_reservaciones(estado_reservacion_id), NN |
+| fecha_inicio | DATETIME2 | NN |
+| fecha_final | DATETIME2 | NN |
+| nota_cliente | NVARCHAR(500) | NULL |
+| nota_interna | NVARCHAR(500) | NULL |
+| creado_en | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
+| actualizado_en | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
 
-### tracking_codes
+### codigos_de_rastreos
 | Columna | Tipo | Restricciones |
 |---|---|---|
-| tracking_id | INT | **PK** IDENTITY(1,1) |
-| booking_id | INT | **FK** → bookings(booking_id), NN, UQ |
-| tracking_code | NVARCHAR(50) | NN, UQ |
-| expires_at | DATETIME2 | NN |
-| is_active | BIT | NN DEFAULT 1 |
-| created_at | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
+| codigo_de_rastreo_id | INT | **PK** IDENTITY(1,1) |
+| reserva_id | INT | **FK** → reservaciones(reserva_id), NN, UQ |
+| codigo_rastreo | NVARCHAR(50) | NN, UQ |
+| expira_en | DATETIME2 | NN |
+| activo | BIT | NN DEFAULT 1 |
+| creado_en | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
 
 ---
 
 ## Auditoria
 
-### audit_logs
+### registros
 | Columna | Tipo | Restricciones |
 |---|---|---|
-| audit_id | BIGINT | **PK** IDENTITY(1,1) |
-| tenant_id | INT | **FK** → tenants(tenant_id), NULL |
-| owner_id | INT | **FK** → tenant_owners(owner_id), NULL |
+| registro_id | BIGINT | **PK** IDENTITY(1,1) |
+| dominio_id | INT | **FK** → dominios(dominio_id), NULL |
+| dueno_id | INT | **FK** → duenos_de_dominios(dueno_id), NULL |
 | superadmin_id | INT | **FK** → superadmins(superadmin_id), NULL |
-| action | NVARCHAR(100) | NN |
-| entity_name | NVARCHAR(100) | NN |
-| entity_id | INT | NN |
-| old_value | NVARCHAR(MAX) | NULL |
-| new_value | NVARCHAR(MAX) | NULL |
-| created_at | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
+| accion | NVARCHAR(100) | NN |
+| nombre_entidad | NVARCHAR(100) | NN |
+| entidad_id | INT | NN |
+| valor_anterior | NVARCHAR(MAX) | NULL |
+| nuevo_valor | NVARCHAR(MAX) | NULL |
+| creado_en | DATETIME2 | NN DEFAULT SYSUTCDATETIME() |
 
 ---
 
@@ -221,25 +240,25 @@
 
 | # | Tabla Padre | Cardinalidad | Tabla Hija | Via FK |
 |---|---|---|---|---|
-| 1 | business_types | 1:N | tenants | business_type_id |
-| 2 | tenant_statuses | 1:N | tenants | tenant_status_id |
-| 3 | tenants | 1:N | tenant_owners | tenant_id |
-| 4 | tenants | 1:N | customers | tenant_id |
-| 5 | tenants | 1:N | service_categories | tenant_id |
-| 6 | tenants | 1:N | services | tenant_id |
-| 7 | tenants | 1:N | locations | tenant_id |
-| 8 | tenants | 1:N | business_hours | tenant_id |
-| 9 | tenants | 1:N | availability_blocks | tenant_id |
-| 10 | tenants | 1:N | bookings | tenant_id |
-| 11 | tenants | 1:N | audit_logs | tenant_id |
-| 12 | tenant_owners | 1:N | audit_logs | owner_id |
-| 13 | superadmins | 1:N | audit_logs | superadmin_id |
-| 14 | service_categories | 1:N | services | category_id |
-| 15 | locations | 1:N | business_hours | location_id |
-| 16 | locations | 1:N | availability_blocks | location_id |
-| 17 | locations | 1:N | bookings | location_id |
-| 18 | availability_blocks | 1:0..1 | bookings | availability_block_id (UQ, ON DELETE SET NULL) |
-| 19 | customers | 1:N | bookings | customer_id |
-| 20 | services | 1:N | bookings | service_id |
-| 21 | booking_statuses | 1:N | bookings | booking_status_id |
-| 22 | bookings | 1:1 | tracking_codes | booking_id (UQ) |
+| 1 | tipos_negocios | 1:N | dominios | tipo_negocio_id |
+| 2 | estados_dominios | 1:N | dominios | dominio_estado_id |
+| 3 | dominios | 1:N | duenos_de_dominios | dominio_id |
+| 4 | dominios | 1:N | clientes | dominio_id |
+| 5 | dominios | 1:N | categorias_servicios | dominio_id |
+| 6 | dominios | 1:N | servicios | dominio_id |
+| 7 | dominios | 1:N | localidades | dominio_id |
+| 8 | dominios | 1:N | horarios | dominio_id |
+| 9 | dominios | 1:N | bloques_de_disponibilidad | dominio_id |
+| 10 | dominios | 1:N | reservaciones | dominio_id |
+| 11 | dominios | 1:N | registros | dominio_id |
+| 12 | duenos_de_dominios | 1:N | registros | dueno_id |
+| 13 | superadmins | 1:N | registros | superadmin_id |
+| 14 | categorias_servicios | 1:N | servicios | categoria_id |
+| 15 | localidades | 1:N | horarios | localidad_id |
+| 16 | localidades | 1:N | bloques_de_disponibilidad | localidad_id |
+| 17 | localidades | 1:N | reservaciones | localidad_id |
+| 18 | bloques_de_disponibilidad | 1:0..1 | reservaciones | bloque_disponibilidad_id (UQ, ON DELETE SET NULL) |
+| 19 | clientes | 1:N | reservaciones | cliente_id |
+| 20 | servicios | 1:N | reservaciones | servicio_id |
+| 21 | estados_reservaciones | 1:N | reservaciones | estado_reservacion_id |
+| 22 | reservaciones | 1:1 | codigos_de_rastreos | reserva_id (UQ) |

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiGet, isMockMode } from "@/lib/api";
+import { endpoints } from "@/lib/endpoints";
 import { mockAvailability } from "@/lib/mock-data";
 import type { AvailabilityBlock } from "@/types/availability";
 
@@ -17,7 +18,7 @@ export function useAvailability(tenantSlug: string) {
         setLoading(false);
         return;
       }
-      const data = await apiGet<AvailabilityBlock[]>(`/public/${tenantSlug}/availability`);
+      const data = await apiGet<AvailabilityBlock[]>(endpoints.public.availability(tenantSlug));
       setBlocks(data);
       setLoading(false);
     }

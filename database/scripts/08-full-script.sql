@@ -1,6 +1,29 @@
+﻿-- ============================================================
+-- 08-full-script.sql
+-- Proyecto: MBM - Multi-Tenant Booking Manager
+-- Contenido: script unico y equivalente a correr, en orden y sobre
+-- un servidor limpio, 01-create-database.sql + 02-create-tables.sql
+-- + 03-seed-data.sql + 04-procedures.sql + 05-functions.sql +
+-- 06-views.sql + 07-triggers.sql. Generado por concatenacion; no
+-- editar secciones individuales aqui, editar el archivo fuente
+-- correspondiente en database/scripts/ y regenerar este archivo.
+-- Identificadores en espanol, ASCII. Ver docs/rename-map.csv para
+-- la equivalencia con los nombres en ingles y docs/sql-signatures.md
+-- para la referencia compacta de firmas (SP/vistas/funciones/THROW).
+-- ============================================================
+
+-- ============================================================
+-- SECCION 01. CREACION DE LA BASE DE DATOS
+-- Fuente: database/scripts/01-create-database.sql
+-- ============================================================
+
 -- ============================================================
 -- 01-create-database.sql
--- Crea la base de datos principal del proyecto MBM
+-- Proyecto: MBM - Multi-Tenant Booking Manager
+-- Contenido: crea la base de datos mbm_booking desde cero.
+-- Nota: el schema usa identificadores en espanol (ASCII puro);
+--       ver docs/rename-map.csv para la equivalencia con los
+--       nombres originales en ingles y el modelo MR con enie.
 -- ============================================================
 
 USE master;
@@ -8,24 +31,30 @@ GO
 
 IF EXISTS (SELECT name FROM sys.databases WHERE name = N'mbm_booking')
 BEGIN
-    ALTER DATABASE mbm_booking SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    ALTER DATABASE mbm_booking SET SINGLE_USER WITH ROLLBACK IMMEDIATE; -- Solo una conexion mientras se construye
     DROP DATABASE mbm_booking;
 END
 
 CREATE DATABASE mbm_booking
-COLLATE Latin1_General_CI_AI;
+COLLATE Latin1_General_CI_AI; -- Para trabajar con caracteres en espanol CI busquedas sensitivas en caracteres y AI para quitar accentos en busquedas
 GO
 
 USE mbm_booking;
 GO
 
-
+PRINT '[01-create-database] base de datos mbm_booking creada ... OK';
 GO
+
+-- ============================================================
+-- SECCION 02. TABLAS Y RELACIONES
+-- Fuente: database/scripts/02-create-tables.sql
+-- ============================================================
 
 -- ============================================================
 -- 02-create-tables.sql
 -- Proyecto: MBM - Multi-Tenant Booking Manager
--- Contenido: crea las 15 tablas y relaciones
+-- Contenido: crea las 15 tablas y relaciones (identificadores en espanol, ASCII)
+-- Ver docs/rename-map.csv para la equivalencia con los nombres en ingles.
 -- ============================================================
 
 USE mbm_booking;
@@ -33,749 +62,2436 @@ GO
 
 -- Catalogos ---------------------------------------------------------------
 
-CREATE TABLE business_types (
-    business_type_id INT IDENTITY(1,1) PRIMARY KEY,
-    name             NVARCHAR(100) NOT NULL UNIQUE,
-    description      NVARCHAR(500) NULL,
-    is_active        BIT NOT NULL DEFAULT 1
+CREATE TABLE tipos_negocios (
+    tipo_negocio_id INT IDENTITY(1,1) PRIMARY KEY,
+    nombre          NVARCHAR(100) NOT NULL UNIQUE,
+    descripcion     NVARCHAR(500) NULL,
+    activo          BIT NOT NULL DEFAULT 1
 );
+PRINT '[02-create-tables] tabla tipos_negocios ... OK';
 GO
 
-CREATE TABLE tenant_statuses (
-    tenant_status_id INT IDENTITY(1,1) PRIMARY KEY,
-    name             NVARCHAR(50) NOT NULL UNIQUE,
-    description      NVARCHAR(200) NULL
+CREATE TABLE estados_dominios (
+    dominio_estado_id INT IDENTITY(1,1) PRIMARY KEY,
+    nombre            NVARCHAR(50) NOT NULL UNIQUE,
+    descripcion       NVARCHAR(200) NULL
 );
+PRINT '[02-create-tables] tabla estados_dominios ... OK';
 GO
 
-CREATE TABLE booking_statuses (
-    booking_status_id INT IDENTITY(1,1) PRIMARY KEY,
-    name              NVARCHAR(50) NOT NULL UNIQUE,
-    description       NVARCHAR(200) NULL
+CREATE TABLE estados_reservaciones (
+    estado_reservacion_id INT IDENTITY(1,1) PRIMARY KEY,
+    nombre                NVARCHAR(50) NOT NULL UNIQUE,
+    descripcion           NVARCHAR(200) NULL
 );
+PRINT '[02-create-tables] tabla estados_reservaciones ... OK';
 GO
 
 -- Superadmins -------------------------------------------------------------
 
 CREATE TABLE superadmins (
-    superadmin_id INT IDENTITY(1,1) PRIMARY KEY,
-    full_name     NVARCHAR(200) NOT NULL,
-    email         NVARCHAR(254) NOT NULL UNIQUE,
-    password_hash NVARCHAR(512) NOT NULL,
-    is_active     BIT NOT NULL DEFAULT 1,
-    created_at    DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
-    updated_at    DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+    superadmin_id          INT IDENTITY(1,1) PRIMARY KEY,
+    nombre                 NVARCHAR(100) NOT NULL,
+    apellido_1             NVARCHAR(100) NOT NULL,
+    apellido_2             NVARCHAR(100) NULL,
+    correo                 NVARCHAR(254) NOT NULL UNIQUE,
+    contrasena_encriptada  NVARCHAR(512) NOT NULL,
+    activo                 BIT NOT NULL DEFAULT 1,
+    creado_en              DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    actualizado_en         DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
+PRINT '[02-create-tables] tabla superadmins ... OK';
 GO
 
--- Tenants y owners --------------------------------------------------------
+-- Dominios y duenos --------------------------------------------------------
 
-CREATE TABLE tenants (
-    tenant_id        INT IDENTITY(1,1) PRIMARY KEY,
-    business_type_id INT NOT NULL REFERENCES business_types(business_type_id),
-    tenant_status_id INT NOT NULL REFERENCES tenant_statuses(tenant_status_id),
-    name             NVARCHAR(200) NOT NULL,
-    slug             NVARCHAR(100) NOT NULL UNIQUE,
-    email            NVARCHAR(254) NOT NULL,
-    phone            NVARCHAR(30) NULL,
-    description      NVARCHAR(MAX) NULL,
-    logo_url         NVARCHAR(500) NULL,
-    public_message   NVARCHAR(500) NULL,
-    is_active        BIT NOT NULL DEFAULT 1,
-    created_at       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
-    updated_at       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+CREATE TABLE dominios (
+    dominio_id        INT IDENTITY(1,1) PRIMARY KEY,
+    tipo_negocio_id   INT NOT NULL REFERENCES tipos_negocios(tipo_negocio_id),
+    dominio_estado_id INT NOT NULL REFERENCES estados_dominios(dominio_estado_id),
+    nombre            NVARCHAR(200) NOT NULL,
+    slug              NVARCHAR(100) NOT NULL UNIQUE,
+    correo            NVARCHAR(254) NOT NULL,
+    telefono          NVARCHAR(30) NULL,
+    descripcion       NVARCHAR(MAX) NULL,
+    logo_url          NVARCHAR(500) NULL,
+    mensaje_publico   NVARCHAR(500) NULL,
+    activo            BIT NOT NULL DEFAULT 1,
+    creado_en         DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    actualizado_en    DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
+PRINT '[02-create-tables] tabla dominios ... OK';
 GO
 
-CREATE TABLE tenant_owners (
-    owner_id      INT IDENTITY(1,1) PRIMARY KEY,
-    tenant_id     INT NOT NULL REFERENCES tenants(tenant_id),
-    full_name     NVARCHAR(200) NOT NULL,
-    email         NVARCHAR(254) NOT NULL,
-    password_hash NVARCHAR(512) NOT NULL,
-    phone         NVARCHAR(30) NULL,
-    is_active     BIT NOT NULL DEFAULT 1,
-    created_at    DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
-    updated_at    DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+CREATE TABLE duenos_de_dominios (
+    dueno_id               INT IDENTITY(1,1) PRIMARY KEY,
+    dominio_id             INT NOT NULL REFERENCES dominios(dominio_id),
+    nombre                 NVARCHAR(100) NOT NULL,
+    apellido_1             NVARCHAR(100) NOT NULL,
+    apellido_2             NVARCHAR(100) NULL,
+    correo                 NVARCHAR(254) NOT NULL,
+    contrasena_encriptada  NVARCHAR(512) NOT NULL,
+    telefono               NVARCHAR(30) NULL,
+    activo                 BIT NOT NULL DEFAULT 1,
+    creado_en              DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    actualizado_en         DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
+PRINT '[02-create-tables] tabla duenos_de_dominios ... OK';
 GO
 
 -- Clientes ---------------------------------------------------------------
 
-CREATE TABLE customers (
-    customer_id INT IDENTITY(1,1) PRIMARY KEY,
-    tenant_id   INT NOT NULL REFERENCES tenants(tenant_id),
-    first_name  NVARCHAR(100) NOT NULL,
-    last_name   NVARCHAR(100) NOT NULL,
-    email       NVARCHAR(254) NOT NULL,
-    phone       NVARCHAR(30) NOT NULL,
-    notes       NVARCHAR(500) NULL,
-    created_at  DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
-    updated_at  DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+CREATE TABLE clientes (
+    cliente_id  INT IDENTITY(1,1) PRIMARY KEY,
+    dominio_id  INT NOT NULL REFERENCES dominios(dominio_id),
+    nombre      NVARCHAR(100) NOT NULL,
+    apellido_1  NVARCHAR(100) NOT NULL,
+    apellido_2  NVARCHAR(100) NULL,
+    correo      NVARCHAR(254) NOT NULL,
+    telefono    NVARCHAR(30) NOT NULL,
+    notas       NVARCHAR(500) NULL,
+    creado_en   DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    actualizado_en DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
+PRINT '[02-create-tables] tabla clientes ... OK';
 GO
 
 -- Servicios ---------------------------------------------------------------
 
-CREATE TABLE service_categories (
-    category_id INT IDENTITY(1,1) PRIMARY KEY,
-    tenant_id   INT NOT NULL REFERENCES tenants(tenant_id),
-    name        NVARCHAR(150) NOT NULL,
-    description NVARCHAR(500) NULL,
-    is_active   BIT NOT NULL DEFAULT 1,
-    created_at  DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
-    updated_at  DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+CREATE TABLE categorias_servicios (
+    categoria_id   INT IDENTITY(1,1) PRIMARY KEY,
+    dominio_id     INT NOT NULL REFERENCES dominios(dominio_id),
+    nombre         NVARCHAR(150) NOT NULL,
+    descripcion    NVARCHAR(500) NULL,
+    activo         BIT NOT NULL DEFAULT 1,
+    creado_en      DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    actualizado_en DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
+PRINT '[02-create-tables] tabla categorias_servicios ... OK';
 GO
 
-CREATE TABLE services (
-    service_id       INT IDENTITY(1,1) PRIMARY KEY,
-    tenant_id        INT NOT NULL REFERENCES tenants(tenant_id),
-    category_id      INT NOT NULL REFERENCES service_categories(category_id),
-    name             NVARCHAR(200) NOT NULL,
-    description      NVARCHAR(MAX) NULL,
-    duration_minutes INT NOT NULL,
-    price            DECIMAL(10,2) NULL,
-    show_price       BIT NOT NULL DEFAULT 0,
-    is_active        BIT NOT NULL DEFAULT 1,
-    created_at       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
-    updated_at       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+CREATE TABLE servicios (
+    servicio_id      INT IDENTITY(1,1) PRIMARY KEY,
+    dominio_id       INT NOT NULL REFERENCES dominios(dominio_id),
+    categoria_id     INT NOT NULL REFERENCES categorias_servicios(categoria_id),
+    nombre           NVARCHAR(200) NOT NULL,
+    descripcion      NVARCHAR(MAX) NULL,
+    duracion_minutos INT NOT NULL,
+    precio           DECIMAL(10,2) NULL,
+    mostrar_precio   BIT NOT NULL DEFAULT 0,
+    activo           BIT NOT NULL DEFAULT 1,
+    creado_en        DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    actualizado_en   DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
+PRINT '[02-create-tables] tabla servicios ... OK';
 GO
 
--- Ubicaciones y horarios --------------------------------------------------
+-- Localidades y horarios --------------------------------------------------
 
-CREATE TABLE locations (
-    location_id INT IDENTITY(1,1) PRIMARY KEY,
-    tenant_id   INT NOT NULL REFERENCES tenants(tenant_id),
-    name        NVARCHAR(200) NOT NULL,
-    address     NVARCHAR(500) NOT NULL,
-    phone       NVARCHAR(30) NULL,
-    is_main     BIT NOT NULL DEFAULT 0,
-    is_active   BIT NOT NULL DEFAULT 1,
-    created_at  DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
-    updated_at  DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+CREATE TABLE localidades (
+    localidad_id INT IDENTITY(1,1) PRIMARY KEY,
+    dominio_id   INT NOT NULL REFERENCES dominios(dominio_id),
+    nombre       NVARCHAR(200) NOT NULL,
+    direccion    NVARCHAR(500) NOT NULL,
+    telefono     NVARCHAR(30) NULL,
+    principal    BIT NOT NULL DEFAULT 0,
+    activo       BIT NOT NULL DEFAULT 1,
+    creado_en    DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    actualizado_en DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
+PRINT '[02-create-tables] tabla localidades ... OK';
 GO
 
-CREATE TABLE business_hours (
-    business_hour_id INT IDENTITY(1,1) PRIMARY KEY,
-    tenant_id        INT NOT NULL REFERENCES tenants(tenant_id),
-    location_id      INT NOT NULL REFERENCES locations(location_id),
-    day_of_week      TINYINT NOT NULL,
-    open_time        TIME NULL,
-    close_time       TIME NULL,
-    is_closed        BIT NOT NULL DEFAULT 0,
-    updated_at       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+CREATE TABLE horarios (
+    horario_id     INT IDENTITY(1,1) PRIMARY KEY,
+    dominio_id     INT NOT NULL REFERENCES dominios(dominio_id),
+    localidad_id   INT NOT NULL REFERENCES localidades(localidad_id),
+    dia_semana     TINYINT NOT NULL,
+    hora_apertura  TIME NULL,
+    hora_cerrado   TIME NULL,
+    cerrado        BIT NOT NULL DEFAULT 0,
+    actualizado_en DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
+PRINT '[02-create-tables] tabla horarios ... OK';
 GO
 
-CREATE TABLE availability_blocks (
-    availability_block_id INT IDENTITY(1,1) PRIMARY KEY,
-    tenant_id             INT NOT NULL REFERENCES tenants(tenant_id),
-    location_id           INT NOT NULL REFERENCES locations(location_id),
-    block_date            DATE NOT NULL,
-    start_time            TIME NOT NULL,
-    end_time              TIME NOT NULL,
-    is_active             BIT NOT NULL DEFAULT 1,
-    created_at            DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
-    updated_at            DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+CREATE TABLE bloques_de_disponibilidad (
+    bloque_disponibilidad_id INT IDENTITY(1,1) PRIMARY KEY,
+    dominio_id               INT NOT NULL REFERENCES dominios(dominio_id),
+    localidad_id             INT NOT NULL REFERENCES localidades(localidad_id),
+    fecha_de_bloque          DATE NOT NULL,
+    fecha_inicio             DATETIME2 NOT NULL,
+    fecha_final              DATETIME2 NOT NULL,
+    activo                   BIT NOT NULL DEFAULT 1,
+    creado_en                DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    actualizado_en           DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
+PRINT '[02-create-tables] tabla bloques_de_disponibilidad ... OK';
 GO
 
--- Reservas ---------------------------------------------------------------
+-- Reservaciones ------------------------------------------------------------
 
-CREATE TABLE bookings (
-    booking_id            INT IDENTITY(1,1) PRIMARY KEY,
-    tenant_id             INT NOT NULL REFERENCES tenants(tenant_id),
-    customer_id           INT NOT NULL REFERENCES customers(customer_id),
-    service_id            INT NOT NULL REFERENCES services(service_id),
-    location_id           INT NOT NULL REFERENCES locations(location_id),
-    availability_block_id INT NULL UNIQUE REFERENCES availability_blocks(availability_block_id) ON DELETE SET NULL,
-    booking_status_id     INT NOT NULL REFERENCES booking_statuses(booking_status_id),
-    booking_date          DATE NOT NULL,
-    start_time            TIME NOT NULL,
-    end_time              TIME NOT NULL,
-    customer_notes        NVARCHAR(500) NULL,
-    internal_notes        NVARCHAR(500) NULL,
-    created_at            DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
-    updated_at            DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+CREATE TABLE reservaciones (
+    reserva_id               INT IDENTITY(1,1) PRIMARY KEY,
+    dominio_id               INT NOT NULL REFERENCES dominios(dominio_id),
+    cliente_id               INT NOT NULL REFERENCES clientes(cliente_id),
+    servicio_id              INT NOT NULL REFERENCES servicios(servicio_id),
+    localidad_id             INT NOT NULL REFERENCES localidades(localidad_id),
+    bloque_disponibilidad_id INT NULL REFERENCES bloques_de_disponibilidad(bloque_disponibilidad_id) ON DELETE SET NULL,
+    estado_reservacion_id    INT NOT NULL REFERENCES estados_reservaciones(estado_reservacion_id),
+    fecha_inicio             DATETIME2 NOT NULL,
+    fecha_final              DATETIME2 NOT NULL,
+    nota_cliente             NVARCHAR(500) NULL,
+    nota_interna             NVARCHAR(500) NULL,
+    creado_en                DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    actualizado_en           DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 GO
+-- Indice unico FILTRADO (no constraint UNIQUE plano): un bloque solo puede
+-- estar tomado por una reservacion a la vez, pero multiples reservaciones
+-- canceladas/reagendadas pueden tener NULL (el trigger de liberacion pone
+-- la FK en NULL preservando el historial en fecha_inicio/fecha_final).
+CREATE UNIQUE INDEX ux_reservaciones_bloque
+    ON reservaciones(bloque_disponibilidad_id)
+    WHERE bloque_disponibilidad_id IS NOT NULL;
+PRINT '[02-create-tables] tabla reservaciones ... OK';
+GO
 
-CREATE TABLE tracking_codes (
-    tracking_id   INT IDENTITY(1,1) PRIMARY KEY,
-    booking_id    INT NOT NULL UNIQUE REFERENCES bookings(booking_id),
-    tracking_code NVARCHAR(50) NOT NULL UNIQUE,
-    expires_at    DATETIME2 NOT NULL,
-    is_active     BIT NOT NULL DEFAULT 1,
-    created_at    DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+CREATE TABLE codigos_de_rastreos (
+    codigo_de_rastreo_id INT IDENTITY(1,1) PRIMARY KEY,
+    reserva_id           INT NOT NULL UNIQUE REFERENCES reservaciones(reserva_id),
+    codigo_rastreo       NVARCHAR(50) NOT NULL UNIQUE,
+    expira_en            DATETIME2 NOT NULL,
+    activo               BIT NOT NULL DEFAULT 1,
+    creado_en            DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
+PRINT '[02-create-tables] tabla codigos_de_rastreos ... OK';
 GO
 
 -- Auditoria ---------------------------------------------------------------
 
-CREATE TABLE audit_logs (
-    audit_id      BIGINT IDENTITY(1,1) PRIMARY KEY,
-    tenant_id     INT NULL REFERENCES tenants(tenant_id),
-    owner_id      INT NULL REFERENCES tenant_owners(owner_id),
-    superadmin_id INT NULL REFERENCES superadmins(superadmin_id),
-    action        NVARCHAR(100) NOT NULL,
-    entity_name   NVARCHAR(100) NOT NULL,
-    entity_id     INT NOT NULL,
-    old_value     NVARCHAR(MAX) NULL,
-    new_value     NVARCHAR(MAX) NULL,
-    created_at    DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+CREATE TABLE registros (
+    registro_id     BIGINT IDENTITY(1,1) PRIMARY KEY,
+    dominio_id      INT NULL REFERENCES dominios(dominio_id),
+    dueno_id        INT NULL REFERENCES duenos_de_dominios(dueno_id),
+    superadmin_id   INT NULL REFERENCES superadmins(superadmin_id),
+    accion          NVARCHAR(100) NOT NULL,
+    nombre_entidad  NVARCHAR(100) NOT NULL,
+    entidad_id      INT NOT NULL,
+    valor_anterior  NVARCHAR(MAX) NULL,
+    nuevo_valor     NVARCHAR(MAX) NULL,
+    creado_en       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
+PRINT '[02-create-tables] tabla registros ... OK';
 GO
 
-
+PRINT '[02-create-tables] 15/15 tablas creadas';
 GO
+
+-- ============================================================
+-- SECCION 03. SEED DATA
+-- Fuente: database/scripts/03-seed-data.sql
+-- ============================================================
 
 -- ============================================================
 -- 03-seed-data.sql
 -- Proyecto: MBM - Multi-Tenant Booking Manager
--- Contenido: datos de prueba (>= 50 registros por tabla)
--- Todos los datos realistas - 50 filas genuinas por tabla
+-- Contenido: datos de prueba (50 registros por tabla, 15 tablas)
+-- GENERADO por scripts/gen-seed.py -- NO editar a mano.
+--   Regenerar:  python3 scripts/gen-seed.py
+--   Verificar:  python3 scripts/gen-seed.py --check
+-- Requiere base recien creada (01 y 02): los IDs IDENTITY
+-- inician en 1 y las FKs se emiten como literales 1..50.
 -- ============================================================
 
 USE mbm_booking;
 GO
 
 SET NOCOUNT ON;
+GO
 
-DECLARE @bt TABLE (rid INT IDENTITY(1,1), id INT);
-DECLARE @ts TABLE (rid INT IDENTITY(1,1), id INT);
-DECLARE @bs TABLE (rid INT IDENTITY(1,1), id INT);
-DECLARE @sa TABLE (rid INT IDENTITY(1,1), id INT);
-DECLARE @tn TABLE (rid INT IDENTITY(1,1), id INT);
-DECLARE @ow TABLE (rid INT IDENTITY(1,1), id INT);
-DECLARE @cu TABLE (rid INT IDENTITY(1,1), id INT);
-DECLARE @ca TABLE (rid INT IDENTITY(1,1), id INT);
-DECLARE @sv TABLE (rid INT IDENTITY(1,1), id INT);
-DECLARE @lc TABLE (rid INT IDENTITY(1,1), id INT);
-DECLARE @bl TABLE (rid INT IDENTITY(1,1), id INT);
-DECLARE @bk TABLE (rid INT IDENTITY(1,1), id INT);
-DECLARE @sk TABLE (rid INT IDENTITY(1,1), id INT);
-DECLARE @ns TABLE (n INT);
+INSERT INTO tipos_negocios (nombre, descripcion, activo) VALUES
+    (N'Barbería', N'Corte y arreglo personal', 1),
+    (N'Salón de belleza', N'Servicios de estilismo y belleza', 1),
+    (N'Spa', N'Tratamientos de relajación y bienestar', 1),
+    (N'Veterinaria', N'Servicios de salud para mascotas', 1),
+    (N'Clínica', N'Atención médica general', 1),
+    (N'Consultorio', N'Atención médica especializada', 1),
+    (N'Centro estético', N'Tratamientos estéticos', 1),
+    (N'Odontología', N'Servicios dentales', 1),
+    (N'Gimnasio', N'Acondicionamiento físico', 1),
+    (N'Terapias', N'Terapias alternativas', 1),
+    (N'Fisioterapia', N'Rehabilitación física', 1),
+    (N'Nutrición', N'Consulta nutricional', 1),
+    (N'Psicología', N'Salud mental y terapia', 1),
+    (N'Quiropráctica', N'Ajustes y terapia de columna', 1),
+    (N'Podología', N'Cuidado de los pies', 1),
+    (N'Optometría', N'Examen de la vista', 1),
+    (N'Dermatología', N'Cuidado de la piel', 1),
+    (N'Peluquería canina', N'Estética para mascotas', 1),
+    (N'Estudio de tatuajes', N'Tatuajes y arte corporal', 1),
+    (N'Estudio de piercing', N'Perforaciones corporales', 1),
+    (N'Fotografía', N'Sesiones fotográficas', 1),
+    (N'Escuela de música', N'Clases de instrumentos musicales', 1),
+    (N'Academia de baile', N'Clases de baile', 1),
+    (N'Tutorías académicas', N'Apoyo escolar personalizado', 1),
+    (N'Escuela de idiomas', N'Clases de idiomas', 1),
+    (N'Autolavado', N'Lavado y detallado de vehículos', 1),
+    (N'Taller mecánico', N'Mantenimiento de vehículos', 1),
+    (N'Cerrajería', N'Servicios de cerrajería', 1),
+    (N'Estudio de yoga', N'Clases de yoga', 1),
+    (N'Estudio de pilates', N'Clases de pilates', 1),
+    (N'Entrenamiento personal', N'Entrenamiento uno a uno', 1),
+    (N'Masoterapia', N'Masajes terapéuticos', 1),
+    (N'Acupuntura', N'Medicina tradicional china', 1),
+    (N'Medicina general', N'Consulta médica familiar', 1),
+    (N'Pediatría', N'Atención médica infantil', 1),
+    (N'Ginecología', N'Salud femenina', 1),
+    (N'Oftalmología', N'Salud ocular', 1),
+    (N'Audiología', N'Salud auditiva', 1),
+    (N'Laboratorio clínico', N'Exámenes de laboratorio', 1),
+    (N'Radiología', N'Imágenes médicas', 1),
+    (N'Sala de eventos', N'Alquiler de espacios para eventos', 1),
+    (N'Catering', N'Servicios de alimentación', 1),
+    (N'Floristería', N'Arreglos florales', 1),
+    (N'Repostería', N'Pasteles y postres por encargo', 1),
+    (N'Sastrería', N'Confección y arreglos de ropa', 1),
+    (N'Zapatería', N'Reparación de calzado', 1),
+    (N'Lavandería', N'Lavado y planchado', 1),
+    (N'Limpieza de hogar', N'Servicios de limpieza residencial', 1),
+    (N'Jardinería', N'Mantenimiento de jardines', 1),
+    (N'Consultoría legal', N'Asesoría jurídica', 1);
+PRINT '[03-seed-data] tabla tipos_negocios ... OK';
+GO
 
-INSERT INTO @ns SELECT TOP 50 ROW_NUMBER() OVER(ORDER BY (SELECT NULL)) FROM sys.all_columns;
+INSERT INTO estados_dominios (nombre, descripcion) VALUES
+    (N'pendiente', N'Pendiente de aprobación'),
+    (N'activo', N'Activo y operando'),
+    (N'suspendido', N'Suspendido por administrador'),
+    (N'inactivo', N'Inactivo o dado de baja'),
+    (N'estado_demo_05', N'Estado de dominio de prueba 5 (relleno para R4)'),
+    (N'estado_demo_06', N'Estado de dominio de prueba 6 (relleno para R4)'),
+    (N'estado_demo_07', N'Estado de dominio de prueba 7 (relleno para R4)'),
+    (N'estado_demo_08', N'Estado de dominio de prueba 8 (relleno para R4)'),
+    (N'estado_demo_09', N'Estado de dominio de prueba 9 (relleno para R4)'),
+    (N'estado_demo_10', N'Estado de dominio de prueba 10 (relleno para R4)'),
+    (N'estado_demo_11', N'Estado de dominio de prueba 11 (relleno para R4)'),
+    (N'estado_demo_12', N'Estado de dominio de prueba 12 (relleno para R4)'),
+    (N'estado_demo_13', N'Estado de dominio de prueba 13 (relleno para R4)'),
+    (N'estado_demo_14', N'Estado de dominio de prueba 14 (relleno para R4)'),
+    (N'estado_demo_15', N'Estado de dominio de prueba 15 (relleno para R4)'),
+    (N'estado_demo_16', N'Estado de dominio de prueba 16 (relleno para R4)'),
+    (N'estado_demo_17', N'Estado de dominio de prueba 17 (relleno para R4)'),
+    (N'estado_demo_18', N'Estado de dominio de prueba 18 (relleno para R4)'),
+    (N'estado_demo_19', N'Estado de dominio de prueba 19 (relleno para R4)'),
+    (N'estado_demo_20', N'Estado de dominio de prueba 20 (relleno para R4)'),
+    (N'estado_demo_21', N'Estado de dominio de prueba 21 (relleno para R4)'),
+    (N'estado_demo_22', N'Estado de dominio de prueba 22 (relleno para R4)'),
+    (N'estado_demo_23', N'Estado de dominio de prueba 23 (relleno para R4)'),
+    (N'estado_demo_24', N'Estado de dominio de prueba 24 (relleno para R4)'),
+    (N'estado_demo_25', N'Estado de dominio de prueba 25 (relleno para R4)'),
+    (N'estado_demo_26', N'Estado de dominio de prueba 26 (relleno para R4)'),
+    (N'estado_demo_27', N'Estado de dominio de prueba 27 (relleno para R4)'),
+    (N'estado_demo_28', N'Estado de dominio de prueba 28 (relleno para R4)'),
+    (N'estado_demo_29', N'Estado de dominio de prueba 29 (relleno para R4)'),
+    (N'estado_demo_30', N'Estado de dominio de prueba 30 (relleno para R4)'),
+    (N'estado_demo_31', N'Estado de dominio de prueba 31 (relleno para R4)'),
+    (N'estado_demo_32', N'Estado de dominio de prueba 32 (relleno para R4)'),
+    (N'estado_demo_33', N'Estado de dominio de prueba 33 (relleno para R4)'),
+    (N'estado_demo_34', N'Estado de dominio de prueba 34 (relleno para R4)'),
+    (N'estado_demo_35', N'Estado de dominio de prueba 35 (relleno para R4)'),
+    (N'estado_demo_36', N'Estado de dominio de prueba 36 (relleno para R4)'),
+    (N'estado_demo_37', N'Estado de dominio de prueba 37 (relleno para R4)'),
+    (N'estado_demo_38', N'Estado de dominio de prueba 38 (relleno para R4)'),
+    (N'estado_demo_39', N'Estado de dominio de prueba 39 (relleno para R4)'),
+    (N'estado_demo_40', N'Estado de dominio de prueba 40 (relleno para R4)'),
+    (N'estado_demo_41', N'Estado de dominio de prueba 41 (relleno para R4)'),
+    (N'estado_demo_42', N'Estado de dominio de prueba 42 (relleno para R4)'),
+    (N'estado_demo_43', N'Estado de dominio de prueba 43 (relleno para R4)'),
+    (N'estado_demo_44', N'Estado de dominio de prueba 44 (relleno para R4)'),
+    (N'estado_demo_45', N'Estado de dominio de prueba 45 (relleno para R4)'),
+    (N'estado_demo_46', N'Estado de dominio de prueba 46 (relleno para R4)'),
+    (N'estado_demo_47', N'Estado de dominio de prueba 47 (relleno para R4)'),
+    (N'estado_demo_48', N'Estado de dominio de prueba 48 (relleno para R4)'),
+    (N'estado_demo_49', N'Estado de dominio de prueba 49 (relleno para R4)'),
+    (N'estado_demo_50', N'Estado de dominio de prueba 50 (relleno para R4)');
+PRINT '[03-seed-data] tabla estados_dominios ... OK';
+GO
 
--- ====================================================================
--- CATÁLOGOS
--- ====================================================================
+INSERT INTO estados_reservaciones (nombre, descripcion) VALUES
+    (N'pendiente', N'Reserva pendiente de confirmación'),
+    (N'confirmada', N'Reserva confirmada'),
+    (N'cancelada', N'Reserva cancelada'),
+    (N'completada', N'Reserva completada'),
+    (N'reagendada', N'Reserva reagendada'),
+    (N'estado_reserva_demo_06', N'Estado de reservación de prueba 6 (relleno para R4)'),
+    (N'estado_reserva_demo_07', N'Estado de reservación de prueba 7 (relleno para R4)'),
+    (N'estado_reserva_demo_08', N'Estado de reservación de prueba 8 (relleno para R4)'),
+    (N'estado_reserva_demo_09', N'Estado de reservación de prueba 9 (relleno para R4)'),
+    (N'estado_reserva_demo_10', N'Estado de reservación de prueba 10 (relleno para R4)'),
+    (N'estado_reserva_demo_11', N'Estado de reservación de prueba 11 (relleno para R4)'),
+    (N'estado_reserva_demo_12', N'Estado de reservación de prueba 12 (relleno para R4)'),
+    (N'estado_reserva_demo_13', N'Estado de reservación de prueba 13 (relleno para R4)'),
+    (N'estado_reserva_demo_14', N'Estado de reservación de prueba 14 (relleno para R4)'),
+    (N'estado_reserva_demo_15', N'Estado de reservación de prueba 15 (relleno para R4)'),
+    (N'estado_reserva_demo_16', N'Estado de reservación de prueba 16 (relleno para R4)'),
+    (N'estado_reserva_demo_17', N'Estado de reservación de prueba 17 (relleno para R4)'),
+    (N'estado_reserva_demo_18', N'Estado de reservación de prueba 18 (relleno para R4)'),
+    (N'estado_reserva_demo_19', N'Estado de reservación de prueba 19 (relleno para R4)'),
+    (N'estado_reserva_demo_20', N'Estado de reservación de prueba 20 (relleno para R4)'),
+    (N'estado_reserva_demo_21', N'Estado de reservación de prueba 21 (relleno para R4)'),
+    (N'estado_reserva_demo_22', N'Estado de reservación de prueba 22 (relleno para R4)'),
+    (N'estado_reserva_demo_23', N'Estado de reservación de prueba 23 (relleno para R4)'),
+    (N'estado_reserva_demo_24', N'Estado de reservación de prueba 24 (relleno para R4)'),
+    (N'estado_reserva_demo_25', N'Estado de reservación de prueba 25 (relleno para R4)'),
+    (N'estado_reserva_demo_26', N'Estado de reservación de prueba 26 (relleno para R4)'),
+    (N'estado_reserva_demo_27', N'Estado de reservación de prueba 27 (relleno para R4)'),
+    (N'estado_reserva_demo_28', N'Estado de reservación de prueba 28 (relleno para R4)'),
+    (N'estado_reserva_demo_29', N'Estado de reservación de prueba 29 (relleno para R4)'),
+    (N'estado_reserva_demo_30', N'Estado de reservación de prueba 30 (relleno para R4)'),
+    (N'estado_reserva_demo_31', N'Estado de reservación de prueba 31 (relleno para R4)'),
+    (N'estado_reserva_demo_32', N'Estado de reservación de prueba 32 (relleno para R4)'),
+    (N'estado_reserva_demo_33', N'Estado de reservación de prueba 33 (relleno para R4)'),
+    (N'estado_reserva_demo_34', N'Estado de reservación de prueba 34 (relleno para R4)'),
+    (N'estado_reserva_demo_35', N'Estado de reservación de prueba 35 (relleno para R4)'),
+    (N'estado_reserva_demo_36', N'Estado de reservación de prueba 36 (relleno para R4)'),
+    (N'estado_reserva_demo_37', N'Estado de reservación de prueba 37 (relleno para R4)'),
+    (N'estado_reserva_demo_38', N'Estado de reservación de prueba 38 (relleno para R4)'),
+    (N'estado_reserva_demo_39', N'Estado de reservación de prueba 39 (relleno para R4)'),
+    (N'estado_reserva_demo_40', N'Estado de reservación de prueba 40 (relleno para R4)'),
+    (N'estado_reserva_demo_41', N'Estado de reservación de prueba 41 (relleno para R4)'),
+    (N'estado_reserva_demo_42', N'Estado de reservación de prueba 42 (relleno para R4)'),
+    (N'estado_reserva_demo_43', N'Estado de reservación de prueba 43 (relleno para R4)'),
+    (N'estado_reserva_demo_44', N'Estado de reservación de prueba 44 (relleno para R4)'),
+    (N'estado_reserva_demo_45', N'Estado de reservación de prueba 45 (relleno para R4)'),
+    (N'estado_reserva_demo_46', N'Estado de reservación de prueba 46 (relleno para R4)'),
+    (N'estado_reserva_demo_47', N'Estado de reservación de prueba 47 (relleno para R4)'),
+    (N'estado_reserva_demo_48', N'Estado de reservación de prueba 48 (relleno para R4)'),
+    (N'estado_reserva_demo_49', N'Estado de reservación de prueba 49 (relleno para R4)'),
+    (N'estado_reserva_demo_50', N'Estado de reservación de prueba 50 (relleno para R4)');
+PRINT '[03-seed-data] tabla estados_reservaciones ... OK';
+GO
 
-INSERT INTO business_types (name, description, is_active)
-OUTPUT inserted.business_type_id INTO @bt (id)
-SELECT name, descr, 1 FROM (VALUES
-    (N'Barbería',          N'Corte y arreglo personal'),
-    (N'Salón de belleza',  N'Servicios de estilismo y belleza'),
-    (N'Spa',               N'Tratamientos de relajación y bienestar'),
-    (N'Veterinaria',       N'Servicios de salud para mascotas'),
-    (N'Clínica',           N'Atención médica general'),
-    (N'Consultorio',       N'Atención médica especializada'),
-    (N'Centro estético',   N'Tratamientos estéticos'),
-    (N'Odontología',       N'Servicios dentales'),
-    (N'Gimnasio',          N'Acondicionamiento físico'),
-    (N'Terapias',          N'Terapias alternativas')
-) t(name, descr);
+INSERT INTO superadmins (nombre, apellido_1, apellido_2, correo, contrasena_encriptada, activo) VALUES
+    (N'Melanie Yeonsuk', N'Campos', N'Arias', N'melanie.campos@mbm.admin', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Isaac', N'Chavez', N'Zumbado', N'isaac.chavez@mbm.admin', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Luna', N'Delgado', N'Durango', N'luna.delgado@mbm.admin', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Handel Simón', N'Enriquez', N'Acuña', N'handel.enriquez@mbm.admin', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Jeferson Andrew', N'Fuentes', N'García', N'jeferson.fuentes@mbm.admin', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Adrián', N'Mora', N'Jiménez', N'superadmin06@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Beatriz', N'Vargas', N'Hernández', N'superadmin07@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Cristopher', N'Solano', N'Picado', N'superadmin08@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Diana', N'Brenes', N'Salas', N'superadmin09@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Ernesto', N'Alfaro', N'Monge', N'superadmin10@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Flor', N'Villalobos', N'Esquivel', N'superadmin11@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Gerardo', N'Sánchez', N'Cascante', N'superadmin12@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Hannia', N'Castro', NULL, N'superadmin13@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Iván', N'Rojas', N'Jiménez', N'superadmin14@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Julieta', N'Mora', N'Hernández', N'superadmin15@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Keylor', N'Vargas', N'Picado', N'superadmin16@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Lorena', N'Solano', N'Salas', N'superadmin17@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Marco', N'Brenes', N'Monge', N'superadmin18@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Natalia', N'Alfaro', N'Esquivel', N'superadmin19@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Octavio', N'Villalobos', N'Cascante', N'superadmin20@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Adrián', N'Sánchez', NULL, N'superadmin21@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Beatriz', N'Castro', N'Jiménez', N'superadmin22@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Cristopher', N'Rojas', N'Hernández', N'superadmin23@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Diana', N'Mora', N'Picado', N'superadmin24@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Ernesto', N'Vargas', N'Salas', N'superadmin25@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Flor', N'Solano', N'Monge', N'superadmin26@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Gerardo', N'Brenes', N'Esquivel', N'superadmin27@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Hannia', N'Alfaro', N'Cascante', N'superadmin28@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Iván', N'Villalobos', NULL, N'superadmin29@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Julieta', N'Sánchez', N'Jiménez', N'superadmin30@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Keylor', N'Castro', N'Hernández', N'superadmin31@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Lorena', N'Rojas', N'Picado', N'superadmin32@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Marco', N'Mora', N'Salas', N'superadmin33@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Natalia', N'Vargas', N'Monge', N'superadmin34@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Octavio', N'Solano', N'Esquivel', N'superadmin35@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Adrián', N'Brenes', N'Cascante', N'superadmin36@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Beatriz', N'Alfaro', NULL, N'superadmin37@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Cristopher', N'Villalobos', N'Jiménez', N'superadmin38@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Diana', N'Sánchez', N'Hernández', N'superadmin39@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Ernesto', N'Castro', N'Picado', N'superadmin40@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Flor', N'Rojas', N'Salas', N'superadmin41@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Gerardo', N'Mora', N'Monge', N'superadmin42@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Hannia', N'Vargas', N'Esquivel', N'superadmin43@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Iván', N'Solano', N'Cascante', N'superadmin44@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Julieta', N'Brenes', NULL, N'superadmin45@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Keylor', N'Alfaro', N'Jiménez', N'superadmin46@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Lorena', N'Villalobos', N'Hernández', N'superadmin47@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Marco', N'Sánchez', N'Picado', N'superadmin48@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Natalia', N'Castro', N'Salas', N'superadmin49@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1),
+    (N'Octavio', N'Rojas', N'Monge', N'superadmin50@mbm.local', N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1);
+PRINT '[03-seed-data] tabla superadmins ... OK';
+GO
 
-INSERT INTO business_types (name, description, is_active)
-OUTPUT inserted.business_type_id INTO @bt (id)
-SELECT
-    CONCAT(N'Tipo_negocio_', n),
-    CONCAT(N'Descripción tipo ', n),
-    1
-FROM @ns WHERE n > 10;
+INSERT INTO dominios (tipo_negocio_id, dominio_estado_id, nombre, slug, correo, telefono, descripcion, logo_url, mensaje_publico, activo) VALUES
+    (1, 2, N'Barbería El Colocho', N'barberia-el-colocho', N'info@colochocr.com', N'2278-1001', N'Barbería clásica en San Pedro', NULL, N'Pura vida! Agendá tu cita sin filas.', 1),
+    (2, 2, N'Salón Elegance', N'salon-elegance', N'contacto@elegancecr.com', N'2278-1002', N'Salón de belleza en Escazú', NULL, N'Tu estilo, nuestra pasión.', 1),
+    (3, 2, N'Spa La Garita', N'spa-la-garita', N'reservas@lagarita.com', N'2278-1003', N'Spa y masajes en Santa Ana', NULL, N'Relajate con nosotros, mae.', 1),
+    (4, 2, N'Veterinaria San Jorge', N'vet-san-jorge', N'citas@sanveterinaria.com', N'2278-1004', N'Veterinaria en Moravia', NULL, N'Cuidamos a su mascota como propia.', 1),
+    (5, 2, N'Clínica Santa Catalina', N'clinica-santa-catalina', N'info@santacatalina.com', N'2278-1005', N'Clínica médica en Desamparados', NULL, N'Salud para toda la familia.', 1),
+    (6, 2, N'Consultorio Dra. Solís', N'dra-solis', N'citas@drasolis.com', N'2278-1006', N'Odontología general en Rohrmoser', NULL, N'Tu sonrisa es nuestra prioridad.', 1),
+    (7, 2, N'Centro Estético Glow', N'centro-glow', N'hola@centroglow.com', N'2278-1007', N'Estética avanzada en Curridabat', NULL, N'Descubrí tu mejor versión.', 1),
+    (8, 2, N'Odontoclínica del Valle', N'odontoclinica-valle', N'citas@odvcr.com', N'2278-1008', N'Clínica dental en Alajuela', NULL, N'Tu salud bucal nos importa.', 1),
+    (9, 2, N'Fit Gym Centro', N'fit-gym', N'info@fitgymcr.com', N'2278-1009', N'Gimnasio en Heredia', NULL, N'Transformá tu cuerpo.', 1),
+    (10, 2, N'Terapias Holísticas CR', N'terapias-holisticas', N'contacto@terapiascr.com', N'2278-1010', N'Terapias alternativas en Cartago', NULL, N'Equilibrio para cuerpo y mente.', 1),
+    (1, 2, N'Barbería Don Chepe', N'barberia-don-chepe', N'chepe@donchepecr.com', N'2278-1011', N'Barbería tradicional en Guadalupe', NULL, N'Donde los ticos se arreglan.', 1),
+    (2, 2, N'Salón Divino', N'salon-divino', N'info@salandivino.com', N'2278-1012', N'Salón y estética en San José', NULL, N'Belleza con corazón tico.', 1),
+    (3, 2, N'Spa Pura Vida', N'spa-pura-vida', N'reservas@puracr.com', N'2278-1013', N'Spa con hidroterapia en Barrio Escalante', NULL, N'Desconectate del estrés.', 1),
+    (4, 2, N'Veterinaria Huellitas', N'vet-huellitas', N'contacto@huellitascr.com', N'2278-1014', N'Veterinaria en Tibás', NULL, N'Tu mascota merece lo mejor.', 1),
+    (1, 2, N'Barbería King', N'barberia-king', N'king@barberiaking.com', N'2278-1015', N'Barbería moderna en Hatillo', NULL, N'Estilo tico con actitud.', 1),
+    (2, 2, N'Salón Santa Ana', N'salon-santa-ana', N'info@santaanabeauty.com', N'2278-1016', N'Salón de belleza en Santa Ana', NULL, N'Embellecé tu día.', 1),
+    (5, 2, N'Clínica Médica Central', N'clinica-medica-central', N'info@cmcentral.com', N'2278-1017', N'Clínica en el centro de San José', NULL, N'Atención médica de confianza.', 1),
+    (6, 2, N'Psicología Integral', N'psicologia-integral', N'citas@psiintegral.com', N'2278-1018', N'Consulta psicológica en Rohrmoser', NULL, N'Tu salud mental es primero.', 1),
+    (9, 2, N'CrossFit Pérez Zeledón', N'crossfit-perez', N'info@crossfitpz.com', N'2278-1019', N'CrossFit y funcional en Pérez Zeledón', NULL, N'Superá tus límites.', 1),
+    (3, 2, N'Spa La Sabana', N'spa-la-sabana', N'hola@lasabanacr.com', N'2278-1020', N'Spa frente al Parque Metropolitano', NULL, N'Tu oasis en la ciudad.', 1),
+    (1, 2, N'Barbería El Rubio', N'barberia-el-rubio', N'rubio@barberiacr.com', N'2278-1021', N'Barbería en Zapote', NULL, N'Corte y afeitado de primera.', 1),
+    (2, 2, N'Salón Mary', N'salon-mary', N'mary@salanmary.com', N'2278-1022', N'Salón de belleza en Tibás', NULL, N'Tu lugar de confianza.', 1),
+    (3, 2, N'Spa Montaña Azul', N'spa-montana-azul', N'info@spamontana.com', N'2278-1023', N'Spa en las montañas de Heredia', NULL, N'Un respiro natural.', 1),
+    (7, 2, N'Estética Karina', N'estetica-karina', N'karina@estetikcr.com', N'2278-1024', N'Centro de estética en Curridabat', NULL, N'Destacá tu belleza natural.', 1),
+    (1, 2, N'Barbería Los Amigos', N'barberia-amigos', N'amigos@barberiacr.com', N'2278-1025', N'Barbería en San Francisco de Dos Ríos', NULL, N'Llegue, está en su casa.', 1),
+    (8, 2, N'Clínica Dental San José', N'dental-san-jose', N'citas@dentalcr.com', N'2278-1026', N'Odontología en Sabana Sur', NULL, N'Tu sonrisa saludable.', 1),
+    (3, 2, N'Centro de Masajes Zen', N'masajes-zen', N'info@zentralcr.com', N'2278-1027', N'Masajes y terapias en Barrio Amón', NULL, N'Encontrá tu zen interior.', 1),
+    (4, 2, N'Peluquería Canina CR', N'pelu-canina-cr', N'hola@pelucanina.com', N'2278-1028', N'Estética canina en Moravia', NULL, N'Tu mascota bien cuidada.', 1),
+    (9, 2, N'Gimnasio BodyFit', N'gym-bodyfit', N'info@bodyfitcr.com', N'2278-1029', N'Gimnasio en San Pedro', NULL, N'Transformate con nosotros.', 1),
+    (10, 2, N'Nutrición Vida', N'nutricion-vida', N'citas@nutriovidacr.com', N'2278-1030', N'Consultorio nutricional en Heredia', NULL, N'Comé rico, viví mejor.', 1),
+    (1, 2, N'Barbería El Peluquero', N'barberia-peluquero', N'peluquero@crbarber.com', N'2278-1031', N'Barbería en Alajuela centro', NULL, N'Estilo clásico y moderno.', 1),
+    (2, 2, N'Uñas Perfectas', N'unas-perfectas', N'info@unasperfectas.com', N'2278-1032', N'Salón de uñas en Escazú', NULL, N'Tus manos hablan por vos.', 1),
+    (3, 2, N'Spa Tropical', N'spa-tropical', N'reservas@tropicalcr.com', N'2278-1033', N'Spa en Guanacaste', NULL, N'Relajación con vista al mar.', 1),
+    (4, 2, N'Veterinaria Mascotas Felices', N'vet-mascotas-felices', N'contacto@mascotascr.com', N'2278-1034', N'Veterinaria en Alajuela', NULL, N'Un hogar para tu mascota.', 1),
+    (1, 2, N'Barbería Estilo', N'barberia-estilo', N'estilo@barberiacr.com', N'2278-1035', N'Barbería en Santo Domingo de Heredia', NULL, N'Corte de calidad, precio justo.', 1),
+    (10, 2, N'Centro de Acupuntura', N'acupuntura-cr', N'citas@acupecr.com', N'2278-1036', N'Acupuntura y medicina china', NULL, N'Equilibrio natural.', 1),
+    (4, 2, N'Veterinaria del Sur', N'vet-del-sur', N'info@vetsurcr.com', N'2278-1037', N'Veterinaria en Pérez Zeledón', NULL, N'Cuidado integral para mascotas.', 1),
+    (2, 2, N'Salón Glamour', N'salon-glamour', N'info@glamourcr.com', N'2278-1038', N'Salón de belleza en Rohrmoser', NULL, N'Brillo y sofisticación.', 1),
+    (1, 2, N'Barbería El Trébol', N'barberia-trebol', N'trebol@barberiacr.com', N'2278-1039', N'Barbería en Tres Ríos', NULL, N'Corte con suerte.', 1),
+    (5, 2, N'Rehabilitación Física', N'rehab-fisica', N'citas@rehabcr.com', N'2278-1040', N'Fisioterapia en Curridabat', NULL, N'Movete sin dolor.', 1),
+    (3, 2, N'Spa Relax Total', N'spa-relax-total', N'hola@relaxtotal.com', N'2278-1041', N'Spa en San José centro', NULL, N'Desconectate del mundo.', 1),
+    (1, 2, N'Barbería y Algo Más', N'barberia-algo-mas', N'info@algomasbarber.com', N'2278-1042', N'Barbería con café en Barrio Escalante', NULL, N'Corte, café y buena charla.', 1),
+    (9, 2, N'Gimnasio Femenino Fit', N'gym-femenino-fit', N'info@gymfitwomen.com', N'2278-1043', N'Gimnasio solo para mujeres', NULL, N'Tu espacio, tu ritmo.', 1),
+    (8, 2, N'Odontología Especializada', N'odonto-especializada', N'citas@odontoespecial.com', N'2278-1044', N'Ortodoncia y estética dental', NULL, N'Tu mejor sonrisa.', 1),
+    (10, 2, N'Terapia Ocupacional CR', N'terapia-ocupacional', N'info@tocupacional.com', N'2278-1045', N'Terapia ocupacional en Heredia', NULL, N'Independencia y bienestar.', 1),
+    (1, 2, N'Barbería El Parque', N'barberia-parque', N'parque@barberiacr.com', N'2278-1046', N'Barbería frente al Parque Central', NULL, N'Corte al paso.', 1),
+    (7, 2, N'Centro Estético Divine', N'divine-estetica', N'info@divinecr.com', N'2278-1047', N'Estética de lujo en Escazú', NULL, N'Tratame como una diva.', 1),
+    (4, 2, N'Veterinaria 24 Horas', N'vet-24-horas', N'emergencias@vetcr.com', N'2278-1048', N'Veterinaria de emergencia en San José', NULL, N'Siempre para tu mascota.', 1),
+    (2, 2, N'Salón Linda', N'salon-linda', N'hola@lindasalona.com', N'2278-1049', N'Salón de belleza en Desamparados', NULL, N'Linda por dentro y por fuera.', 1),
+    (8, 2, N'Clínica Dental Premium', N'dental-premium', N'citas@dentalpremium.com', N'2278-1050', N'Clínica dental en Santa Ana', NULL, N'Odontología de primera.', 1);
+PRINT '[03-seed-data] tabla dominios ... OK';
+GO
 
-INSERT INTO tenant_statuses (name, description)
-OUTPUT inserted.tenant_status_id INTO @ts (id)
-SELECT name, descr FROM (VALUES
-    (N'pending',   N'Pendiente de aprobación'),
-    (N'active',    N'Activo y operando'),
-    (N'suspended', N'Suspendido por administrador'),
-    (N'inactive',  N'Inactivo o dado de baja')
-) t(name, descr);
+INSERT INTO duenos_de_dominios (dominio_id, nombre, apellido_1, apellido_2, correo, contrasena_encriptada, telefono, activo) VALUES
+    (1, N'Martín', N'Quesada', N'Arias', N'martin.quesada@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1001', 1),
+    (2, N'Sofía', N'Camacho', N'Vindas', N'sofia.camacho@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1002', 1),
+    (3, N'Andrés', N'Ramírez', NULL, N'andres.ramirez@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1003', 1),
+    (4, N'Gabriela', N'Umaña', N'Soto', N'gabriela.umana@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1004', 1),
+    (5, N'Esteban', N'Chacón', NULL, N'esteban.chacon@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1005', 1),
+    (6, N'Daniela', N'Castillo', N'Mora', N'daniela.castillo@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1006', 1),
+    (7, N'Pablo', N'Jiménez', NULL, N'pablo.jimenez@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1007', 1),
+    (8, N'Valeria', N'Serrano', N'Campos', N'valeria.serrano@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1008', 1),
+    (9, N'Santiago', N'Víquez', NULL, N'santiago.viquez@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1009', 1),
+    (10, N'Camila', N'Delgado', N'Pineda', N'camila.delgado@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1010', 1),
+    (11, N'Felipe', N'Rojas', NULL, N'felipe.rojas@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1011', 1),
+    (12, N'Mariana', N'Porras', N'Salas', N'mariana.porras@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1012', 1),
+    (13, N'Javier', N'Cortés', NULL, N'javier.cortes@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1013', 1),
+    (14, N'Paula', N'Navarro', N'Brenes', N'paula.navarro@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1014', 1),
+    (15, N'Diego', N'Masís', NULL, N'diego.masis@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1015', 1),
+    (16, N'Andrea', N'Vega', N'Solano', N'andrea.vega@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1016', 1),
+    (17, N'Cristian', N'Herrera', NULL, N'cristian.herrera@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1017', 1),
+    (18, N'Renata', N'Aguilar', N'Chinchilla', N'renata.aguilar@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1018', 1),
+    (19, N'Manuel', N'Guerrero', NULL, N'manuel.guerrero@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1019', 1),
+    (20, N'Fernanda', N'Arce', N'Villalobos', N'fernanda.arce@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1020', 1),
+    (21, N'Kevin', N'Arce', NULL, N'kevin.arce@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1021', 1),
+    (22, N'Priscilla', N'Sandí', N'Rojas', N'priscilla.sandi@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1022', 1),
+    (23, N'Marcela', N'Granados', NULL, N'marcela.granados@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1023', 1),
+    (24, N'Fabián', N'Obando', N'Espinoza', N'fabian.obando@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1024', 1),
+    (25, N'Tatiana', N'Marín', NULL, N'tatiana.marin@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1025', 1),
+    (26, N'Bryan', N'Zamora', N'Quirós', N'bryan.zamora@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1026', 1),
+    (27, N'Hillary', N'Segura', NULL, N'hillary.segura@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1027', 1),
+    (28, N'Geovanny', N'Araya', N'Fonseca', N'geovanny.araya@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1028', 1),
+    (29, N'Melany', N'Bogarín', NULL, N'melany.bogarin@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1029', 1),
+    (30, N'Warner', N'Ulloa', N'Barrantes', N'warner.ulloa@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1030', 1),
+    (31, N'Rebeca', N'Salazar', NULL, N'rebeca.salazar@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1031', 1),
+    (32, N'Allan', N'Quesada', N'Madrigal', N'allan.quesada@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1032', 1),
+    (33, N'Kendall', N'Rodríguez', NULL, N'kendall.rodriguez@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1033', 1),
+    (34, N'Fiorella', N'Campos', N'Alpízar', N'fiorella.campos@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1034', 1),
+    (35, N'Sharon', N'Calvo', NULL, N'sharon.calvo@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1035', 1),
+    (36, N'Yoselyn', N'Murillo', N'Gamboa', N'yoselyn.murillo@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1036', 1),
+    (37, N'Joseph', N'Arias', NULL, N'joseph.arias@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1037', 1),
+    (38, N'Luis Diego', N'Solís', N'Carvajal', N'luisdiego.solis@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1038', 1),
+    (39, N'María Fernanda', N'Mora', NULL, N'mafe.mora@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1039', 1),
+    (40, N'Andrés', N'Fallas', N'Hidalgo', N'andres.fallas@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1040', 1),
+    (41, N'Valeria', N'Matamoros', NULL, N'valeria.matamoros@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1041', 1),
+    (42, N'Mario', N'Zúñiga', N'Céspedes', N'mario.zuniga@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1042', 1),
+    (43, N'Alejandra', N'Corrales', NULL, N'alejandra.corrales@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1043', 1),
+    (44, N'Juan Pablo', N'Mena', N'Argüello', N'jpablo.mena@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1044', 1),
+    (45, N'Karina', N'Rímolo', NULL, N'karina.rimolo@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1045', 1),
+    (46, N'Óscar', N'Bermúdez', N'Sibaja', N'oscar.bermudez@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1046', 1),
+    (47, N'Paola', N'Carranza', NULL, N'paola.carranza@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1047', 1),
+    (48, N'Randall', N'Segura', N'Montero', N'randall.segura@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1048', 1),
+    (49, N'Adriana', N'Ramírez', NULL, N'adriana.ramirez@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1049', 1),
+    (50, N'Melissa', N'Cerdas', N'Loría', N'melissa.cerdas@email.com', N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', N'8877-1050', 1);
+PRINT '[03-seed-data] tabla duenos_de_dominios ... OK';
+GO
 
-INSERT INTO tenant_statuses (name, description)
-OUTPUT inserted.tenant_status_id INTO @ts (id)
-SELECT CONCAT(N'estado_', n), CONCAT(N'Estado ', n) FROM @ns WHERE n > 4;
+INSERT INTO clientes (dominio_id, nombre, apellido_1, apellido_2, correo, telefono, notas) VALUES
+    (1, N'Juan', N'Vargas', N'Mora', N'juan.vargas@email.com', N'8877-3001', N'Cliente frecuente - prefiere sábados'),
+    (2, N'María', N'Cordero', NULL, N'maria.cordero@email.com', N'8877-3002', NULL),
+    (3, N'Carlos', N'Monge', N'Salas', N'carlos.monge@email.com', N'8877-3003', N'Alérgico a fragancias fuertes'),
+    (4, N'Ana', N'Chaves', NULL, N'ana.chaves@email.com', N'8877-3004', N'Prefiere atención con la misma estilista'),
+    (5, N'Pedro', N'Rivera', N'Solís', N'pedro.rivera@email.com', N'8877-3005', NULL),
+    (6, N'Laura', N'Guillén', NULL, N'laura.guillen@email.com', N'8877-3006', N'Cliente desde 2024'),
+    (7, N'José', N'Pérez', N'Brenes', N'jose.perez@email.com', N'8877-3007', NULL),
+    (8, N'Sofía', N'Álvarez', NULL, N'sofia.alvarez@email.com', N'8877-3008', N'Recomendó a 3 amigas'),
+    (9, N'Miguel', N'Reyes', N'Castro', N'miguel.reyes@email.com', N'8877-3009', N'Le pagan con SINPE - dejar nota'),
+    (10, N'Carmen', N'Morales', NULL, N'carmen.morales@email.com', N'8877-3010', NULL),
+    (11, N'Luis', N'Torres', N'Jiménez', N'luis.torres@email.com', N'8877-3011', N'Siempre pide el mismo barbero'),
+    (12, N'Valentina', N'Castro', NULL, N'valentina.castro@email.com', N'8877-3012', N'Llega con su perro - permitir'),
+    (13, N'Andrés', N'Ortiz', N'Vega', N'andres.ortiz@email.com', N'8877-3013', NULL),
+    (14, N'Isabella', N'Vargas', NULL, N'isabella.vargas@email.com', N'8877-3014', N'Estudiante - descuento de jueves'),
+    (15, N'Diego', N'Ruiz', N'Alfaro', N'diego.ruiz@email.com', N'8877-3015', NULL),
+    (16, N'Camila', N'Medina', NULL, N'camila.medina@email.com', N'8877-3016', N'Prefiere WhatsApp para recordatorios'),
+    (17, N'Santiago', N'Delgado', N'Pacheco', N'santiago.delgado@email.com', N'8877-3017', NULL),
+    (18, N'Luciana', N'Rojas', NULL, N'luciana.rojas@email.com', N'8877-3018', N'Compra siempre el paquete completo'),
+    (19, N'Manuel', N'Silva', N'Araya', N'manuel.silva@email.com', N'8877-3019', N'Le gusta pagar en efectivo'),
+    (20, N'Gabriela', N'Peña', NULL, N'gabriela.pena@email.com', N'8877-3020', NULL),
+    (21, N'Alejandro', N'Campos', N'Ulate', N'alejandro.campos@email.com', N'8877-3021', N'Atleta - masajes descontracturantes'),
+    (22, N'Mariana', N'Flores', NULL, N'mariana.flores@email.com', N'8877-3022', N'Lleva a sus 2 hijos también'),
+    (23, N'Francisco', N'Aguilar', N'Venegas', N'francisco.aguilar@email.com', N'8877-3023', NULL),
+    (24, N'Antonella', N'Guzmán', NULL, N'antonella.guzman@email.com', N'8877-3024', N'Celiaca - importante en notas'),
+    (25, N'Ricardo', N'Mendoza', N'Salazar', N'ricardo.mendoza@email.com', N'8877-3025', NULL),
+    (26, N'Josefina', N'Cruz', NULL, N'josefina.cruz@email.com', N'8877-3026', N'Vive en Grecia - prefiere tardes'),
+    (27, N'Eduardo', N'Soto', N'Marín', N'eduardo.soto@email.com', N'8877-3027', NULL),
+    (28, N'Ximena', N'Pacheco', NULL, N'ximena.pacheco@email.com', N'8877-3028', N'Luna de miel - dar trato especial'),
+    (29, N'Roberto', N'Navarro', N'Umaña', N'roberto.navarro@email.com', N'8877-3029', N'Veterano - descuento adulto mayor'),
+    (30, N'Fernanda', N'Vera', NULL, N'fernanda.vera@email.com', N'8877-3030', N'Embarazada - masajes prenatal'),
+    (31, N'Kevin', N'Arce', N'Chacón', N'kevin.arce@email.com', N'8877-3031', NULL),
+    (32, N'Priscilla', N'Sandí', NULL, N'priscilla.sandi@email.com', N'8877-3032', N'Viene todos los viernes'),
+    (33, N'Esteban', N'Cordero', N'Vílchez', N'esteban.cordero@email.com', N'8877-3033', N'Paga con tarjeta siempre'),
+    (34, N'Marcela', N'Granados', NULL, N'marcela.granados@email.com', N'8877-3034', N'Compra productos también'),
+    (35, N'Fabián', N'Obando', N'Rojas', N'fabian.obando@email.com', N'8877-3035', NULL),
+    (36, N'Rebeca', N'Salazar', NULL, N'rebeca.salazar@email.com', N'8877-3036', N'Cliente referido por Sofía'),
+    (37, N'Allan', N'Quesada', N'Herrera', N'allan.quesada@email.com', N'8877-3037', N'Llega después de las 4pm'),
+    (38, N'Tatiana', N'Marín', NULL, N'tatiana.marin@email.com', N'8877-3038', N'Le gusta pagar en efectivo'),
+    (39, N'Bryan', N'Zamora', N'Picado', N'bryan.zamora@email.com', N'8877-3039', NULL),
+    (40, N'Hillary', N'Segura', NULL, N'hillary.segura@email.com', N'8877-3040', N'Siempre llega puntual'),
+    (41, N'Geovanny', N'Araya', N'Cascante', N'geovanny.araya@email.com', N'8877-3041', NULL),
+    (42, N'Melany', N'Bogarín', NULL, N'melany.bogarin@email.com', N'8877-3042', N'Pide cita con la misma persona'),
+    (43, N'Warner', N'Ulloa', N'Sequeira', N'warner.ulloa@email.com', N'8877-3043', N'Prefiere los lunes'),
+    (44, N'Fiorella', N'Campos', NULL, N'fiorella.campos@email.com', N'8877-3044', NULL),
+    (45, N'Kendall', N'Rodríguez', N'Zeledón', N'kendall.rodriguez@email.com', N'8877-3045', N'Viene con su mamá'),
+    (46, N'Sharon', N'Calvo', NULL, N'sharon.calvo@email.com', N'8877-3046', N'Estudiante universitario'),
+    (47, N'Yoselyn', N'Murillo', N'Esquivel', N'yoselyn.murillo@email.com', N'8877-3047', N'Pide recordatorio por SMS'),
+    (48, N'Joseph', N'Arias', NULL, N'joseph.arias@email.com', N'8877-3048', N'Referido por la clínica'),
+    (49, N'Luis Diego', N'Solís', N'Monge', N'luisdiego.solis@email.com', N'8877-3049', NULL),
+    (50, N'Mónica', N'Aguilar', NULL, N'monica.aguilar@email.com', N'8877-3050', N'Cliente nueva - dar bienvenida');
+PRINT '[03-seed-data] tabla clientes ... OK';
+GO
 
-INSERT INTO booking_statuses (name, description)
-OUTPUT inserted.booking_status_id INTO @bs (id)
-SELECT name, descr FROM (VALUES
-    (N'pending',     N'Reserva pendiente de confirmación'),
-    (N'confirmed',   N'Reserva confirmada'),
-    (N'cancelled',   N'Reserva cancelada'),
-    (N'completed',   N'Reserva completada'),
-    (N'rescheduled', N'Reserva reagendada')
-) t(name, descr);
+INSERT INTO categorias_servicios (dominio_id, nombre, descripcion, activo) VALUES
+    (1, N'Cortes', N'Categoría de Cortes', 1),
+    (2, N'Tintura', N'Categoría de Tintura', 1),
+    (3, N'Masajes', N'Categoría de Masajes', 1),
+    (4, N'Consultas', N'Categoría de Consultas', 1),
+    (5, N'Estética facial', N'Categoría de Estética facial', 1),
+    (6, N'Pediatría', N'Categoría de Pediatría', 1),
+    (7, N'Limpieza', N'Categoría de Limpieza', 1),
+    (8, N'Odontología', N'Categoría de Odontología', 1),
+    (9, N'Fitness', N'Categoría de Fitness', 1),
+    (10, N'Terapias', N'Categoría de Terapias', 1),
+    (11, N'Uñas', N'Categoría de Uñas', 1),
+    (12, N'Depilación', N'Categoría de Depilación', 1),
+    (13, N'Revisiones', N'Categoría de Revisiones', 1),
+    (14, N'Pack pareja', N'Categoría de Pack pareja', 1),
+    (15, N'Promociones', N'Categoría de Promociones', 1),
+    (16, N'Barbería', N'Categoría de Barbería', 1),
+    (17, N'Maquillaje', N'Categoría de Maquillaje', 1),
+    (18, N'Spa', N'Categoría de Spa', 1),
+    (19, N'Quiropráctica', N'Categoría de Quiropráctica', 1),
+    (20, N'Nutrición', N'Categoría de Nutrición', 1),
+    (21, N'Acupuntura', N'Categoría de Acupuntura', 1),
+    (22, N'Fisioterapia', N'Categoría de Fisioterapia', 1),
+    (23, N'Odontopediatría', N'Categoría de Odontopediatría', 1),
+    (24, N'Veterinaria', N'Categoría de Veterinaria', 1),
+    (25, N'Estética avanzada', N'Categoría de Estética avanzada', 1),
+    (26, N'Cuidado capilar', N'Categoría de Cuidado capilar', 1),
+    (27, N'Depilación láser', N'Categoría de Depilación láser', 1),
+    (28, N'Bienestar', N'Categoría de Bienestar', 1),
+    (29, N'Yoga', N'Categoría de Yoga', 1),
+    (30, N'Pilates', N'Categoría de Pilates', 1),
+    (31, N'Kinesiología', N'Categoría de Kinesiología', 1),
+    (32, N'Reflexología', N'Categoría de Reflexología', 1),
+    (33, N'Aromaterapia', N'Categoría de Aromaterapia', 1),
+    (34, N'Hidroterapia', N'Categoría de Hidroterapia', 1),
+    (35, N'Fitoterapia', N'Categoría de Fitoterapia', 1),
+    (36, N'Radiestesia', N'Categoría de Radiestesia', 1),
+    (37, N'Reiki', N'Categoría de Reiki', 1),
+    (38, N'Medicina general', N'Categoría de Medicina general', 1),
+    (39, N'Pedagogía', N'Categoría de Pedagogía', 1),
+    (40, N'Logopedia', N'Categoría de Logopedia', 1),
+    (41, N'Dermatología', N'Categoría de Dermatología', 1),
+    (42, N'Tricología', N'Categoría de Tricología', 1),
+    (43, N'Ortodoncia', N'Categoría de Ortodoncia', 1),
+    (44, N'Blanqueamiento', N'Categoría de Blanqueamiento', 1),
+    (45, N'Cirugía oral', N'Categoría de Cirugía oral', 1),
+    (46, N'Periodoncia', N'Categoría de Periodoncia', 1),
+    (47, N'Endodoncia', N'Categoría de Endodoncia', 1),
+    (48, N'Implantes', N'Categoría de Implantes', 1),
+    (49, N'Radiografía', N'Categoría de Radiografía', 1),
+    (50, N'Odontología general', N'Categoría de Odontología general', 1);
+PRINT '[03-seed-data] tabla categorias_servicios ... OK';
+GO
 
-INSERT INTO booking_statuses (name, description)
-OUTPUT inserted.booking_status_id INTO @bs (id)
-SELECT CONCAT(N'estado_reserva_', n), CONCAT(N'Estado reserva ', n) FROM @ns WHERE n > 5;
+INSERT INTO servicios (dominio_id, categoria_id, nombre, descripcion, duracion_minutos, precio, mostrar_precio, activo) VALUES
+    (1, 1, N'Corte de cabello hombre', N'Servicio de Corte de cabello hombre', 30, 6000.00, 1, 1),
+    (2, 2, N'Corte de cabello mujer', N'Servicio de Corte de cabello mujer', 45, 9000.00, 1, 1),
+    (3, 3, N'Afeitado tradicional', N'Servicio de Afeitado tradicional', 20, 5000.00, 1, 1),
+    (4, 4, N'Lavado y peinado', N'Servicio de Lavado y peinado', 25, 7000.00, 1, 1),
+    (5, 5, N'Tinte completo', N'Servicio de Tinte completo', 90, 35000.00, 1, 1),
+    (6, 6, N'Manicure clásico', N'Servicio de Manicure clásico', 40, 12000.00, 1, 1),
+    (7, 7, N'Pedicure spa', N'Servicio de Pedicure spa', 50, 15000.00, 1, 1),
+    (8, 8, N'Masaje relajante', N'Servicio de Masaje relajante', 60, 25000.00, 1, 1),
+    (9, 9, N'Masaje descontracturante', N'Servicio de Masaje descontracturante', 45, 30000.00, 1, 1),
+    (10, 10, N'Consulta general', N'Servicio de Consulta general', 30, 20000.00, 1, 1),
+    (11, 11, N'Baño y corte mascota', N'Servicio de Baño y corte mascota', 50, 15000.00, 1, 1),
+    (12, 12, N'Corte mascota raza pequeña', N'Servicio de Corte mascota raza pequeña', 30, 10000.00, 1, 1),
+    (13, 13, N'Limpieza facial profunda', N'Servicio de Limpieza facial profunda', 45, 22000.00, 1, 1),
+    (14, 14, N'Depilación con cera', N'Servicio de Depilación con cera', 30, 10000.00, 1, 1),
+    (15, 15, N'Revisión dental', N'Servicio de Revisión dental', 20, 15000.00, 1, 1),
+    (16, 16, N'Limpieza dental', N'Servicio de Limpieza dental', 40, 30000.00, 1, 1),
+    (17, 17, N'Sesión de gym dirigida', N'Servicio de Sesión de gym dirigida', 60, 8000.00, 1, 1),
+    (18, 18, N'Terapia de relajación', N'Servicio de Terapia de relajación', 50, 20000.00, 1, 1),
+    (19, 19, N'Pack novia completo', N'Servicio de Pack novia completo', 150, 75000.00, 1, 1),
+    (20, 20, N'Corte y barba combo', N'Servicio de Corte y barba combo', 40, 10000.00, 1, 1),
+    (21, 21, N'Peinado para fiestas', N'Servicio de Peinado para fiestas', 60, 18000.00, 1, 1),
+    (22, 22, N'Tinte con mechas', N'Servicio de Tinte con mechas', 120, 45000.00, 1, 1),
+    (23, 23, N'Masaje con piedras calientes', N'Servicio de Masaje con piedras calientes', 75, 35000.00, 1, 1),
+    (24, 24, N'Consulta veterinaria general', N'Servicio de Consulta veterinaria general', 30, 18000.00, 1, 1),
+    (25, 25, N'Vacunación de mascotas', N'Servicio de Vacunación de mascotas', 20, 12000.00, 1, 1),
+    (26, 26, N'Corte mascota raza grande', N'Servicio de Corte mascota raza grande', 60, 20000.00, 1, 1),
+    (27, 27, N'Exfoliación corporal', N'Servicio de Exfoliación corporal', 50, 25000.00, 1, 1),
+    (28, 28, N'Mascarilla facial', N'Servicio de Mascarilla facial', 30, 15000.00, 1, 1),
+    (29, 29, N'Radiofrecuencia facial', N'Servicio de Radiofrecuencia facial', 60, 40000.00, 1, 1),
+    (30, 30, N'Depilación láser axilas', N'Servicio de Depilación láser axilas', 30, 25000.00, 1, 1),
+    (31, 31, N'Ortodoncia inicial', N'Servicio de Ortodoncia inicial', 45, 35000.00, 1, 1),
+    (32, 32, N'Blanqueamiento dental', N'Servicio de Blanqueamiento dental', 90, 60000.00, 1, 1),
+    (33, 33, N'Rutina de pesas guiada', N'Servicio de Rutina de pesas guiada', 60, 10000.00, 1, 1),
+    (34, 34, N'Yoga grupal', N'Servicio de Yoga grupal', 60, 8000.00, 1, 1),
+    (35, 35, N'Spinning', N'Servicio de Spinning', 45, 7000.00, 1, 1),
+    (36, 36, N'Terapia psicológica', N'Servicio de Terapia psicológica', 50, 30000.00, 1, 1),
+    (37, 37, N'Evaluación nutricional', N'Servicio de Evaluación nutricional', 40, 22000.00, 1, 1),
+    (38, 38, N'Acupuntura', N'Servicio de Acupuntura', 45, 20000.00, 1, 1),
+    (39, 39, N'Reflexología', N'Servicio de Reflexología', 50, 18000.00, 1, 1),
+    (40, 40, N'Maquillaje profesional', N'Servicio de Maquillaje profesional', 90, 35000.00, 1, 1),
+    (41, 41, N'Extensiones de pestañas', N'Servicio de Extensiones de pestañas', 60, 25000.00, 1, 1),
+    (42, 42, N'Uñas acrílicas', N'Servicio de Uñas acrílicas', 75, 20000.00, 1, 1),
+    (43, 43, N'Gelish', N'Servicio de Gelish', 45, 12000.00, 1, 1),
+    (44, 44, N'Corte y diseño de cejas', N'Servicio de Corte y diseño de cejas', 20, 5000.00, 1, 1),
+    (45, 45, N'Tratamiento capilar', N'Servicio de Tratamiento capilar', 60, 30000.00, 1, 1),
+    (46, 46, N'Alisado permanente', N'Servicio de Alisado permanente', 120, 55000.00, 1, 1),
+    (47, 47, N'Hidratación facial', N'Servicio de Hidratación facial', 45, 20000.00, 1, 1),
+    (48, 48, N'Consulta dermatológica', N'Servicio de Consulta dermatológica', 30, 25000.00, 1, 1),
+    (49, 49, N'Limpieza de cutis', N'Servicio de Limpieza de cutis', 50, 28000.00, 1, 1),
+    (50, 50, N'Pack spa pareja', N'Servicio de Pack spa pareja', 120, 60000.00, 1, 1);
+PRINT '[03-seed-data] tabla servicios ... OK';
+GO
 
--- ====================================================================
--- SUPERADMINS (miembros del proyecto)
--- ====================================================================
+INSERT INTO localidades (dominio_id, nombre, direccion, telefono, principal, activo) VALUES
+    (1, N'Sede Central', N'Del Banco Nacional 100 m sur, San Pedro', N'2256-0501', 1, 1),
+    (2, N'Sucursal Escazú', N'Frente a Multiplaza Escazú, local 5', N'2256-0502', 1, 1),
+    (3, N'Santa Ana', N'Contiguo al Palí de Santa Ana', N'2256-0503', 1, 1),
+    (4, N'Moravia', N'300 m norte de la iglesia de Moravia', N'2256-0504', 1, 1),
+    (5, N'Desamparados', N'Costado sur del parque de Desamparados', N'2256-0505', 1, 1),
+    (6, N'Rohrmoser', N'Del Automercado 200 m oeste', N'2256-0506', 1, 1),
+    (7, N'Curridabat', N'Plaza del Sol, local 12', N'2256-0507', 1, 1),
+    (8, N'Alajuela Central', N'50 m este de la Catedral, Alajuela', N'2256-0508', 1, 1),
+    (9, N'Heredia', N'Frente al Fortín, Heredia centro', N'2256-0509', 1, 1),
+    (10, N'Cartago', N'100 m norte de las Ruinas, Cartago', N'2256-0510', 1, 1),
+    (11, N'Guadalupe', N'Del antiguo Palí 150 m norte', N'2256-0511', 1, 1),
+    (12, N'San José centro', N'Avenida Central, calle 9', N'2256-0512', 1, 1),
+    (13, N'Barrio Escalante', N'Calle 33, contiguo a la soda', N'2256-0513', 1, 1),
+    (14, N'Tibás', N'200 m sur del Mall San Pedro', N'2256-0514', 1, 1),
+    (15, N'Hatillo', N'Frente al parque de Hatillo 3', N'2256-0515', 1, 1),
+    (16, N'Santa Ana Centro', N'50 m este de la iglesia', N'2256-0516', 1, 1),
+    (17, N'San José Centro', N'Calle 2, avenida 6', N'2256-0517', 1, 1),
+    (18, N'Rohrmoser II', N'200 m norte del Colegio de Abogados', N'2256-0518', 1, 1),
+    (19, N'Pérez Zeledón', N'100 m sur del Banco Popular', N'2256-0519', 1, 1),
+    (20, N'La Sabana', N'Frente al Parque Metropolitano', N'2256-0520', 1, 1),
+    (21, N'Zapote', N'Del cementerio 50 m norte', N'2256-0521', 1, 1),
+    (22, N'Tibás Norte', N'200 m oeste de la escuela', N'2256-0522', 1, 1),
+    (23, N'Heredia Montaña', N'Carretera a San Rafael 1 km', N'2256-0523', 1, 1),
+    (24, N'Curridabat Este', N'Condominio Los Pinos, casa 8', N'2256-0524', 1, 1),
+    (25, N'Dos Ríos', N'Del Ebáis 150 m sur', N'2256-0525', 1, 1),
+    (26, N'Sabana Sur', N'Edificio Medical, piso 4', N'2256-0526', 1, 1),
+    (27, N'Barrio Amón', N'Casa amarilla esquinera', N'2256-0527', 1, 1),
+    (28, N'Moravia Norte', N'Contiguo a la bomba', N'2256-0528', 1, 1),
+    (29, N'San Pedro', N'Del parque 100 m este', N'2256-0529', 1, 1),
+    (30, N'Heredia Centro', N'Contiguo al Banco Nacional', N'2256-0530', 1, 1),
+    (31, N'Alajuela centro', N'50 m oeste del parque', N'2256-0531', 1, 1),
+    (32, N'Escazú Este', N'Plaza Itskatzú, local 3', N'2256-0532', 1, 1),
+    (33, N'Guanacaste', N'Playa Hermosa, contiguo al hotel', N'2256-0533', 1, 1),
+    (34, N'Alajuela Oeste', N'200 m sur de la gasolinera', N'2256-0534', 1, 1),
+    (35, N'Santo Domingo', N'Frente a la iglesia católica', N'2256-0535', 1, 1),
+    (36, N'San José Centro', N'Calle 11, avenida 3', N'2256-0536', 1, 1),
+    (37, N'Pérez Zeledón Sur', N'200 m sur del hospital', N'2256-0537', 1, 1),
+    (38, N'Rohrmoser Centro', N'Plaza Rohrmoser, local 7', N'2256-0538', 1, 1),
+    (39, N'Tres Ríos', N'Del palí 100 m este', N'2256-0539', 1, 1),
+    (40, N'Curridabat Oeste', N'Detrás del periódico La Nación', N'2256-0540', 1, 1),
+    (41, N'San José Central', N'Calle 5, contiguo al Teatro', N'2256-0541', 1, 1),
+    (42, N'Barrio Escalante 2', N'Calle 37, casa blanca esquina', N'2256-0542', 1, 1),
+    (43, N'San José Mujeres', N'Barrio La California, local 9', N'2256-0543', 1, 1),
+    (44, N'Santa Ana Este', N'Plaza Santa Ana, piso 2', N'2256-0544', 1, 1),
+    (45, N'Heredia Oeste', N'Del parque 300 m oeste', N'2256-0545', 1, 1),
+    (46, N'San José Centro', N'Calle 1, frente al parque', N'2256-0546', 1, 1),
+    (47, N'Escazú Lujo', N'Multiplaza Escazú, local 20', N'2256-0547', 1, 1),
+    (48, N'San José 24H', N'Calle 14, contiguo a la Clínica', N'2256-0548', 1, 1),
+    (49, N'Desamparados Sur', N'100 m sur del mercado', N'2256-0549', 1, 1),
+    (50, N'Santa Ana Centro', N'Contiguo al BAC San José', N'2256-0550', 1, 1);
+PRINT '[03-seed-data] tabla localidades ... OK';
+GO
 
-INSERT INTO superadmins (full_name, email, password_hash, is_active)
-OUTPUT inserted.superadmin_id INTO @sa (id)
-SELECT name, email, N'$2b$12$HNf7oIJgipKcyCIEJLR1POaKhc46Oh//2IJ7eNtn/Mu5wvNC98qFe', 1 FROM (VALUES
-    (N'Campos Arias Melanie Yeonsuk',    N'melanie.campos@mbm.admin'),
-    (N'Chavez Zumbado Isaac',            N'isaac.chavez@mbm.admin'),
-    (N'Delgado Durango Luna',            N'luna.delgado@mbm.admin'),
-    (N'Enriquez Acuña Handel Simón',     N'handel.enriquez@mbm.admin'),
-    (N'Fuentes García Jeferson Andrew',  N'jeferson.fuentes@mbm.admin')
-) t(name, email);
+INSERT INTO horarios (dominio_id, localidad_id, dia_semana, hora_apertura, hora_cerrado, cerrado) VALUES
+    (1, 1, 0, NULL, NULL, 1),
+    (2, 2, 1, '13:00', '18:00', 0),
+    (3, 3, 2, '08:00', '17:00', 0),
+    (4, 4, 3, '07:00', '12:00', 0),
+    (5, 5, 4, '13:00', '18:00', 0),
+    (6, 6, 5, '08:00', '17:00', 0),
+    (7, 7, 6, '07:00', '12:00', 0),
+    (8, 8, 0, NULL, NULL, 1),
+    (9, 9, 1, '08:00', '17:00', 0),
+    (10, 10, 2, '07:00', '12:00', 0),
+    (11, 11, 3, '13:00', '18:00', 0),
+    (12, 12, 4, '08:00', '17:00', 0),
+    (13, 13, 5, '07:00', '12:00', 0),
+    (14, 14, 6, '13:00', '18:00', 0),
+    (15, 15, 0, NULL, NULL, 1),
+    (16, 16, 1, '07:00', '12:00', 0),
+    (17, 17, 2, '13:00', '18:00', 0),
+    (18, 18, 3, '08:00', '17:00', 0),
+    (19, 19, 4, '07:00', '12:00', 0),
+    (20, 20, 5, '13:00', '18:00', 0),
+    (21, 21, 6, '08:00', '17:00', 0),
+    (22, 22, 0, NULL, NULL, 1),
+    (23, 23, 1, '13:00', '18:00', 0),
+    (24, 24, 2, '08:00', '17:00', 0),
+    (25, 25, 3, '07:00', '12:00', 0),
+    (26, 26, 4, '13:00', '18:00', 0),
+    (27, 27, 5, '08:00', '17:00', 0),
+    (28, 28, 6, '07:00', '12:00', 0),
+    (29, 29, 0, NULL, NULL, 1),
+    (30, 30, 1, '08:00', '17:00', 0),
+    (31, 31, 2, '07:00', '12:00', 0),
+    (32, 32, 3, '13:00', '18:00', 0),
+    (33, 33, 4, '08:00', '17:00', 0),
+    (34, 34, 5, '07:00', '12:00', 0),
+    (35, 35, 6, '13:00', '18:00', 0),
+    (36, 36, 0, NULL, NULL, 1),
+    (37, 37, 1, '07:00', '12:00', 0),
+    (38, 38, 2, '13:00', '18:00', 0),
+    (39, 39, 3, '08:00', '17:00', 0),
+    (40, 40, 4, '07:00', '12:00', 0),
+    (41, 41, 5, '13:00', '18:00', 0),
+    (42, 42, 6, '08:00', '17:00', 0),
+    (43, 43, 0, NULL, NULL, 1),
+    (44, 44, 1, '13:00', '18:00', 0),
+    (45, 45, 2, '08:00', '17:00', 0),
+    (46, 46, 3, '07:00', '12:00', 0),
+    (47, 47, 4, '13:00', '18:00', 0),
+    (48, 48, 5, '08:00', '17:00', 0),
+    (49, 49, 6, '07:00', '12:00', 0),
+    (50, 50, 0, NULL, NULL, 1);
+PRINT '[03-seed-data] tabla horarios ... OK';
+GO
 
--- ====================================================================
--- TENANTS (50 negocios)
--- ====================================================================
+INSERT INTO bloques_de_disponibilidad (dominio_id, localidad_id, fecha_de_bloque, fecha_inicio, fecha_final, activo) VALUES
+    (1, 1, '2026-07-02', '2026-07-02T08:00:00', '2026-07-02T08:30:00', 1),
+    (2, 2, '2026-07-03', '2026-07-03T09:30:00', '2026-07-03T10:15:00', 1),
+    (3, 3, '2026-07-04', '2026-07-04T10:00:00', '2026-07-04T10:20:00', 1),
+    (4, 4, '2026-07-05', '2026-07-05T11:30:00', '2026-07-05T11:55:00', 1),
+    (5, 5, '2026-07-06', '2026-07-06T12:00:00', '2026-07-06T13:30:00', 1),
+    (6, 6, '2026-07-07', '2026-07-07T13:30:00', '2026-07-07T14:10:00', 1),
+    (7, 7, '2026-07-08', '2026-07-08T14:00:00', '2026-07-08T14:50:00', 1),
+    (8, 8, '2026-07-09', '2026-07-09T15:30:00', '2026-07-09T16:30:00', 1),
+    (9, 9, '2026-07-10', '2026-07-10T08:00:00', '2026-07-10T08:45:00', 1),
+    (10, 10, '2026-07-11', '2026-07-11T09:30:00', '2026-07-11T10:00:00', 1),
+    (11, 11, '2026-07-12', '2026-07-12T10:00:00', '2026-07-12T10:50:00', 1),
+    (12, 12, '2026-07-13', '2026-07-13T11:30:00', '2026-07-13T12:00:00', 1),
+    (13, 13, '2026-07-14', '2026-07-14T12:00:00', '2026-07-14T12:45:00', 1),
+    (14, 14, '2026-07-15', '2026-07-15T13:30:00', '2026-07-15T14:00:00', 1),
+    (15, 15, '2026-07-02', '2026-07-02T14:00:00', '2026-07-02T14:20:00', 1),
+    (16, 16, '2026-07-03', '2026-07-03T15:30:00', '2026-07-03T16:10:00', 1),
+    (17, 17, '2026-07-04', '2026-07-04T08:00:00', '2026-07-04T09:00:00', 1),
+    (18, 18, '2026-07-05', '2026-07-05T09:30:00', '2026-07-05T10:20:00', 1),
+    (19, 19, '2026-07-06', '2026-07-06T10:00:00', '2026-07-06T12:30:00', 1),
+    (20, 20, '2026-07-07', '2026-07-07T11:30:00', '2026-07-07T12:10:00', 1),
+    (21, 21, '2026-07-08', '2026-07-08T12:00:00', '2026-07-08T13:00:00', 1),
+    (22, 22, '2026-07-09', '2026-07-09T13:30:00', '2026-07-09T15:30:00', 1),
+    (23, 23, '2026-07-10', '2026-07-10T14:00:00', '2026-07-10T15:15:00', 1),
+    (24, 24, '2026-07-11', '2026-07-11T15:30:00', '2026-07-11T16:00:00', 1),
+    (25, 25, '2026-07-12', '2026-07-12T08:00:00', '2026-07-12T08:20:00', 1),
+    (26, 26, '2026-07-13', '2026-07-13T09:30:00', '2026-07-13T10:30:00', 1),
+    (27, 27, '2026-07-14', '2026-07-14T10:00:00', '2026-07-14T10:50:00', 1),
+    (28, 28, '2026-07-15', '2026-07-15T11:30:00', '2026-07-15T12:00:00', 1),
+    (29, 29, '2026-07-02', '2026-07-02T12:00:00', '2026-07-02T13:00:00', 1),
+    (30, 30, '2026-07-03', '2026-07-03T13:30:00', '2026-07-03T14:00:00', 1),
+    (31, 31, '2026-07-04', '2026-07-04T14:00:00', '2026-07-04T14:45:00', 1),
+    (32, 32, '2026-07-05', '2026-07-05T15:30:00', '2026-07-05T17:00:00', 1),
+    (33, 33, '2026-07-06', '2026-07-06T08:00:00', '2026-07-06T09:00:00', 1),
+    (34, 34, '2026-07-07', '2026-07-07T09:30:00', '2026-07-07T10:30:00', 1),
+    (35, 35, '2026-07-08', '2026-07-08T10:00:00', '2026-07-08T10:45:00', 1),
+    (36, 36, '2026-07-09', '2026-07-09T11:30:00', '2026-07-09T12:20:00', 1),
+    (37, 37, '2026-07-10', '2026-07-10T12:00:00', '2026-07-10T12:40:00', 1),
+    (38, 38, '2026-07-11', '2026-07-11T13:30:00', '2026-07-11T14:15:00', 1),
+    (39, 39, '2026-07-12', '2026-07-12T14:00:00', '2026-07-12T14:50:00', 1),
+    (40, 40, '2026-07-13', '2026-07-13T15:30:00', '2026-07-13T17:00:00', 1),
+    (41, 41, '2026-07-14', '2026-07-14T08:00:00', '2026-07-14T09:00:00', 1),
+    (42, 42, '2026-07-15', '2026-07-15T09:30:00', '2026-07-15T10:45:00', 1),
+    (43, 43, '2026-07-02', '2026-07-02T10:00:00', '2026-07-02T10:45:00', 1),
+    (44, 44, '2026-07-03', '2026-07-03T11:30:00', '2026-07-03T11:50:00', 1),
+    (45, 45, '2026-07-04', '2026-07-04T12:00:00', '2026-07-04T13:00:00', 1),
+    (46, 46, '2026-07-05', '2026-07-05T13:30:00', '2026-07-05T15:30:00', 1),
+    (47, 47, '2026-07-06', '2026-07-06T14:00:00', '2026-07-06T14:45:00', 1),
+    (48, 48, '2026-07-07', '2026-07-07T15:30:00', '2026-07-07T16:00:00', 1),
+    (49, 49, '2026-07-08', '2026-07-08T08:00:00', '2026-07-08T08:50:00', 1),
+    (50, 50, '2026-07-09', '2026-07-09T09:30:00', '2026-07-09T11:30:00', 1);
+PRINT '[03-seed-data] tabla bloques_de_disponibilidad ... OK';
+GO
 
-INSERT INTO tenants (business_type_id, tenant_status_id, name, slug, email, phone, description, public_message, is_active)
-OUTPUT inserted.tenant_id INTO @tn (id)
-SELECT bt, st, name, slug, email, phone, descr, msg, 1 FROM (VALUES
-    (1, 2, N'Barbería El Colocho',    N'barberia-el-colocho',    N'info@colochocr.com',     N'2278-1001', N'Barbería clásica en San Pedro',           N'¡Pura vida! Agendá tu cita sin filas.'),
-    (2, 2, N'Salón Elegance',         N'salon-elegance',         N'contacto@elegancecr.com', N'2278-1002', N'Salón de belleza en Escazú',              N'Tu estilo, nuestra pasión.'),
-    (3, 2, N'Spa La Garita',          N'spa-la-garita',          N'reservas@lagarita.com',  N'2278-1003', N'Spa y masajes en Santa Ana',              N'Relajate con nosotros, mae.'),
-    (4, 2, N'Veterinaria San Jorge',  N'vet-san-jorge',          N'citas@sanveterinaria.com',N'2278-1004', N'Veterinaria en Moravia',                  N'Cuidamos a su mascota como propia.'),
-    (5, 2, N'Clínica Santa Catalina', N'clinica-santa-catalina', N'info@santacatalina.com',  N'2278-1005', N'Clínica médica en Desamparados',          N'Salud para toda la familia.'),
-    (6, 2, N'Consultorio Dra. Solís', N'dra-solis',              N'citas@drasolis.com',     N'2278-1006', N'Odontología general en Rohrmoser',        N'Tu sonrisa es nuestra prioridad.'),
-    (7, 2, N'Centro Estético Glow',   N'centro-glow',            N'hola@centroglow.com',    N'2278-1007', N'Estética avanzada en Curridabat',         N'Descubrí tu mejor versión.'),
-    (8, 2, N'Odontoclínica del Valle',N'odontoclinica-valle',    N'citas@odvcr.com',        N'2278-1008', N'Clínica dental en Alajuela',              N'Tu salud bucal nos importa.'),
-    (9, 2, N'Fit Gym Centro',         N'fit-gym',                N'info@fitgymcr.com',      N'2278-1009', N'Gimnasio en Heredia',                      N'Transformá tu cuerpo.'),
-    (10,2, N'Terapias Holísticas CR', N'terapias-holisticas',    N'contacto@terapiascr.com',N'2278-1010', N'Terapias alternativas en Cartago',         N'Equilibrio para cuerpo y mente.'),
-    (1, 2, N'Barbería Don Chepe',     N'barberia-don-chepe',     N'chepe@donchepecr.com',   N'2278-1011', N'Barbería tradicional en Guadalupe',        N'Donde los ticos se arreglan.'),
-    (2, 2, N'Salón Divino',           N'salon-divino',           N'info@salandivino.com',   N'2278-1012', N'Salón y estética en San José',            N'Belleza con corazón tico.'),
-    (3, 2, N'Spa Pura Vida',          N'spa-pura-vida',          N'reservas@puracr.com',    N'2278-1013', N'Spa con hidroterapia en Barrio Escalante', N'Desconectate del estrés.'),
-    (4, 2, N'Veterinaria Huellitas',  N'vet-huellitas',          N'contacto@huellitascr.com',N'2278-1014', N'Veterinaria en Tibás',                     N'Tu mascota merece lo mejor.'),
-    (1, 2, N'Barbería King',          N'barberia-king',          N'king@barberiaking.com',  N'2278-1015', N'Barbería moderna en Hatillo',              N'Estilo tico con actitud.'),
-    (2, 2, N'Salón Santa Ana',        N'salon-santa-ana',        N'info@santaanabeauty.com',N'2278-1016', N'Salón de belleza en Santa Ana',            N'Embellecé tu día.'),
-    (5, 2, N'Clínica Médica Central', N'clinica-medica-central', N'info@cmcentral.com',     N'2278-1017', N'Clínica en el centro de San José',         N'Atención médica de confianza.'),
-    (6, 2, N'Psicología Integral',    N'psicologia-integral',    N'citas@psiintegral.com',  N'2278-1018', N'Consulta psicológica en Rohrmoser',        N'Tu salud mental es primero.'),
-    (9, 2, N'CrossFit Pérez Zeledón', N'crossfit-perez',         N'info@crossfitpz.com',    N'2278-1019', N'CrossFit y funcional en Pérez Zeledón',    N'Superá tus límites.'),
-    (3, 2, N'Spa La Sabana',          N'spa-la-sabana',          N'hola@lasabanacr.com',    N'2278-1020', N'Spa frente al Parque Metropolitano',       N'Tu oasis en la ciudad.'),
-    (1, 2, N'Barbería El Rubio',      N'barberia-el-rubio',      N'rubio@barberiacr.com',   N'2278-1021', N'Barbería en Zapote',                       N'Corte y afeitado de primera.'),
-    (2, 2, N'Salón Mary',             N'salon-mary',             N'mary@salanmary.com',     N'2278-1022', N'Salón de belleza en Tibás',               N'Tu lugar de confianza.'),
-    (3, 2, N'Spa Montaña Azul',       N'spa-montana-azul',       N'info@spamontana.com',    N'2278-1023', N'Spa en las montañas de Heredia',           N'Un respiro natural.'),
-    (7, 2, N'Estética Karina',        N'estetica-karina',        N'karina@estetikcr.com',   N'2278-1024', N'Centro de estética en Curridabat',         N'Destacá tu belleza natural.'),
-    (1, 2, N'Barbería Los Amigos',    N'barberia-amigos',        N'amigos@barberiacr.com',  N'2278-1025', N'Barbería en San Francisco de Dos Ríos',    N'Llegue, está en su casa.'),
-    (8, 2, N'Clínica Dental San José',N'dental-san-jose',        N'citas@dentalcr.com',     N'2278-1026', N'Odontología en Sabana Sur',                N'Tu sonrisa saludable.'),
-    (3, 2, N'Centro de Masajes Zen',  N'masajes-zen',            N'info@zentralcr.com',     N'2278-1027', N'Masajes y terapias en Barrio Amón',        N'Encontrá tu zen interior.'),
-    (4, 2, N'Peluquería Canina CR',   N'pelu-canina-cr',         N'hola@pelucanina.com',    N'2278-1028', N'Estética canina en Moravia',               N'Tu mascota bien cuidada.'),
-    (9, 2, N'Gimnasio BodyFit',       N'gym-bodyfit',            N'info@bodyfitcr.com',     N'2278-1029', N'Gimnasio en San Pedro',                     N'Transformate con nosotros.'),
-    (10,2, N'Nutrición Vida',         N'nutricion-vida',         N'citas@nutriovidacr.com', N'2278-1030', N'Consultorio nutricional en Heredia',        N'Comé rico, viví mejor.'),
-    (1, 2, N'Barbería El Peluquero',  N'barberia-peluquero',     N'peluquero@crbarber.com', N'2278-1031', N'Barbería en Alajuela centro',              N'Estilo clásico y moderno.'),
-    (2, 2, N'Uñas Perfectas',         N'unas-perfectas',         N'info@unasperfectas.com', N'2278-1032', N'Salón de uñas en Escazú',                  N'Tus manos hablan por vos.'),
-    (3, 2, N'Spa Tropical',           N'spa-tropical',           N'reservas@tropicalcr.com',N'2278-1033', N'Spa en Guanacaste',                        N'Relajación con vista al mar.'),
-    (4, 2, N'Veterinaria Mascotas Felices', N'vet-mascotas-felices', N'contacto@mascotascr.com', N'2278-1034', N'Veterinaria en Alajuela',                N'Un hogar para tu mascota.'),
-    (1, 2, N'Barbería Estilo',        N'barberia-estilo',        N'estilo@barberiacr.com',  N'2278-1035', N'Barbería en Santo Domingo de Heredia',     N'Corte de calidad, precio justo.'),
-    (10,2, N'Centro de Acupuntura',   N'acupuntura-cr',          N'citas@acupecr.com',      N'2278-1036', N'Acupuntura y medicina china',              N'Equilibrio natural.'),
-    (4, 2, N'Veterinaria del Sur',    N'vet-del-sur',            N'info@vetsurcr.com',      N'2278-1037', N'Veterinaria en Pérez Zeledón',             N'Cuidado integral para mascotas.'),
-    (2, 2, N'Salón Glamour',          N'salon-glamour',          N'info@glamourcr.com',     N'2278-1038', N'Salón de belleza en Rohrmoser',            N'Brillo y sofisticación.'),
-    (1, 2, N'Barbería El Trébol',     N'barberia-trebol',        N'trebol@barberiacr.com',  N'2278-1039', N'Barbería en Tres Ríos',                     N'Corte con suerte.'),
-    (5, 2, N'Rehabilitación Física',  N'rehab-fisica',           N'citas@rehabcr.com',      N'2278-1040', N'Fisioterapia en Curridabat',               N'Movete sin dolor.'),
-    (3, 2, N'Spa Relax Total',        N'spa-relax-total',        N'hola@relaxtotal.com',    N'2278-1041', N'Spa en San José centro',                   N'Desconectate del mundo.'),
-    (1, 2, N'Barbería y Algo Más',    N'barberia-algo-mas',      N'info@algomasbarber.com', N'2278-1042', N'Barbería con café en Barrio Escalante',    N'Corte, café y buena charla.'),
-    (9, 2, N'Gimnasio Femenino Fit',  N'gym-femenino-fit',       N'info@gymfitwomen.com',   N'2278-1043', N'Gimnasio solo para mujeres',               N'Tu espacio, tu ritmo.'),
-    (8, 2, N'Odontología Especializada', N'odonto-especializada',N'citas@odontoespecial.com',N'2278-1044', N'Ortodoncia y estética dental',             N'Tu mejor sonrisa.'),
-    (10,2, N'Terapia Ocupacional CR', N'terapia-ocupacional',    N'info@tocupacional.com',  N'2278-1045', N'Terapia ocupacional en Heredia',           N'Independencia y bienestar.'),
-    (1, 2, N'Barbería El Parque',     N'barberia-parque',        N'parque@barberiacr.com',  N'2278-1046', N'Barbería frente al Parque Central',         N'Corte al paso.'),
-    (7, 2, N'Centro Estético Divine', N'divine-estetica',        N'info@divinecr.com',      N'2278-1047', N'Estética de lujo en Escazú',               N'Tratame como una diva.'),
-    (4, 2, N'Veterinaria 24 Horas',   N'vet-24-horas',           N'emergencias@vetcr.com',   N'2278-1048', N'Veterinaria de emergencia en San José',    N'Siempre para tu mascota.'),
-    (2, 2, N'Salón Linda',            N'salon-linda',            N'hola@lindasalona.com',   N'2278-1049', N'Salón de belleza en Desamparados',         N'Linda por dentro y por fuera.'),
-    (8, 2, N'Clínica Dental Premium', N'dental-premium',         N'citas@dentalpremium.com',N'2278-1050', N'Clínica dental en Santa Ana',              N'Odontología de primera.')
-) t(bt, st, name, slug, email, phone, descr, msg);
+INSERT INTO reservaciones (dominio_id, cliente_id, servicio_id, localidad_id, bloque_disponibilidad_id, estado_reservacion_id, fecha_inicio, fecha_final, nota_cliente, nota_interna) VALUES
+    (1, 1, 1, 1, 1, 1, '2026-07-02T08:00:00', '2026-07-02T08:30:00', N'Prefiero en la mañana', NULL),
+    (2, 2, 2, 2, 2, 2, '2026-07-03T09:30:00', '2026-07-03T10:15:00', N'Antes del mediodía por favor', NULL),
+    (3, 3, 3, 3, NULL, 3, '2026-07-04T10:00:00', '2026-07-04T10:20:00', N'En la tarde después de las 2', NULL),
+    (4, 4, 4, 4, 4, 4, '2026-07-05T11:30:00', '2026-07-05T11:55:00', N'Sin preferencia de horario', NULL),
+    (5, 5, 5, 5, 5, 5, '2026-07-06T12:00:00', '2026-07-06T13:30:00', N'Llamar antes de confirmar', NULL),
+    (6, 6, 6, 6, 6, 1, '2026-07-07T13:30:00', '2026-07-07T14:10:00', N'Que no sea muy temprano', NULL),
+    (7, 7, 7, 7, 7, 2, '2026-07-08T14:00:00', '2026-07-08T14:50:00', N'Prefiero en la mañana', N'Cliente frecuente, dar seguimiento'),
+    (8, 8, 8, 8, NULL, 3, '2026-07-09T15:30:00', '2026-07-09T16:30:00', N'Antes del mediodía por favor', NULL),
+    (9, 9, 9, 9, 9, 4, '2026-07-10T08:00:00', '2026-07-10T08:45:00', N'En la tarde después de las 2', NULL),
+    (10, 10, 10, 10, 10, 5, '2026-07-11T09:30:00', '2026-07-11T10:00:00', N'Sin preferencia de horario', NULL),
+    (11, 11, 11, 11, 11, 1, '2026-07-12T10:00:00', '2026-07-12T10:50:00', N'Llamar antes de confirmar', NULL),
+    (12, 12, 12, 12, 12, 2, '2026-07-13T11:30:00', '2026-07-13T12:00:00', N'Que no sea muy temprano', NULL),
+    (13, 13, 13, 13, NULL, 3, '2026-07-14T12:00:00', '2026-07-14T12:45:00', N'Prefiero en la mañana', NULL),
+    (14, 14, 14, 14, 14, 4, '2026-07-15T13:30:00', '2026-07-15T14:00:00', N'Antes del mediodía por favor', N'Cliente frecuente, dar seguimiento'),
+    (15, 15, 15, 15, 15, 5, '2026-07-02T14:00:00', '2026-07-02T14:20:00', N'En la tarde después de las 2', NULL),
+    (16, 16, 16, 16, 16, 1, '2026-07-03T15:30:00', '2026-07-03T16:10:00', N'Sin preferencia de horario', NULL),
+    (17, 17, 17, 17, 17, 2, '2026-07-04T08:00:00', '2026-07-04T09:00:00', N'Llamar antes de confirmar', NULL),
+    (18, 18, 18, 18, NULL, 3, '2026-07-05T09:30:00', '2026-07-05T10:20:00', N'Que no sea muy temprano', NULL),
+    (19, 19, 19, 19, 19, 4, '2026-07-06T10:00:00', '2026-07-06T12:30:00', N'Prefiero en la mañana', NULL),
+    (20, 20, 20, 20, 20, 5, '2026-07-07T11:30:00', '2026-07-07T12:10:00', N'Antes del mediodía por favor', NULL),
+    (21, 21, 21, 21, 21, 1, '2026-07-08T12:00:00', '2026-07-08T13:00:00', N'En la tarde después de las 2', N'Cliente frecuente, dar seguimiento'),
+    (22, 22, 22, 22, 22, 2, '2026-07-09T13:30:00', '2026-07-09T15:30:00', N'Sin preferencia de horario', NULL),
+    (23, 23, 23, 23, NULL, 3, '2026-07-10T14:00:00', '2026-07-10T15:15:00', N'Llamar antes de confirmar', NULL),
+    (24, 24, 24, 24, 24, 4, '2026-07-11T15:30:00', '2026-07-11T16:00:00', N'Que no sea muy temprano', NULL),
+    (25, 25, 25, 25, 25, 5, '2026-07-12T08:00:00', '2026-07-12T08:20:00', N'Prefiero en la mañana', NULL),
+    (26, 26, 26, 26, 26, 1, '2026-07-13T09:30:00', '2026-07-13T10:30:00', N'Antes del mediodía por favor', NULL),
+    (27, 27, 27, 27, 27, 2, '2026-07-14T10:00:00', '2026-07-14T10:50:00', N'En la tarde después de las 2', NULL),
+    (28, 28, 28, 28, NULL, 3, '2026-07-15T11:30:00', '2026-07-15T12:00:00', N'Sin preferencia de horario', N'Cliente frecuente, dar seguimiento'),
+    (29, 29, 29, 29, 29, 4, '2026-07-02T12:00:00', '2026-07-02T13:00:00', N'Llamar antes de confirmar', NULL),
+    (30, 30, 30, 30, 30, 5, '2026-07-03T13:30:00', '2026-07-03T14:00:00', N'Que no sea muy temprano', NULL),
+    (31, 31, 31, 31, 31, 1, '2026-07-04T14:00:00', '2026-07-04T14:45:00', N'Prefiero en la mañana', NULL),
+    (32, 32, 32, 32, 32, 2, '2026-07-05T15:30:00', '2026-07-05T17:00:00', N'Antes del mediodía por favor', NULL),
+    (33, 33, 33, 33, NULL, 3, '2026-07-06T08:00:00', '2026-07-06T09:00:00', N'En la tarde después de las 2', NULL),
+    (34, 34, 34, 34, 34, 4, '2026-07-07T09:30:00', '2026-07-07T10:30:00', N'Sin preferencia de horario', NULL),
+    (35, 35, 35, 35, 35, 5, '2026-07-08T10:00:00', '2026-07-08T10:45:00', N'Llamar antes de confirmar', N'Cliente frecuente, dar seguimiento'),
+    (36, 36, 36, 36, 36, 1, '2026-07-09T11:30:00', '2026-07-09T12:20:00', N'Que no sea muy temprano', NULL),
+    (37, 37, 37, 37, 37, 2, '2026-07-10T12:00:00', '2026-07-10T12:40:00', N'Prefiero en la mañana', NULL),
+    (38, 38, 38, 38, NULL, 3, '2026-07-11T13:30:00', '2026-07-11T14:15:00', N'Antes del mediodía por favor', NULL),
+    (39, 39, 39, 39, 39, 4, '2026-07-12T14:00:00', '2026-07-12T14:50:00', N'En la tarde después de las 2', NULL),
+    (40, 40, 40, 40, 40, 5, '2026-07-13T15:30:00', '2026-07-13T17:00:00', N'Sin preferencia de horario', NULL),
+    (41, 41, 41, 41, 41, 1, '2026-07-14T08:00:00', '2026-07-14T09:00:00', N'Llamar antes de confirmar', NULL),
+    (42, 42, 42, 42, 42, 2, '2026-07-15T09:30:00', '2026-07-15T10:45:00', N'Que no sea muy temprano', N'Cliente frecuente, dar seguimiento'),
+    (43, 43, 43, 43, NULL, 3, '2026-07-02T10:00:00', '2026-07-02T10:45:00', N'Prefiero en la mañana', NULL),
+    (44, 44, 44, 44, 44, 4, '2026-07-03T11:30:00', '2026-07-03T11:50:00', N'Antes del mediodía por favor', NULL),
+    (45, 45, 45, 45, 45, 5, '2026-07-04T12:00:00', '2026-07-04T13:00:00', N'En la tarde después de las 2', NULL),
+    (46, 46, 46, 46, 46, 1, '2026-07-05T13:30:00', '2026-07-05T15:30:00', N'Sin preferencia de horario', NULL),
+    (47, 47, 47, 47, 47, 2, '2026-07-06T14:00:00', '2026-07-06T14:45:00', N'Llamar antes de confirmar', NULL),
+    (48, 48, 48, 48, NULL, 3, '2026-07-07T15:30:00', '2026-07-07T16:00:00', N'Que no sea muy temprano', NULL),
+    (49, 49, 49, 49, 49, 4, '2026-07-08T08:00:00', '2026-07-08T08:50:00', N'Prefiero en la mañana', N'Cliente frecuente, dar seguimiento'),
+    (50, 50, 50, 50, 50, 5, '2026-07-09T09:30:00', '2026-07-09T11:30:00', N'Antes del mediodía por favor', NULL);
+PRINT '[03-seed-data] tabla reservaciones ... OK';
+GO
 
--- ====================================================================
--- TENANT OWNERS (50)
--- ====================================================================
+INSERT INTO codigos_de_rastreos (reserva_id, codigo_rastreo, expira_en, activo) VALUES
+    (1, N'MBM-FMT01', '2026-08-01T08:00:00', 1),
+    (2, N'MBM-LYL02', '2026-08-02T09:30:00', 1),
+    (3, N'MBM-RKD03', '2026-08-03T10:00:00', 1),
+    (4, N'MBM-WWW04', '2026-08-04T11:30:00', 1),
+    (5, N'MBM-BHP05', '2026-08-05T12:00:00', 1),
+    (6, N'MBM-GUG06', '2026-08-06T13:30:00', 1),
+    (7, N'MBM-MFZ07', '2026-08-07T14:00:00', 1),
+    (8, N'MBM-SSS08', '2026-08-08T15:30:00', 1),
+    (9, N'MBM-XDK09', '2026-08-09T08:00:00', 1),
+    (10, N'MBM-CQC10', '2026-08-10T09:30:00', 1),
+    (11, N'MBM-HBV11', '2026-08-11T10:00:00', 1),
+    (12, N'MBM-NNN12', '2026-08-12T11:30:00', 1),
+    (13, N'MBM-TZF13', '2026-08-13T12:00:00', 1),
+    (14, N'MBM-YLY14', '2026-08-14T13:30:00', 1),
+    (15, N'MBM-DXR15', '2026-08-01T14:00:00', 1),
+    (16, N'MBM-JJJ16', '2026-08-02T15:30:00', 1),
+    (17, N'MBM-PVB17', '2026-08-03T08:00:00', 1),
+    (18, N'MBM-UGU18', '2026-08-04T09:30:00', 1),
+    (19, N'MBM-ZTM19', '2026-08-05T10:00:00', 1),
+    (20, N'MBM-EEE20', '2026-08-06T11:30:00', 1),
+    (21, N'MBM-KRX21', '2026-08-07T12:00:00', 1),
+    (22, N'MBM-QCQ22', '2026-08-08T13:30:00', 1),
+    (23, N'MBM-VPH23', '2026-08-09T14:00:00', 1),
+    (24, N'MBM-AAA24', '2026-08-10T15:30:00', 1),
+    (25, N'MBM-FMT25', '2026-08-11T08:00:00', 1),
+    (26, N'MBM-LYL26', '2026-08-12T09:30:00', 1),
+    (27, N'MBM-RKD27', '2026-08-13T10:00:00', 1),
+    (28, N'MBM-WWW28', '2026-08-14T11:30:00', 1),
+    (29, N'MBM-BHP29', '2026-08-01T12:00:00', 1),
+    (30, N'MBM-GUG30', '2026-08-02T13:30:00', 1),
+    (31, N'MBM-MFZ31', '2026-08-03T14:00:00', 1),
+    (32, N'MBM-SSS32', '2026-08-04T15:30:00', 1),
+    (33, N'MBM-XDK33', '2026-08-05T08:00:00', 1),
+    (34, N'MBM-CQC34', '2026-08-06T09:30:00', 1),
+    (35, N'MBM-HBV35', '2026-08-07T10:00:00', 1),
+    (36, N'MBM-NNN36', '2026-08-08T11:30:00', 1),
+    (37, N'MBM-TZF37', '2026-08-09T12:00:00', 1),
+    (38, N'MBM-YLY38', '2026-08-10T13:30:00', 1),
+    (39, N'MBM-DXR39', '2026-08-11T14:00:00', 1),
+    (40, N'MBM-JJJ40', '2026-08-12T15:30:00', 1),
+    (41, N'MBM-PVB41', '2026-08-13T08:00:00', 1),
+    (42, N'MBM-UGU42', '2026-08-14T09:30:00', 1),
+    (43, N'MBM-ZTM43', '2026-08-01T10:00:00', 1),
+    (44, N'MBM-EEE44', '2026-08-02T11:30:00', 1),
+    (45, N'MBM-KRX45', '2026-08-03T12:00:00', 1),
+    (46, N'MBM-QCQ46', '2026-08-04T13:30:00', 1),
+    (47, N'MBM-VPH47', '2026-08-05T14:00:00', 1),
+    (48, N'MBM-AAA48', '2026-08-06T15:30:00', 1),
+    (49, N'MBM-FMT49', '2026-08-07T08:00:00', 1),
+    (50, N'MBM-LYL50', '2026-08-08T09:30:00', 1);
+PRINT '[03-seed-data] tabla codigos_de_rastreos ... OK';
+GO
 
-WITH owner_list AS (
-    SELECT t.name, t.email, t.phone, ROW_NUMBER() OVER(ORDER BY t.name) AS rn FROM (VALUES
-    (N'Martín Quesada',      N'martin.quesada@email.com',      N'8877-1001'),
-    (N'Sofía Camacho',       N'sofia.camacho@email.com',       N'8877-1002'),
-    (N'Andrés Ramírez',      N'andres.ramirez@email.com',      N'8877-1003'),
-    (N'Gabriela Umaña',      N'gabriela.umana@email.com',      N'8877-1004'),
-    (N'Esteban Chacón',      N'esteban.chacon@email.com',      N'8877-1005'),
-    (N'Daniela Castillo',    N'daniela.castillo@email.com',    N'8877-1006'),
-    (N'Pablo Jiménez',       N'pablo.jimenez@email.com',       N'8877-1007'),
-    (N'Valeria Serrano',     N'valeria.serrano@email.com',     N'8877-1008'),
-    (N'Santiago Víquez',     N'santiago.viquez@email.com',     N'8877-1009'),
-    (N'Camila Delgado',      N'camila.delgado@email.com',      N'8877-1010'),
-    (N'Felipe Rojas',        N'felipe.rojas@email.com',        N'8877-1011'),
-    (N'Mariana Porras',      N'mariana.porras@email.com',      N'8877-1012'),
-    (N'Javier Cortés',       N'javier.cortes@email.com',       N'8877-1013'),
-    (N'Paula Navarro',       N'paula.navarro@email.com',       N'8877-1014'),
-    (N'Diego Masís',         N'diego.masis@email.com',         N'8877-1015'),
-    (N'Andrea Vega',         N'andrea.vega@email.com',         N'8877-1016'),
-    (N'Cristian Herrera',    N'cristian.herrera@email.com',    N'8877-1017'),
-    (N'Renata Aguilar',      N'renata.aguilar@email.com',      N'8877-1018'),
-    (N'Manuel Guerrero',     N'manuel.guerrero@email.com',     N'8877-1019'),
-    (N'Fernanda Arce',       N'fernanda.arce@email.com',       N'8877-1020'),
-    (N'Kevin Arce',          N'kevin.arce@email.com',          N'8877-1021'),
-    (N'Priscilla Sandí',     N'priscilla.sandi@email.com',     N'8877-1022'),
-    (N'Marcela Granados',    N'marcela.granados@email.com',    N'8877-1023'),
-    (N'Fabián Obando',       N'fabian.obando@email.com',       N'8877-1024'),
-    (N'Tatiana Marín',       N'tatiana.marin@email.com',       N'8877-1025'),
-    (N'Bryan Zamora',        N'bryan.zamora@email.com',        N'8877-1026'),
-    (N'Hillary Segura',      N'hillary.segura@email.com',      N'8877-1027'),
-    (N'Geovanny Araya',      N'geovanny.araya@email.com',      N'8877-1028'),
-    (N'Melany Bogarín',      N'melany.bogarin@email.com',      N'8877-1029'),
-    (N'Warner Ulloa',        N'warner.ulloa@email.com',        N'8877-1030'),
-    (N'Rebeca Salazar',      N'rebeca.salazar@email.com',      N'8877-1031'),
-    (N'Allan Quesada',       N'allan.quesada@email.com',       N'8877-1032'),
-    (N'Kendall Rodríguez',   N'kendall.rodriguez@email.com',   N'8877-1033'),
-    (N'Fiorella Campos',     N'fiorella.campos@email.com',     N'8877-1034'),
-    (N'Sharon Calvo',        N'sharon.calvo@email.com',        N'8877-1035'),
-    (N'Yoselyn Murillo',     N'yoselyn.murillo@email.com',     N'8877-1036'),
-    (N'Joseph Arias',        N'joseph.arias@email.com',        N'8877-1037'),
-    (N'Luis Diego Solís',    N'luisdiego.solis@email.com',     N'8877-1038'),
-    (N'María Fernanda Mora', N'mafe.mora@email.com',           N'8877-1039'),
-    (N'Andrés Fallas',       N'andres.fallas@email.com',       N'8877-1040'),
-    (N'Valeria Matamoros',   N'valeria.matamoros@email.com',   N'8877-1041'),
-    (N'Mario Zúñiga',        N'mario.zuniga@email.com',        N'8877-1042'),
-    (N'Alejandra Corrales',  N'alejandra.corrales@email.com',  N'8877-1043'),
-    (N'Juan Pablo Mena',     N'jpablo.mena@email.com',         N'8877-1044'),
-    (N'Karina Rímolo',       N'karina.rimolo@email.com',       N'8877-1045'),
-    (N'Óscar Bermúdez',      N'oscar.bermudez@email.com',      N'8877-1046'),
-    (N'Paola Carranza',      N'paola.carranza@email.com',      N'8877-1047'),
-    (N'Randall Segura',      N'randall.segura@email.com',      N'8877-1048'),
-    (N'Adriana Ramírez',     N'adriana.ramirez@email.com',     N'8877-1049'),
-    (N'Melissa Cerdas',      N'melissa.cerdas@email.com',      N'8877-1050')
-) AS t(name, email, phone)
-)
-INSERT INTO tenant_owners (tenant_id, full_name, email, password_hash, phone, is_active)
-OUTPUT inserted.owner_id INTO @ow (id)
-SELECT tn.id, ol.name, ol.email, N'$2b$12$6B3wIs./ish6IGqLCScHCet1uryH9qoa9WPGGqEzBVa47GL7kJHPe', ol.phone, 1
-FROM owner_list ol
-JOIN @tn tn ON tn.rid = ol.rn;
+INSERT INTO registros (dominio_id, dueno_id, superadmin_id, accion, nombre_entidad, entidad_id, valor_anterior, nuevo_valor) VALUES
+    (1, 1, NULL, N'dominio_creado', N'dominios', 1, NULL, N'Negocio creado: Barbería El Colocho'),
+    (2, 2, NULL, N'dominio_creado', N'dominios', 2, NULL, N'Negocio creado: Salón Elegance'),
+    (3, 3, NULL, N'dominio_creado', N'dominios', 3, NULL, N'Negocio creado: Spa La Garita'),
+    (4, 4, NULL, N'dominio_creado', N'dominios', 4, NULL, N'Negocio creado: Veterinaria San Jorge'),
+    (5, 5, NULL, N'dominio_creado', N'dominios', 5, NULL, N'Negocio creado: Clínica Santa Catalina'),
+    (6, 6, NULL, N'dominio_creado', N'dominios', 6, NULL, N'Negocio creado: Consultorio Dra. Solís'),
+    (7, 7, NULL, N'dominio_creado', N'dominios', 7, NULL, N'Negocio creado: Centro Estético Glow'),
+    (8, 8, NULL, N'dominio_creado', N'dominios', 8, NULL, N'Negocio creado: Odontoclínica del Valle'),
+    (9, 9, NULL, N'dominio_creado', N'dominios', 9, NULL, N'Negocio creado: Fit Gym Centro'),
+    (10, 10, NULL, N'dominio_creado', N'dominios', 10, NULL, N'Negocio creado: Terapias Holísticas CR'),
+    (11, 11, NULL, N'dominio_creado', N'dominios', 11, NULL, N'Negocio creado: Barbería Don Chepe'),
+    (12, 12, NULL, N'dominio_creado', N'dominios', 12, NULL, N'Negocio creado: Salón Divino'),
+    (13, 13, NULL, N'dominio_creado', N'dominios', 13, NULL, N'Negocio creado: Spa Pura Vida'),
+    (14, 14, NULL, N'dominio_creado', N'dominios', 14, NULL, N'Negocio creado: Veterinaria Huellitas'),
+    (15, 15, NULL, N'dominio_creado', N'dominios', 15, NULL, N'Negocio creado: Barbería King'),
+    (16, 16, NULL, N'dominio_creado', N'dominios', 16, NULL, N'Negocio creado: Salón Santa Ana'),
+    (17, 17, NULL, N'dominio_creado', N'dominios', 17, NULL, N'Negocio creado: Clínica Médica Central'),
+    (18, 18, NULL, N'dominio_creado', N'dominios', 18, NULL, N'Negocio creado: Psicología Integral'),
+    (19, 19, NULL, N'dominio_creado', N'dominios', 19, NULL, N'Negocio creado: CrossFit Pérez Zeledón'),
+    (20, 20, NULL, N'dominio_creado', N'dominios', 20, NULL, N'Negocio creado: Spa La Sabana'),
+    (21, 21, NULL, N'dominio_creado', N'dominios', 21, NULL, N'Negocio creado: Barbería El Rubio'),
+    (22, 22, NULL, N'dominio_creado', N'dominios', 22, NULL, N'Negocio creado: Salón Mary'),
+    (23, 23, NULL, N'dominio_creado', N'dominios', 23, NULL, N'Negocio creado: Spa Montaña Azul'),
+    (24, 24, NULL, N'dominio_creado', N'dominios', 24, NULL, N'Negocio creado: Estética Karina'),
+    (25, 25, NULL, N'dominio_creado', N'dominios', 25, NULL, N'Negocio creado: Barbería Los Amigos'),
+    (26, 26, NULL, N'dominio_creado', N'dominios', 26, NULL, N'Negocio creado: Clínica Dental San José'),
+    (27, 27, NULL, N'dominio_creado', N'dominios', 27, NULL, N'Negocio creado: Centro de Masajes Zen'),
+    (28, 28, NULL, N'dominio_creado', N'dominios', 28, NULL, N'Negocio creado: Peluquería Canina CR'),
+    (29, 29, NULL, N'dominio_creado', N'dominios', 29, NULL, N'Negocio creado: Gimnasio BodyFit'),
+    (30, 30, NULL, N'dominio_creado', N'dominios', 30, NULL, N'Negocio creado: Nutrición Vida'),
+    (31, 31, NULL, N'dominio_creado', N'dominios', 31, NULL, N'Negocio creado: Barbería El Peluquero'),
+    (32, 32, NULL, N'dominio_creado', N'dominios', 32, NULL, N'Negocio creado: Uñas Perfectas'),
+    (33, 33, NULL, N'dominio_creado', N'dominios', 33, NULL, N'Negocio creado: Spa Tropical'),
+    (34, 34, NULL, N'dominio_creado', N'dominios', 34, NULL, N'Negocio creado: Veterinaria Mascotas Felices'),
+    (35, 35, NULL, N'dominio_creado', N'dominios', 35, NULL, N'Negocio creado: Barbería Estilo'),
+    (36, 36, NULL, N'dominio_creado', N'dominios', 36, NULL, N'Negocio creado: Centro de Acupuntura'),
+    (37, 37, NULL, N'dominio_creado', N'dominios', 37, NULL, N'Negocio creado: Veterinaria del Sur'),
+    (38, 38, NULL, N'dominio_creado', N'dominios', 38, NULL, N'Negocio creado: Salón Glamour'),
+    (39, 39, NULL, N'dominio_creado', N'dominios', 39, NULL, N'Negocio creado: Barbería El Trébol'),
+    (40, 40, NULL, N'dominio_creado', N'dominios', 40, NULL, N'Negocio creado: Rehabilitación Física'),
+    (41, 41, NULL, N'dominio_creado', N'dominios', 41, NULL, N'Negocio creado: Spa Relax Total'),
+    (42, 42, NULL, N'dominio_creado', N'dominios', 42, NULL, N'Negocio creado: Barbería y Algo Más'),
+    (43, 43, NULL, N'dominio_creado', N'dominios', 43, NULL, N'Negocio creado: Gimnasio Femenino Fit'),
+    (44, 44, NULL, N'dominio_creado', N'dominios', 44, NULL, N'Negocio creado: Odontología Especializada'),
+    (45, 45, NULL, N'dominio_creado', N'dominios', 45, NULL, N'Negocio creado: Terapia Ocupacional CR'),
+    (46, 46, NULL, N'dominio_creado', N'dominios', 46, NULL, N'Negocio creado: Barbería El Parque'),
+    (47, 47, NULL, N'dominio_creado', N'dominios', 47, NULL, N'Negocio creado: Centro Estético Divine'),
+    (48, 48, NULL, N'dominio_creado', N'dominios', 48, NULL, N'Negocio creado: Veterinaria 24 Horas'),
+    (49, 49, NULL, N'dominio_creado', N'dominios', 49, NULL, N'Negocio creado: Salón Linda'),
+    (50, 50, NULL, N'dominio_creado', N'dominios', 50, NULL, N'Negocio creado: Clínica Dental Premium');
+PRINT '[03-seed-data] tabla registros ... OK';
+GO
 
--- ====================================================================
--- CUSTOMERS (50 con notas realistas)
--- ====================================================================
+PRINT '[03-seed-data] 15/15 tablas pobladas';
+GO
 
-WITH customer_list AS (
-    SELECT t.fn, t.ln, t.em, t.ph, t.nota, ROW_NUMBER() OVER(ORDER BY t.fn) AS rn FROM (VALUES
-    (N'Juan',      N'Vargas',      N'juan.vargas@email.com',     N'8877-3001', N'Cliente frecuente - prefiere sábados'),
-    (N'María',     N'Cordero',     N'maria.cordero@email.com',   N'8877-3002', NULL),
-    (N'Carlos',    N'Monge',       N'carlos.monge@email.com',    N'8877-3003', N'Alérgico a fragancias fuertes'),
-    (N'Ana',       N'Chaves',      N'ana.chaves@email.com',      N'8877-3004', N'Prefiere atención con la misma estilista'),
-    (N'Pedro',     N'Rivera',      N'pedro.rivera@email.com',    N'8877-3005', NULL),
-    (N'Laura',     N'Guillén',     N'laura.guillen@email.com',   N'8877-3006', N'Cliente desde 2024'),
-    (N'José',      N'Pérez',       N'jose.perez@email.com',      N'8877-3007', NULL),
-    (N'Sofía',     N'Álvarez',     N'sofia.alvarez@email.com',   N'8877-3008', N'Recomendó a 3 amigas'),
-    (N'Miguel',    N'Reyes',       N'miguel.reyes@email.com',    N'8877-3009', N'Le pagan con SINPE - dejar nota'),
-    (N'Carmen',    N'Morales',     N'carmen.morales@email.com',  N'8877-3010', NULL),
-    (N'Luis',      N'Torres',      N'luis.torres@email.com',     N'8877-3011', N'Siempre pide el mismo barbero'),
-    (N'Valentina', N'Castro',      N'valentina.castro@email.com',N'8877-3012', N'Llega con su perro - permitir'),
-    (N'Andrés',    N'Ortiz',       N'andres.ortiz@email.com',    N'8877-3013', NULL),
-    (N'Isabella',  N'Vargas',      N'isabella.vargas@email.com', N'8877-3014', N'Estudiante - descuento de jueves'),
-    (N'Diego',     N'Ruiz',        N'diego.ruiz@email.com',      N'8877-3015', NULL),
-    (N'Camila',    N'Medina',      N'camila.medina@email.com',   N'8877-3016', N'Prefiere WhatsApp para recordatorios'),
-    (N'Santiago',  N'Delgado',     N'santiago.delgado@email.com',N'8877-3017', NULL),
-    (N'Luciana',   N'Rojas',       N'luciana.rojas@email.com',   N'8877-3018', N'Compra siempre el paquete completo'),
-    (N'Manuel',    N'Silva',       N'manuel.silva@email.com',    N'8877-3019', N'Le gusta pagar en efectivo'),
-    (N'Gabriela',  N'Peña',        N'gabriela.pena@email.com',   N'8877-3020', NULL),
-    (N'Alejandro', N'Campos',      N'alejandro.campos@email.com',N'8877-3021', N'Atleta - masajes descontracturantes'),
-    (N'Mariana',   N'Flores',      N'mariana.flores@email.com',  N'8877-3022', N'Lleva a sus 2 hijos también'),
-    (N'Francisco', N'Aguilar',     N'francisco.aguilar@email.com',N'8877-3023', NULL),
-    (N'Antonella', N'Guzmán',      N'antonella.guzman@email.com',N'8877-3024', N'Celiaca - importante en notas'),
-    (N'Ricardo',   N'Mendoza',     N'ricardo.mendoza@email.com', N'8877-3025', NULL),
-    (N'Josefina',  N'Cruz',        N'josefina.cruz@email.com',   N'8877-3026', N'Vive en Grecia - prefiere tardes'),
-    (N'Eduardo',   N'Soto',        N'eduardo.soto@email.com',    N'8877-3027', NULL),
-    (N'Ximena',    N'Pacheco',     N'ximena.pacheco@email.com',  N'8877-3028', N'Luna de miel - dar trato especial'),
-    (N'Roberto',   N'Navarro',     N'roberto.navarro@email.com', N'8877-3029', N'Veterano - descuento adulto mayor'),
-    (N'Fernanda',  N'Vera',        N'fernanda.vera@email.com',   N'8877-3030', N'Embarazada - masajes prenatal'),
-    (N'Kevin',     N'Arce',        N'kevin.arce@email.com',      N'8877-3031', NULL),
-    (N'Priscilla', N'Sandí',       N'priscilla.sandi@email.com', N'8877-3032', N'Viene todos los viernes'),
-    (N'Esteban',   N'Cordero',     N'esteban.cordero@email.com', N'8877-3033', N'Paga con tarjeta siempre'),
-    (N'Marcela',   N'Granados',    N'marcela.granados@email.com',N'8877-3034', N'Compra productos también'),
-    (N'Fabián',    N'Obando',      N'fabian.obando@email.com',   N'8877-3035', NULL),
-    (N'Rebeca',    N'Salazar',     N'rebeca.salazar@email.com',  N'8877-3036', N'Cliente referido por Sofía'),
-    (N'Allan',     N'Quesada',     N'allan.quesada@email.com',   N'8877-3037', N'Llega después de las 4pm'),
-    (N'Tatiana',   N'Marín',       N'tatiana.marin@email.com',   N'8877-3038', N'Le gusta pagar en efectivo'),
-    (N'Bryan',     N'Zamora',      N'bryan.zamora@email.com',    N'8877-3039', NULL),
-    (N'Hillary',   N'Segura',      N'hillary.segura@email.com',  N'8877-3040', N'Siempre llega puntual'),
-    (N'Geovanny',  N'Araya',       N'geovanny.araya@email.com',  N'8877-3041', NULL),
-    (N'Melany',    N'Bogarín',     N'melany.bogarin@email.com',  N'8877-3042', N'Pide cita con la misma persona'),
-    (N'Warner',    N'Ulloa',       N'warner.ulloa@email.com',    N'8877-3043', N'Prefiere los lunes'),
-    (N'Fiorella',  N'Campos',      N'fiorella.campos@email.com', N'8877-3044', NULL),
-    (N'Kendall',   N'Rodríguez',   N'kendall.rodriguez@email.com',N'8877-3045', N'Viene con su mamá'),
-    (N'Sharon',    N'Calvo',       N'sharon.calvo@email.com',    N'8877-3046', N'Estudiante universitario'),
-    (N'Yoselyn',   N'Murillo',     N'yoselyn.murillo@email.com', N'8877-3047', N'Pide recordatorio por SMS'),
-    (N'Joseph',    N'Arias',       N'joseph.arias@email.com',    N'8877-3048', N'Referido por la clínica'),
-    (N'Luis Diego',N'Solís',       N'luisdiego.solis@email.com', N'8877-3049', NULL),
-    (N'Mónica',    N'Aguilar',     N'monica.aguilar@email.com',  N'8877-3050', N'Cliente nueva - dar bienvenida')
-) AS t(fn, ln, em, ph, nota)
-)
-INSERT INTO customers (tenant_id, first_name, last_name, email, phone, notes)
-OUTPUT inserted.customer_id INTO @cu (id)
-SELECT tn.id, cl.fn, cl.ln, cl.em, cl.ph, cl.nota
-FROM customer_list cl
-JOIN @tn tn ON tn.rid = cl.rn;
+-- ============================================================
+-- SECCION 04. STORED PROCEDURES
+-- Fuente: database/scripts/04-procedures.sql
+-- ============================================================
 
--- ====================================================================
--- SERVICE CATEGORIES
--- ====================================================================
+-- ============================================================
+-- 04-procedures.sql
+-- Proyecto: MBM - Multi-Tenant Booking Manager
+-- Contenido: 13 stored procedures de dominios, servicios, disponibilidad,
+-- clientes y reservaciones (identificadores en espanol, ASCII).
+-- Idempotente: CREATE OR ALTER PROCEDURE.
+-- Ver docs/rename-map.csv para nombres de tablas/columnas.
+--
+-- Convencion de errores (THROW):
+--   50001-50019  validacion / regla de negocio        (400)
+--   50020-50039  no encontrado / no pertenece al dominio (404)
+--   50040-50059  conflicto / recurso ocupado           (409)
+--
+-- Tabla de codigos usados en este archivo:
+--   50001  El dominio no se encuentra activo.
+--   50002  El slug ya esta en uso por otro dominio.
+--   50003  El estado actual de la reservacion no permite la transicion.
+--   50004  Rango de fechas del bloque invalido (fecha_inicio >= fecha_final).
+--   50005  Debe proporcionar cliente_id o los datos completos del cliente.
+--   50020  El tipo de negocio no existe.
+--   50021  El dominio no existe.
+--   50022  El superadmin no existe.
+--   50023  La categoria no existe o no pertenece al dominio.
+--   50024  El servicio no existe o no pertenece al dominio.
+--   50025  La localidad no existe o no pertenece al dominio.
+--   50026  El bloque de disponibilidad no existe o no pertenece al dominio/localidad.
+--   50027  El cliente no existe o no pertenece al dominio.
+--   50028  La reservacion no existe o no pertenece al dominio.
+--   50040  El bloque de disponibilidad ya esta ocupado o tiene una reservacion activa.
+--   50041  El bloque se solapa con un bloque activo existente en la misma localidad.
+--   50042  El nuevo bloque de disponibilidad (reagendar) ya esta ocupado.
+--
+-- Nota de responsabilidad (anti-doble-efecto): estos procedimientos NO
+-- insertan en codigos_de_rastreos ni en registros, y NUNCA reactivan un
+-- bloque de disponibilidad (SET activo = 1). Esos efectos secundarios
+-- quedan a cargo de los triggers del Work Package WP4.
+-- ============================================================
 
-WITH cat_list AS (
-    SELECT name, ROW_NUMBER() OVER(ORDER BY name) AS rn FROM (VALUES
-    (N'Cortes'), (N'Tintura'), (N'Masajes'), (N'Consultas'),
-    (N'Estética facial'), (N'Pediatría'), (N'Limpieza'),
-    (N'Odontología'), (N'Fitness'), (N'Terapias'),
-    (N'Uñas'), (N'Depilación'), (N'Revisiones'),
-    (N'Pack pareja'), (N'Promociones'),
-    (N'Barbería'), (N'Maquillaje'), (N'Spa'),
-    (N'Quiropráctica'), (N'Nutrición'),
-    (N'Acupuntura'), (N'Fisioterapia'), (N'Odontopediatría'),
-    (N'Veterinaria'), (N'Estética avanzada'),
-    (N'Cuidado capilar'), (N'Depilación láser'),
-    (N'Bienestar'), (N'Yoga'), (N'Pilates'),
-    (N'Kinesiología'), (N'Reflexología'), (N'Aromaterapia'),
-    (N'Hidroterapia'), (N'Fitoterapia'),
-    (N'Radiestesia'), (N'Reiki'), (N'Medicina general'),
-    (N'Pedagogía'), (N'Logopedia'),
-    (N'Dermatología'), (N'Tricología'), (N'Ortodoncia'),
-    (N'Blanqueamiento'), (N'Cirugía oral'),
-    (N'Periodoncia'), (N'Endodoncia'), (N'Implantes'),
-    (N'Radiografía'), (N'Odontología general')
-) t(name)
-)
-INSERT INTO service_categories (tenant_id, name, description, is_active)
-OUTPUT inserted.category_id INTO @ca (id)
-SELECT tn.id, cl.name, CONCAT(N'Categoría de ', cl.name), 1
-FROM cat_list cl
-JOIN @tn tn ON tn.rid = cl.rn;
+USE mbm_booking;
+GO
 
--- ====================================================================
--- SERVICES (50 realistas)
--- ====================================================================
+-- ------------------------------------------------------------
+-- 1. sp_crear_dominio
+-- Crea un dominio (tenant) en estado 'pendiente'.
+-- ------------------------------------------------------------
+CREATE OR ALTER PROCEDURE sp_crear_dominio
+    @tipo_negocio_id   INT,
+    @nombre            NVARCHAR(200),
+    @slug              NVARCHAR(100),
+    @correo            NVARCHAR(254),
+    @telefono          NVARCHAR(30)   = NULL,
+    @descripcion       NVARCHAR(MAX)  = NULL,
+    @logo_url          NVARCHAR(500)  = NULL,
+    @mensaje_publico   NVARCHAR(500)  = NULL,
+    @dominio_id        INT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
 
-WITH service_list AS (
-    SELECT name, dur, pr, ROW_NUMBER() OVER(ORDER BY name) AS rn FROM (VALUES
-    (N'Corte de cabello hombre',     30,  6000),
-    (N'Corte de cabello mujer',      45,  9000),
-    (N'Afeitado tradicional',        20,  5000),
-    (N'Lavado y peinado',            25,  7000),
-    (N'Tinte completo',              90, 35000),
-    (N'Manicure clásico',            40, 12000),
-    (N'Pedicure spa',                50, 15000),
-    (N'Masaje relajante',            60, 25000),
-    (N'Masaje descontracturante',    45, 30000),
-    (N'Consulta general',            30, 20000),
-    (N'Baño y corte mascota',        50, 15000),
-    (N'Corte mascota raza pequeña',  30, 10000),
-    (N'Limpieza facial profunda',    45, 22000),
-    (N'Depilación con cera',         30, 10000),
-    (N'Revisión dental',             20, 15000),
-    (N'Limpieza dental',             40, 30000),
-    (N'Sesión de gym dirigida',      60,  8000),
-    (N'Terapia de relajación',       50, 20000),
-    (N'Pack novia completo',        150, 75000),
-    (N'Corte y barba combo',         40, 10000),
-    (N'Peinado para fiestas',        60, 18000),
-    (N'Tinte con mechas',            120, 45000),
-    (N'Masaje con piedras calientes', 75, 35000),
-    (N'Consulta veterinaria general', 30, 18000),
-    (N'Vacunación de mascotas',      20, 12000),
-    (N'Corte mascota raza grande',   60, 20000),
-    (N'Exfoliación corporal',        50, 25000),
-    (N'Mascarilla facial',           30, 15000),
-    (N'Radiofrecuencia facial',      60, 40000),
-    (N'Depilación láser axilas',     30, 25000),
-    (N'Ortodoncia inicial',          45, 35000),
-    (N'Blanqueamiento dental',       90, 60000),
-    (N'Rutina de pesas guiada',      60, 10000),
-    (N'Yoga grupal',                 60,  8000),
-    (N'Spinning',                    45,  7000),
-    (N'Terapia psicológica',         50, 30000),
-    (N'Evaluación nutricional',      40, 22000),
-    (N'Acupuntura',                  45, 20000),
-    (N'Reflexología',                50, 18000),
-    (N'Maquillaje profesional',      90, 35000),
-    (N'Extensiones de pestañas',     60, 25000),
-    (N'Uñas acrílicas',             75, 20000),
-    (N'Gelish',                      45, 12000),
-    (N'Corte y diseño de cejas',     20,  5000),
-    (N'Tratamiento capilar',         60, 30000),
-    (N'Alisado permanente',         120, 55000),
-    (N'Hidratación facial',          45, 20000),
-    (N'Consulta dermatológica',      30, 25000),
-    (N'Limpieza de cutis',           50, 28000),
-    (N'Pack spa pareja',            120, 60000)
-) t(name, dur, pr)
-)
-INSERT INTO services (tenant_id, category_id, name, description, duration_minutes, price, show_price, is_active)
-OUTPUT inserted.service_id INTO @sv (id)
-SELECT tn.id, ca.id, sl.name, CONCAT(N'Servicio de ', sl.name), sl.dur, sl.pr, 1, 1
-FROM service_list sl
-JOIN @tn tn ON tn.rid = sl.rn
-JOIN @ca ca ON ca.rid = tn.rid;
+    IF NOT EXISTS (SELECT 1 FROM tipos_negocios WHERE tipo_negocio_id = @tipo_negocio_id)
+        THROW 50020, 'El tipo de negocio especificado no existe.', 1;
 
--- ====================================================================
--- LOCATIONS (50 direcciones ticas)
--- ====================================================================
+    IF EXISTS (SELECT 1 FROM dominios WHERE slug = @slug)
+        THROW 50002, 'El slug ya esta en uso por otro dominio.', 1;
 
-INSERT INTO locations (tenant_id, name, address, phone, is_main, is_active)
-OUTPUT inserted.location_id INTO @lc (id)
-SELECT tn.id, name, addr, CONCAT(N'2256-', RIGHT(CONCAT(N'000', 500 + ROW_NUMBER() OVER(ORDER BY name)), 4)), 0, 1
-FROM (
+    DECLARE @estado_pendiente_id INT =
+        (SELECT dominio_estado_id FROM estados_dominios WHERE nombre = N'pendiente');
+
+    INSERT INTO dominios
+        (tipo_negocio_id, dominio_estado_id, nombre, slug, correo, telefono, descripcion, logo_url, mensaje_publico)
     VALUES
-    (1, N'Sede Central',     N'Del Banco Nacional 100 m sur, San Pedro'),
-    (2, N'Sucursal Escazú',  N'Frente a Multiplaza Escazú, local 5'),
-    (3, N'Santa Ana',        N'Contiguo al Palí de Santa Ana'),
-    (4, N'Moravia',          N'300 m norte de la iglesia de Moravia'),
-    (5, N'Desamparados',     N'Costado sur del parque de Desamparados'),
-    (6, N'Rohrmoser',        N'Del Automercado 200 m oeste'),
-    (7, N'Curridabat',       N'Plaza del Sol, local 12'),
-    (8, N'Alajuela Central', N'50 m este de la Catedral, Alajuela'),
-    (9, N'Heredia',          N'Frente al Fortín, Heredia centro'),
-    (10,N'Cartago',          N'100 m norte de las Ruinas, Cartago'),
-    (1, N'Guadalupe',        N'Del antiguo Palí 150 m norte'),
-    (2, N'San José centro',  N'Avenida Central, calle 9'),
-    (3, N'Barrio Escalante', N'Calle 33, contiguo a la soda'),
-    (4, N'Tibás',            N'200 m sur del Mall San Pedro'),
-    (1, N'Hatillo',          N'Frente al parque de Hatillo 3'),
-    (2, N'Santa Ana Centro', N'50 m este de la iglesia'),
-    (5, N'San José Centro',  N'Calle 2, avenida 6'),
-    (6, N'Rohrmoser II',     N'200 m norte del Colegio de Abogados'),
-    (9, N'Pérez Zeledón',    N'100 m sur del Banco Popular'),
-    (3, N'La Sabana',        N'Frente al Parque Metropolitano'),
-    (1, N'Zapote',           N'Del cementerio 50 m norte'),
-    (2, N'Tibás Norte',      N'200 m oeste de la escuela'),
-    (3, N'Heredia Montaña',  N'Carretera a San Rafael 1 km'),
-    (7, N'Curridabat Este',  N'Condominio Los Pinos, casa 8'),
-    (1, N'Dos Ríos',         N'Del Ebáis 150 m sur'),
-    (8, N'Sabana Sur',       N'Edificio Medical, piso 4'),
-    (3, N'Barrio Amón',      N'Casa amarilla esquinera'),
-    (4, N'Moravia Norte',    N'Contiguo a la bomba'),
-    (9, N'San Pedro',        N'Del parque 100 m este'),
-    (10,N'Heredia Centro',   N'Contiguo al Banco Nacional'),
-    (1, N'Alajuela centro',  N'50 m oeste del parque'),
-    (2, N'Escazú Este',      N'Plaza Itskatzú, local 3'),
-    (3, N'Guanacaste',       N'Playa Hermosa, contiguo al hotel'),
-    (4, N'Alajuela Oeste',   N'200 m sur de la gasolinera'),
-    (1, N'Santo Domingo',    N'Frente a la iglesia católica'),
-    (10,N'San José Centro',  N'Calle 11, avenida 3'),
-    (4, N'Pérez Zeledón Sur',N'200 m sur del hospital'),
-    (2, N'Rohrmoser Centro', N'Plaza Rohrmoser, local 7'),
-    (1, N'Tres Ríos',        N'Del palí 100 m este'),
-    (5, N'Curridabat Oeste', N'Detrás del periódico La Nación'),
-    (3, N'San José Central', N'Calle 5, contiguo al Teatro'),
-    (1, N'Barrio Escalante 2',N'Calle 37, casa blanca esquina'),
-    (9, N'San José Mujeres', N'Barrio La California, local 9'),
-    (8, N'Santa Ana Este',   N'Plaza Santa Ana, piso 2'),
-    (10,N'Heredia Oeste',    N'Del parque 300 m oeste'),
-    (1, N'San José Centro',  N'Calle 1, frente al parque'),
-    (7, N'Escazú Lujo',      N'Multiplaza Escazú, local 20'),
-    (4, N'San José 24H',     N'Calle 14, contiguo a la Clínica'),
-    (2, N'Desamparados Sur', N'100 m sur del mercado'),
-    (8, N'Santa Ana Centro', N'Contiguo al BAC San José')
-) t(tid, name, addr)
-JOIN @tn tn ON tn.rid = t.tid;
+        (@tipo_negocio_id, @estado_pendiente_id, @nombre, @slug, @correo, @telefono, @descripcion, @logo_url, @mensaje_publico);
 
--- ====================================================================
--- BUSINESS HOURS
--- ====================================================================
-
-INSERT INTO business_hours (tenant_id, location_id, day_of_week, open_time, close_time, is_closed)
-SELECT
-    tn.id, lc.id,
-    n.n - 1,
-    CASE n.n - 1
-        WHEN 0 THEN NULL WHEN 6 THEN NULL
-        ELSE CAST(DATEADD(MINUTE, 480 + (n.n % 3) * 60, '00:00') AS TIME)
-    END,
-    CASE n.n - 1
-        WHEN 0 THEN NULL WHEN 6 THEN NULL
-        ELSE CAST(DATEADD(MINUTE, 540 + (n.n % 3) * 60, '00:00') AS TIME)
-    END,
-    CASE WHEN n.n - 1 IN (0, 6) THEN 1 ELSE 0 END
-FROM @ns n
-JOIN @tn tn ON tn.rid = n.n
-JOIN @lc lc ON lc.rid = n.n;
-
--- ====================================================================
--- AVAILABILITY BLOCKS
--- ====================================================================
-
-INSERT INTO availability_blocks (tenant_id, location_id, block_date, start_time, end_time, is_active)
-OUTPUT inserted.availability_block_id INTO @bl (id)
-SELECT
-    tn.id, lc.id,
-    DATEADD(DAY, n.n, CAST(GETUTCDATE() AS DATE)),
-    CAST(DATEADD(MINUTE, 480 + (n.n % 8) * 30, '00:00') AS TIME),
-    CAST(DATEADD(MINUTE, 510 + (n.n % 8) * 30, '00:00') AS TIME),
-    1
-FROM @ns n
-JOIN @tn tn ON tn.rid = n.n
-JOIN @lc lc ON lc.rid = n.n;
-
--- ====================================================================
--- BOOKINGS
--- ====================================================================
-
-INSERT INTO bookings (
-    tenant_id, customer_id, service_id, location_id,
-    availability_block_id, booking_status_id,
-    booking_date, start_time, end_time,
-    customer_notes, internal_notes
-)
-OUTPUT inserted.booking_id INTO @bk (id)
-SELECT
-    tn.id, cu.id, sv.id, lc.id, bl.id,
-    (SELECT TOP 1 id FROM @bs WHERE rid = 1 + ((n.n - 1) % 5)),
-    DATEADD(DAY, n.n, CAST(GETUTCDATE() AS DATE)),
-    CAST(DATEADD(MINUTE, 480 + (n.n % 8) * 30, '00:00') AS TIME),
-    CAST(DATEADD(MINUTE, 510 + (n.n % 8) * 30, '00:00') AS TIME),
-    CASE (n.n % 6)
-        WHEN 0 THEN N'Prefiero en la mañana'
-        WHEN 1 THEN N'Antes del mediodía por fa'
-        WHEN 2 THEN N'En la tarde después de las 2'
-        WHEN 3 THEN N'No tengo preferencia'
-        WHEN 4 THEN N'Llamar antes de confirmar'
-        WHEN 5 THEN N'Que no sea muy temprano'
-    END,
-    NULL
-FROM @ns n
-JOIN @tn tn ON tn.rid = n.n
-JOIN @cu cu ON cu.rid = n.n
-JOIN @sv sv ON sv.rid = n.n
-JOIN @lc lc ON lc.rid = n.n
-JOIN @bl bl ON bl.rid = n.n;
-
--- ====================================================================
--- TRACKING CODES
--- ====================================================================
-
-INSERT INTO tracking_codes (booking_id, tracking_code, expires_at, is_active)
-OUTPUT inserted.tracking_id INTO @sk (id)
-SELECT
-    bk.id,
-    CONCAT(N'MBM-',
-        UPPER(SUBSTRING(CONVERT(NVARCHAR(36), NEWID()), 1, 2)),
-        RIGHT(CONCAT(N'00', bk.id), 2)
-    ),
-    DATEADD(DAY, 30, SYSUTCDATETIME()),
-    1
-FROM @bk bk;
-
--- ====================================================================
--- AUDIT LOGS
--- ====================================================================
-
-INSERT INTO audit_logs (tenant_id, owner_id, superadmin_id, action, entity_name, entity_id, old_value, new_value)
-SELECT
-    tn.id, ow.id, NULL,
-    N'tenant_created', N'tenants', tn.id,
-    NULL,
-    CONCAT(N'Negocio creado: ', t.name, N' - pura vida!')
-FROM @tn tn
-JOIN @ow ow ON ow.rid = tn.rid
-JOIN tenants t ON t.tenant_id = tn.id;
+    SET @dominio_id = SCOPE_IDENTITY();
+END
+GO
+PRINT ' [04-procedures] sp_crear_dominio ... OK';
 GO
 
+-- ------------------------------------------------------------
+-- 2. sp_crear_dueno
+-- Crea el dueno (owner) de un dominio existente.
+-- ------------------------------------------------------------
+CREATE OR ALTER PROCEDURE sp_crear_dueno
+    @dominio_id             INT,
+    @nombre                 NVARCHAR(100),
+    @apellido_1             NVARCHAR(100),
+    @apellido_2             NVARCHAR(100)  = NULL,
+    @correo                 NVARCHAR(254),
+    @contrasena_encriptada  NVARCHAR(512),
+    @telefono               NVARCHAR(30)   = NULL,
+    @dueno_id               INT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
 
+    IF NOT EXISTS (SELECT 1 FROM dominios WHERE dominio_id = @dominio_id)
+        THROW 50021, 'El dominio especificado no existe.', 1;
+
+    INSERT INTO duenos_de_dominios
+        (dominio_id, nombre, apellido_1, apellido_2, correo, contrasena_encriptada, telefono)
+    VALUES
+        (@dominio_id, @nombre, @apellido_1, @apellido_2, @correo, @contrasena_encriptada, @telefono);
+
+    SET @dueno_id = SCOPE_IDENTITY();
+END
 GO
+PRINT ' [04-procedures] sp_crear_dueno ... OK';
+GO
+
+-- ------------------------------------------------------------
+-- 3. sp_activar_dominio
+-- Cambia el estado del dominio a 'activo'.
+-- ------------------------------------------------------------
+CREATE OR ALTER PROCEDURE sp_activar_dominio
+    @dominio_id     INT,
+    @superadmin_id  INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM dominios WHERE dominio_id = @dominio_id)
+        THROW 50021, 'El dominio especificado no existe.', 1;
+
+    IF NOT EXISTS (SELECT 1 FROM superadmins WHERE superadmin_id = @superadmin_id)
+        THROW 50022, 'El superadmin especificado no existe.', 1;
+
+    UPDATE dominios
+    SET dominio_estado_id = (SELECT dominio_estado_id FROM estados_dominios WHERE nombre = N'activo'),
+        actualizado_en    = SYSUTCDATETIME()
+    WHERE dominio_id = @dominio_id;
+END
+GO
+PRINT ' [04-procedures] sp_activar_dominio ... OK';
+GO
+
+-- ------------------------------------------------------------
+-- 4. sp_suspender_dominio
+-- Cambia el estado del dominio a 'suspendido'.
+-- ------------------------------------------------------------
+CREATE OR ALTER PROCEDURE sp_suspender_dominio
+    @dominio_id     INT,
+    @superadmin_id  INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM dominios WHERE dominio_id = @dominio_id)
+        THROW 50021, 'El dominio especificado no existe.', 1;
+
+    IF NOT EXISTS (SELECT 1 FROM superadmins WHERE superadmin_id = @superadmin_id)
+        THROW 50022, 'El superadmin especificado no existe.', 1;
+
+    UPDATE dominios
+    SET dominio_estado_id = (SELECT dominio_estado_id FROM estados_dominios WHERE nombre = N'suspendido'),
+        actualizado_en    = SYSUTCDATETIME()
+    WHERE dominio_id = @dominio_id;
+END
+GO
+PRINT ' [04-procedures] sp_suspender_dominio ... OK';
+GO
+
+-- ------------------------------------------------------------
+-- 5. sp_crear_servicio
+-- Crea un servicio; la categoria debe pertenecer al mismo dominio.
+-- ------------------------------------------------------------
+CREATE OR ALTER PROCEDURE sp_crear_servicio
+    @dominio_id        INT,
+    @categoria_id      INT,
+    @nombre            NVARCHAR(200),
+    @descripcion       NVARCHAR(MAX)   = NULL,
+    @duracion_minutos  INT,
+    @precio            DECIMAL(10,2)   = NULL,
+    @mostrar_precio    BIT             = 0,
+    @servicio_id       INT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM dominios WHERE dominio_id = @dominio_id)
+        THROW 50021, 'El dominio especificado no existe.', 1;
+
+    IF NOT EXISTS (SELECT 1 FROM categorias_servicios WHERE categoria_id = @categoria_id AND dominio_id = @dominio_id)
+        THROW 50023, 'La categoria no existe o no pertenece al dominio.', 1;
+
+    INSERT INTO servicios
+        (dominio_id, categoria_id, nombre, descripcion, duracion_minutos, precio, mostrar_precio)
+    VALUES
+        (@dominio_id, @categoria_id, @nombre, @descripcion, @duracion_minutos, @precio, @mostrar_precio);
+
+    SET @servicio_id = SCOPE_IDENTITY();
+END
+GO
+PRINT ' [04-procedures] sp_crear_servicio ... OK';
+GO
+
+-- ------------------------------------------------------------
+-- 6. sp_actualizar_servicio
+-- Actualiza campos de un servicio (patron COALESCE: NULL = sin cambio).
+-- ------------------------------------------------------------
+CREATE OR ALTER PROCEDURE sp_actualizar_servicio
+    @servicio_id       INT,
+    @dominio_id        INT,
+    @categoria_id      INT            = NULL,
+    @nombre            NVARCHAR(200)  = NULL,
+    @descripcion       NVARCHAR(MAX)  = NULL,
+    @duracion_minutos  INT            = NULL,
+    @precio            DECIMAL(10,2)  = NULL,
+    @mostrar_precio    BIT            = NULL,
+    @activo            BIT            = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM servicios WHERE servicio_id = @servicio_id AND dominio_id = @dominio_id)
+        THROW 50024, 'El servicio no existe o no pertenece al dominio.', 1;
+
+    IF @categoria_id IS NOT NULL
+       AND NOT EXISTS (SELECT 1 FROM categorias_servicios WHERE categoria_id = @categoria_id AND dominio_id = @dominio_id)
+        THROW 50023, 'La categoria no existe o no pertenece al dominio.', 1;
+
+    UPDATE servicios
+    SET categoria_id     = COALESCE(@categoria_id, categoria_id),
+        nombre           = COALESCE(@nombre, nombre),
+        descripcion      = COALESCE(@descripcion, descripcion),
+        duracion_minutos = COALESCE(@duracion_minutos, duracion_minutos),
+        precio           = COALESCE(@precio, precio),
+        mostrar_precio   = COALESCE(@mostrar_precio, mostrar_precio),
+        activo           = COALESCE(@activo, activo),
+        actualizado_en   = SYSUTCDATETIME()
+    WHERE servicio_id = @servicio_id AND dominio_id = @dominio_id;
+END
+GO
+PRINT ' [04-procedures] sp_actualizar_servicio ... OK';
+GO
+
+-- ------------------------------------------------------------
+-- 7. sp_crear_bloque_disponibilidad
+-- Crea un bloque de disponibilidad validando pertenencia de la
+-- localidad y no-solapamiento con bloques activos de esa localidad.
+-- ------------------------------------------------------------
+CREATE OR ALTER PROCEDURE sp_crear_bloque_disponibilidad
+    @dominio_id       INT,
+    @localidad_id     INT,
+    @fecha_de_bloque  DATE,
+    @fecha_inicio     DATETIME2,
+    @fecha_final      DATETIME2,
+    @bloque_id        INT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM dominios WHERE dominio_id = @dominio_id)
+        THROW 50021, 'El dominio especificado no existe.', 1;
+
+    IF NOT EXISTS (SELECT 1 FROM localidades WHERE localidad_id = @localidad_id AND dominio_id = @dominio_id)
+        THROW 50025, 'La localidad no existe o no pertenece al dominio.', 1;
+
+    IF @fecha_inicio >= @fecha_final
+        THROW 50004, 'La fecha de inicio del bloque debe ser anterior a la fecha final.', 1;
+
+    IF EXISTS (
+        SELECT 1
+        FROM bloques_de_disponibilidad
+        WHERE localidad_id = @localidad_id
+          AND activo = 1
+          AND fecha_inicio < @fecha_final
+          AND fecha_final   > @fecha_inicio
+    )
+        THROW 50041, 'El bloque se solapa con un bloque activo existente en la misma localidad.', 1;
+
+    INSERT INTO bloques_de_disponibilidad
+        (dominio_id, localidad_id, fecha_de_bloque, fecha_inicio, fecha_final)
+    VALUES
+        (@dominio_id, @localidad_id, @fecha_de_bloque, @fecha_inicio, @fecha_final);
+
+    SET @bloque_id = SCOPE_IDENTITY();
+END
+GO
+PRINT ' [04-procedures] sp_crear_bloque_disponibilidad ... OK';
+GO
+
+-- ------------------------------------------------------------
+-- 8. sp_crear_cliente
+-- Crea un cliente o reutiliza uno existente por (dominio_id, correo).
+-- ------------------------------------------------------------
+CREATE OR ALTER PROCEDURE sp_crear_cliente
+    @dominio_id   INT,
+    @nombre       NVARCHAR(100),
+    @apellido_1   NVARCHAR(100),
+    @apellido_2   NVARCHAR(100)  = NULL,
+    @correo       NVARCHAR(254),
+    @telefono     NVARCHAR(30),
+    @notas        NVARCHAR(500)  = NULL,
+    @cliente_id   INT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM dominios WHERE dominio_id = @dominio_id)
+        THROW 50021, 'El dominio especificado no existe.', 1;
+
+    SELECT @cliente_id = cliente_id
+    FROM clientes
+    WHERE dominio_id = @dominio_id AND correo = @correo;
+
+    IF @cliente_id IS NULL
+    BEGIN
+        INSERT INTO clientes
+            (dominio_id, nombre, apellido_1, apellido_2, correo, telefono, notas)
+        VALUES
+            (@dominio_id, @nombre, @apellido_1, @apellido_2, @correo, @telefono, @notas);
+
+        SET @cliente_id = SCOPE_IDENTITY();
+    END
+END
+GO
+PRINT ' [04-procedures] sp_crear_cliente ... OK';
+GO
+
+-- ------------------------------------------------------------
+-- 9. sp_crear_reservacion
+-- Procedimiento critico: reserva un bloque de disponibilidad de forma
+-- transaccional y con bloqueo pesimista (UPDLOCK, HOLDLOCK) para evitar
+-- doble reserva bajo concurrencia.
+-- No inserta codigos_de_rastreos ni registros (trigger WP4).
+-- ------------------------------------------------------------
+CREATE OR ALTER PROCEDURE sp_crear_reservacion
+    @dominio_id                  INT,
+    @servicio_id                 INT,
+    @localidad_id                INT,
+    @bloque_disponibilidad_id    INT,
+    @cliente_id                  INT             = NULL,
+    @cliente_nombre              NVARCHAR(100)   = NULL,
+    @cliente_apellido_1          NVARCHAR(100)   = NULL,
+    @cliente_apellido_2          NVARCHAR(100)   = NULL,
+    @cliente_correo              NVARCHAR(254)   = NULL,
+    @cliente_telefono            NVARCHAR(30)    = NULL,
+    @cliente_notas               NVARCHAR(500)   = NULL,
+    @nota_cliente                NVARCHAR(500)   = NULL,
+    @reserva_id                  INT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    IF @cliente_id IS NULL
+       AND (@cliente_nombre IS NULL OR @cliente_apellido_1 IS NULL OR @cliente_correo IS NULL OR @cliente_telefono IS NULL)
+        THROW 50005, 'Debe proporcionar cliente_id o los datos completos del cliente (nombre, apellido_1, correo, telefono).', 1;
+
+    BEGIN TRY
+        BEGIN TRAN;
+
+        DECLARE @dominio_estado_id INT;
+        SELECT @dominio_estado_id = dominio_estado_id FROM dominios WHERE dominio_id = @dominio_id;
+
+        IF @dominio_estado_id IS NULL
+            THROW 50021, 'El dominio especificado no existe.', 1;
+
+        IF @dominio_estado_id <> (SELECT dominio_estado_id FROM estados_dominios WHERE nombre = N'activo')
+            THROW 50001, 'El dominio no se encuentra activo.', 1;
+
+        IF NOT EXISTS (SELECT 1 FROM servicios WHERE servicio_id = @servicio_id AND dominio_id = @dominio_id)
+            THROW 50024, 'El servicio no existe o no pertenece al dominio.', 1;
+
+        IF NOT EXISTS (SELECT 1 FROM localidades WHERE localidad_id = @localidad_id AND dominio_id = @dominio_id)
+            THROW 50025, 'La localidad no existe o no pertenece al dominio.', 1;
+
+        IF @cliente_id IS NOT NULL
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM clientes WHERE cliente_id = @cliente_id AND dominio_id = @dominio_id)
+                THROW 50027, 'El cliente no existe o no pertenece al dominio.', 1;
+        END
+        ELSE
+        BEGIN
+            EXEC sp_crear_cliente
+                @dominio_id  = @dominio_id,
+                @nombre      = @cliente_nombre,
+                @apellido_1  = @cliente_apellido_1,
+                @apellido_2  = @cliente_apellido_2,
+                @correo      = @cliente_correo,
+                @telefono    = @cliente_telefono,
+                @notas       = @cliente_notas,
+                @cliente_id  = @cliente_id OUTPUT;
+        END
+
+        -- Bloqueo pesimista del bloque para evitar doble reserva concurrente.
+        DECLARE @bloque_activo        BIT,
+                @bloque_dominio_id    INT,
+                @bloque_localidad_id  INT,
+                @fecha_inicio         DATETIME2,
+                @fecha_final          DATETIME2;
+
+        SELECT @bloque_activo       = activo,
+               @bloque_dominio_id   = dominio_id,
+               @bloque_localidad_id = localidad_id,
+               @fecha_inicio        = fecha_inicio,
+               @fecha_final         = fecha_final
+        FROM bloques_de_disponibilidad WITH (UPDLOCK, HOLDLOCK)
+        WHERE bloque_disponibilidad_id = @bloque_disponibilidad_id;
+
+        IF @bloque_dominio_id IS NULL
+            THROW 50026, 'El bloque de disponibilidad no existe.', 1;
+
+        IF @bloque_dominio_id <> @dominio_id OR @bloque_localidad_id <> @localidad_id
+            THROW 50026, 'El bloque de disponibilidad no pertenece al dominio o a la localidad indicados.', 1;
+
+        IF @bloque_activo = 0
+            THROW 50040, 'El bloque de disponibilidad ya esta ocupado.', 1;
+
+        IF EXISTS (
+            SELECT 1
+            FROM reservaciones
+            WHERE bloque_disponibilidad_id = @bloque_disponibilidad_id
+              AND estado_reservacion_id <> (SELECT estado_reservacion_id FROM estados_reservaciones WHERE nombre = N'cancelada')
+        )
+            THROW 50040, 'Ya existe una reservacion activa para este bloque de disponibilidad.', 1;
+
+        INSERT INTO reservaciones
+            (dominio_id, cliente_id, servicio_id, localidad_id, bloque_disponibilidad_id, estado_reservacion_id, fecha_inicio, fecha_final, nota_cliente)
+        VALUES
+            (@dominio_id, @cliente_id, @servicio_id, @localidad_id, @bloque_disponibilidad_id,
+             (SELECT estado_reservacion_id FROM estados_reservaciones WHERE nombre = N'pendiente'),
+             @fecha_inicio, @fecha_final, @nota_cliente);
+
+        SET @reserva_id = SCOPE_IDENTITY();
+
+        -- Ocupa el bloque. La liberacion (activo = 1) nunca ocurre aqui.
+        UPDATE bloques_de_disponibilidad
+        SET activo = 0, actualizado_en = SYSUTCDATETIME()
+        WHERE bloque_disponibilidad_id = @bloque_disponibilidad_id;
+
+        COMMIT TRAN;
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() <> 0
+            ROLLBACK TRAN;
+        THROW;
+    END CATCH
+END
+GO
+PRINT ' [04-procedures] sp_crear_reservacion ... OK';
+GO
+
+-- ------------------------------------------------------------
+-- 10. sp_confirmar_reservacion
+-- Transiciona la reservacion a 'confirmada'.
+-- ------------------------------------------------------------
+CREATE OR ALTER PROCEDURE sp_confirmar_reservacion
+    @reserva_id  INT,
+    @dominio_id  INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @estado_actual_id INT;
+
+    SELECT @estado_actual_id = estado_reservacion_id
+    FROM reservaciones
+    WHERE reserva_id = @reserva_id AND dominio_id = @dominio_id;
+
+    IF @estado_actual_id IS NULL
+        THROW 50028, 'La reservacion no existe o no pertenece al dominio.', 1;
+
+    IF @estado_actual_id NOT IN (
+        (SELECT estado_reservacion_id FROM estados_reservaciones WHERE nombre = N'pendiente'),
+        (SELECT estado_reservacion_id FROM estados_reservaciones WHERE nombre = N'reagendada')
+    )
+        THROW 50003, 'El estado actual de la reservacion no permite confirmarla.', 1;
+
+    UPDATE reservaciones
+    SET estado_reservacion_id = (SELECT estado_reservacion_id FROM estados_reservaciones WHERE nombre = N'confirmada'),
+        actualizado_en        = SYSUTCDATETIME()
+    WHERE reserva_id = @reserva_id AND dominio_id = @dominio_id;
+END
+GO
+PRINT ' [04-procedures] sp_confirmar_reservacion ... OK';
+GO
+
+-- ------------------------------------------------------------
+-- 11. sp_cancelar_reservacion
+-- Transiciona la reservacion a 'cancelada'. @dominio_id es opcional
+-- para soportar el flujo publico por codigo de rastreo (sin sesion
+-- de dominio). No libera el bloque (trigger WP4).
+-- ------------------------------------------------------------
+CREATE OR ALTER PROCEDURE sp_cancelar_reservacion
+    @reserva_id  INT,
+    @dominio_id  INT = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @estado_actual_id INT;
+
+    SELECT @estado_actual_id = estado_reservacion_id
+    FROM reservaciones
+    WHERE reserva_id = @reserva_id
+      AND (@dominio_id IS NULL OR dominio_id = @dominio_id);
+
+    IF @estado_actual_id IS NULL
+        THROW 50028, 'La reservacion no existe o no pertenece al dominio.', 1;
+
+    IF @estado_actual_id IN (
+        (SELECT estado_reservacion_id FROM estados_reservaciones WHERE nombre = N'cancelada'),
+        (SELECT estado_reservacion_id FROM estados_reservaciones WHERE nombre = N'completada')
+    )
+        THROW 50003, 'El estado actual de la reservacion no permite cancelarla.', 1;
+
+    -- Nota WP4: la liberacion del bloque de disponibilidad (activo = 1)
+    -- la realiza un trigger; este procedimiento no la ejecuta.
+    UPDATE reservaciones
+    SET estado_reservacion_id = (SELECT estado_reservacion_id FROM estados_reservaciones WHERE nombre = N'cancelada'),
+        actualizado_en        = SYSUTCDATETIME()
+    WHERE reserva_id = @reserva_id
+      AND (@dominio_id IS NULL OR dominio_id = @dominio_id);
+END
+GO
+PRINT ' [04-procedures] sp_cancelar_reservacion ... OK';
+GO
+
+-- ------------------------------------------------------------
+-- 12. sp_reagendar_reservacion
+-- Mueve la reservacion a un nuevo bloque de disponibilidad, con el
+-- mismo bloqueo pesimista usado en sp_crear_reservacion.
+-- ------------------------------------------------------------
+CREATE OR ALTER PROCEDURE sp_reagendar_reservacion
+    @reserva_id       INT,
+    @dominio_id       INT,
+    @nuevo_bloque_id  INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    BEGIN TRY
+        BEGIN TRAN;
+
+        DECLARE @estado_actual_id INT, @localidad_id INT;
+
+        SELECT @estado_actual_id = estado_reservacion_id, @localidad_id = localidad_id
+        FROM reservaciones
+        WHERE reserva_id = @reserva_id AND dominio_id = @dominio_id;
+
+        IF @estado_actual_id IS NULL
+            THROW 50028, 'La reservacion no existe o no pertenece al dominio.', 1;
+
+        IF @estado_actual_id IN (
+            (SELECT estado_reservacion_id FROM estados_reservaciones WHERE nombre = N'cancelada'),
+            (SELECT estado_reservacion_id FROM estados_reservaciones WHERE nombre = N'completada')
+        )
+            THROW 50003, 'El estado actual de la reservacion no permite reagendarla.', 1;
+
+        DECLARE @bloque_activo        BIT,
+                @bloque_dominio_id    INT,
+                @bloque_localidad_id  INT,
+                @fecha_inicio         DATETIME2,
+                @fecha_final          DATETIME2;
+
+        SELECT @bloque_activo       = activo,
+               @bloque_dominio_id   = dominio_id,
+               @bloque_localidad_id = localidad_id,
+               @fecha_inicio        = fecha_inicio,
+               @fecha_final         = fecha_final
+        FROM bloques_de_disponibilidad WITH (UPDLOCK, HOLDLOCK)
+        WHERE bloque_disponibilidad_id = @nuevo_bloque_id;
+
+        IF @bloque_dominio_id IS NULL
+            THROW 50026, 'El nuevo bloque de disponibilidad no existe.', 1;
+
+        IF @bloque_dominio_id <> @dominio_id OR @bloque_localidad_id <> @localidad_id
+            THROW 50026, 'El nuevo bloque de disponibilidad no pertenece al dominio o a la localidad de la reservacion.', 1;
+
+        IF @bloque_activo = 0
+            THROW 50042, 'El nuevo bloque de disponibilidad ya esta ocupado.', 1;
+
+        IF EXISTS (
+            SELECT 1
+            FROM reservaciones
+            WHERE bloque_disponibilidad_id = @nuevo_bloque_id
+              AND estado_reservacion_id <> (SELECT estado_reservacion_id FROM estados_reservaciones WHERE nombre = N'cancelada')
+        )
+            THROW 50042, 'Ya existe una reservacion activa para el nuevo bloque de disponibilidad.', 1;
+
+        -- Nota WP4: la liberacion del bloque ANTERIOR (activo = 1) la
+        -- realiza un trigger; este procedimiento no la ejecuta.
+        UPDATE reservaciones
+        SET bloque_disponibilidad_id = @nuevo_bloque_id,
+            fecha_inicio             = @fecha_inicio,
+            fecha_final              = @fecha_final,
+            estado_reservacion_id    = (SELECT estado_reservacion_id FROM estados_reservaciones WHERE nombre = N'reagendada'),
+            actualizado_en           = SYSUTCDATETIME()
+        WHERE reserva_id = @reserva_id AND dominio_id = @dominio_id;
+
+        -- Ocupa el nuevo bloque. La liberacion del bloque anterior queda
+        -- a cargo del trigger WP4 (no se toca aqui).
+        UPDATE bloques_de_disponibilidad
+        SET activo = 0, actualizado_en = SYSUTCDATETIME()
+        WHERE bloque_disponibilidad_id = @nuevo_bloque_id;
+
+        COMMIT TRAN;
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() <> 0
+            ROLLBACK TRAN;
+        THROW;
+    END CATCH
+END
+GO
+PRINT ' [04-procedures] sp_reagendar_reservacion ... OK';
+GO
+
+-- ------------------------------------------------------------
+-- 13. sp_completar_reservacion
+-- Transiciona la reservacion a 'completada'.
+-- ------------------------------------------------------------
+CREATE OR ALTER PROCEDURE sp_completar_reservacion
+    @reserva_id  INT,
+    @dominio_id  INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @estado_actual_id INT;
+
+    SELECT @estado_actual_id = estado_reservacion_id
+    FROM reservaciones
+    WHERE reserva_id = @reserva_id AND dominio_id = @dominio_id;
+
+    IF @estado_actual_id IS NULL
+        THROW 50028, 'La reservacion no existe o no pertenece al dominio.', 1;
+
+    IF @estado_actual_id <> (SELECT estado_reservacion_id FROM estados_reservaciones WHERE nombre = N'confirmada')
+        THROW 50003, 'El estado actual de la reservacion no permite completarla.', 1;
+
+    UPDATE reservaciones
+    SET estado_reservacion_id = (SELECT estado_reservacion_id FROM estados_reservaciones WHERE nombre = N'completada'),
+        actualizado_en        = SYSUTCDATETIME()
+    WHERE reserva_id = @reserva_id AND dominio_id = @dominio_id;
+END
+GO
+PRINT ' [04-procedures] sp_completar_reservacion ... OK';
+GO
+
+PRINT ' [04-procedures] 13/13 procedimientos creados';
+GO
+
+-- ============================================================
+-- SECCION 05. FUNCIONES ESCALARES
+-- Fuente: database/scripts/05-functions.sql
+-- ============================================================
+
+-- ============================================================
+-- 05-functions.sql
+-- Proyecto: MBM - Multi-Tenant Booking Manager
+-- Contenido: 6 funciones escalares de utilidad sobre el esquema en espanol.
+-- Idempotente: usa CREATE OR ALTER, se puede reejecutar sin error.
+-- Ver docs/rename-map.csv para la equivalencia con los nombres en ingles.
+-- ============================================================
+
+USE mbm_booking;
+GO
+
+-- 1. fn_generar_codigo_rastreo ---------------------------------------------
+-- Formatea 'MBM-' + 6 caracteres alfanumericos derivados deterministicamente
+-- de @semilla. Las funciones escalares no pueden llamar NEWID(); el llamador
+-- debe generar la semilla (por ejemplo con NEWID()) y pasarla como parametro.
+-- Se excluyen los caracteres ambiguos 0/O y 1/I del alfabeto de salida.
+CREATE OR ALTER FUNCTION dbo.fn_generar_codigo_rastreo (@semilla UNIQUEIDENTIFIER)
+RETURNS NVARCHAR(50)
+AS
+BEGIN
+    DECLARE @charset NVARCHAR(32) = N'23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+    DECLARE @bytes VARBINARY(16) = CONVERT(VARBINARY(16), @semilla);
+    DECLARE @resultado NVARCHAR(6) = N'';
+    DECLARE @i INT = 1;
+    DECLARE @idx INT;
+
+    IF @semilla IS NULL
+        RETURN NULL;
+
+    WHILE @i <= 6
+    BEGIN
+        SET @idx = CAST(SUBSTRING(@bytes, @i, 1) AS TINYINT) % 32;
+        SET @resultado = @resultado + SUBSTRING(@charset, @idx + 1, 1);
+        SET @i = @i + 1;
+    END
+
+    RETURN N'MBM-' + @resultado;
+END
+GO
+PRINT '[05-functions] fn_generar_codigo_rastreo ... OK';
+GO
+
+-- 2. fn_dominio_activo -------------------------------------------------------
+-- 1 si el dominio existe, activo = 1 y su estado (estados_dominios) es 'activo'.
+CREATE OR ALTER FUNCTION dbo.fn_dominio_activo (@dominio_id INT)
+RETURNS BIT
+AS
+BEGIN
+    DECLARE @resultado BIT = 0;
+
+    IF EXISTS (
+        SELECT 1
+        FROM dominios d
+        JOIN estados_dominios ed ON ed.dominio_estado_id = d.dominio_estado_id
+        WHERE d.dominio_id = @dominio_id
+          AND d.activo = 1
+          AND ed.nombre = N'activo'
+    )
+        SET @resultado = 1;
+
+    RETURN @resultado;
+END
+GO
+PRINT '[05-functions] fn_dominio_activo ... OK';
+GO
+
+-- 3. fn_bloque_disponible -----------------------------------------------------
+-- 1 si el bloque existe, activo = 1 y no tiene ninguna reservacion en un
+-- estado distinto de 'cancelada' apuntandole.
+CREATE OR ALTER FUNCTION dbo.fn_bloque_disponible (@bloque_id INT)
+RETURNS BIT
+AS
+BEGIN
+    DECLARE @resultado BIT = 0;
+
+    IF EXISTS (
+        SELECT 1
+        FROM bloques_de_disponibilidad b
+        WHERE b.bloque_disponibilidad_id = @bloque_id
+          AND b.activo = 1
+    )
+    AND NOT EXISTS (
+        SELECT 1
+        FROM reservaciones r
+        JOIN estados_reservaciones er ON er.estado_reservacion_id = r.estado_reservacion_id
+        WHERE r.bloque_disponibilidad_id = @bloque_id
+          AND er.nombre <> N'cancelada'
+    )
+        SET @resultado = 1;
+
+    RETURN @resultado;
+END
+GO
+PRINT '[05-functions] fn_bloque_disponible ... OK';
+GO
+
+-- 4. fn_total_reservaciones_por_dominio ---------------------------------------
+CREATE OR ALTER FUNCTION dbo.fn_total_reservaciones_por_dominio (@dominio_id INT)
+RETURNS INT
+AS
+BEGIN
+    DECLARE @total INT;
+
+    SELECT @total = COUNT(*)
+    FROM reservaciones
+    WHERE dominio_id = @dominio_id;
+
+    RETURN ISNULL(@total, 0);
+END
+GO
+PRINT '[05-functions] fn_total_reservaciones_por_dominio ... OK';
+GO
+
+-- 5. fn_total_reservaciones_por_servicio ---------------------------------------
+CREATE OR ALTER FUNCTION dbo.fn_total_reservaciones_por_servicio (@servicio_id INT)
+RETURNS INT
+AS
+BEGIN
+    DECLARE @total INT;
+
+    SELECT @total = COUNT(*)
+    FROM reservaciones
+    WHERE servicio_id = @servicio_id;
+
+    RETURN ISNULL(@total, 0);
+END
+GO
+PRINT '[05-functions] fn_total_reservaciones_por_servicio ... OK';
+GO
+
+-- 6. fn_duracion_reservacion ---------------------------------------------------
+-- Duracion en minutos de una reservacion (fecha_final - fecha_inicio).
+CREATE OR ALTER FUNCTION dbo.fn_duracion_reservacion (@reserva_id INT)
+RETURNS INT
+AS
+BEGIN
+    DECLARE @minutos INT;
+
+    SELECT @minutos = DATEDIFF(MINUTE, fecha_inicio, fecha_final)
+    FROM reservaciones
+    WHERE reserva_id = @reserva_id;
+
+    RETURN @minutos;
+END
+GO
+PRINT '[05-functions] fn_duracion_reservacion ... OK';
+GO
+
+PRINT '[05-functions] 6/6 funciones creadas';
+GO
+
+-- ============================================================
+-- SECCION 06. VISTAS
+-- Fuente: database/scripts/06-views.sql
+-- ============================================================
+
+-- ============================================================
+-- 06-views.sql
+-- Proyecto: MBM - Multi-Tenant Booking Manager
+-- Contenido: 7 vistas de lectura sobre el esquema en espanol.
+-- Idempotente: usa CREATE OR ALTER, se puede reejecutar sin error.
+-- R6: toda vista referencia como minimo 2 tablas base.
+-- Ver docs/rename-map.csv para la equivalencia con los nombres en ingles.
+-- ============================================================
+
+USE mbm_booking;
+GO
+
+-- 1. vw_detalle_reservaciones ---------------------------------------------
+-- Detalle completo de cada reservacion (7 tablas).
+CREATE OR ALTER VIEW dbo.vw_detalle_reservaciones
+AS
+SELECT
+    r.reserva_id,
+    r.dominio_id,
+    d.nombre                                          AS dominio_nombre,
+    d.slug                                             AS dominio_slug,
+    c.cliente_id,
+    CONCAT_WS(N' ', c.nombre, c.apellido_1, c.apellido_2) AS cliente_nombre,
+    c.correo                                           AS cliente_correo,
+    s.servicio_id,
+    s.nombre                                           AS servicio_nombre,
+    s.duracion_minutos,
+    l.localidad_id,
+    l.nombre                                           AS localidad_nombre,
+    er.nombre                                          AS estado,
+    r.fecha_inicio,
+    r.fecha_final,
+    r.nota_cliente,
+    r.nota_interna,
+    cr.codigo_rastreo,
+    r.creado_en
+FROM reservaciones r
+JOIN dominios d ON d.dominio_id = r.dominio_id
+JOIN clientes c ON c.cliente_id = r.cliente_id
+JOIN servicios s ON s.servicio_id = r.servicio_id
+JOIN localidades l ON l.localidad_id = r.localidad_id
+JOIN estados_reservaciones er ON er.estado_reservacion_id = r.estado_reservacion_id
+LEFT JOIN codigos_de_rastreos cr ON cr.reserva_id = r.reserva_id;
+GO
+PRINT '[06-views] vw_detalle_reservaciones ... OK';
+GO
+
+-- 2. vw_agenda_diaria -------------------------------------------------------
+-- Pensada para filtrar por dominio_id + fecha.
+CREATE OR ALTER VIEW dbo.vw_agenda_diaria
+AS
+SELECT
+    r.dominio_id,
+    CAST(r.fecha_inicio AS DATE) AS fecha,
+    r.fecha_inicio,
+    r.fecha_final,
+    s.nombre                                           AS servicio_nombre,
+    CONCAT_WS(N' ', c.nombre, c.apellido_1, c.apellido_2) AS cliente_nombre,
+    l.nombre                                           AS localidad_nombre,
+    er.nombre                                          AS estado
+FROM reservaciones r
+JOIN clientes c ON c.cliente_id = r.cliente_id
+JOIN servicios s ON s.servicio_id = r.servicio_id
+JOIN localidades l ON l.localidad_id = r.localidad_id
+JOIN estados_reservaciones er ON er.estado_reservacion_id = r.estado_reservacion_id;
+GO
+PRINT '[06-views] vw_agenda_diaria ... OK';
+GO
+
+-- 3. vw_servicios_publicos ---------------------------------------------------
+-- Solo servicios activos, de categorias activas, de dominios activos.
+CREATE OR ALTER VIEW dbo.vw_servicios_publicos
+AS
+SELECT
+    s.servicio_id,
+    s.dominio_id,
+    d.slug                                             AS dominio_slug,
+    cat.nombre                                         AS categoria_nombre,
+    s.nombre,
+    s.descripcion,
+    s.duracion_minutos,
+    CASE WHEN s.mostrar_precio = 1 THEN s.precio ELSE NULL END AS precio,
+    s.mostrar_precio
+FROM servicios s
+JOIN categorias_servicios cat ON cat.categoria_id = s.categoria_id
+JOIN dominios d ON d.dominio_id = s.dominio_id
+WHERE s.activo = 1
+  AND cat.activo = 1
+  AND d.activo = 1;
+GO
+PRINT '[06-views] vw_servicios_publicos ... OK';
+GO
+
+-- 4. vw_dashboard_dominio -----------------------------------------------------
+-- Agregados por dominio (reservaciones, clientes, servicios, localidades).
+CREATE OR ALTER VIEW dbo.vw_dashboard_dominio
+AS
+SELECT
+    d.dominio_id,
+    d.nombre,
+    ISNULL(rb.total_reservaciones, 0)      AS total_reservaciones,
+    ISNULL(rb.reservaciones_pendientes, 0)  AS reservaciones_pendientes,
+    ISNULL(rb.reservaciones_confirmadas, 0) AS reservaciones_confirmadas,
+    ISNULL(rb.reservaciones_canceladas, 0)  AS reservaciones_canceladas,
+    ISNULL(cl.total_clientes, 0)            AS total_clientes,
+    ISNULL(sv.total_servicios_activos, 0)   AS total_servicios_activos,
+    ISNULL(lo.total_localidades_activas, 0) AS total_localidades_activas
+FROM dominios d
+LEFT JOIN (
+    SELECT
+        r.dominio_id,
+        COUNT(*)                                                        AS total_reservaciones,
+        SUM(CASE WHEN er.nombre = N'pendiente' THEN 1 ELSE 0 END)       AS reservaciones_pendientes,
+        SUM(CASE WHEN er.nombre = N'confirmada' THEN 1 ELSE 0 END)      AS reservaciones_confirmadas,
+        SUM(CASE WHEN er.nombre = N'cancelada' THEN 1 ELSE 0 END)       AS reservaciones_canceladas
+    FROM reservaciones r
+    JOIN estados_reservaciones er ON er.estado_reservacion_id = r.estado_reservacion_id
+    GROUP BY r.dominio_id
+) rb ON rb.dominio_id = d.dominio_id
+LEFT JOIN (
+    SELECT dominio_id, COUNT(*) AS total_clientes
+    FROM clientes
+    GROUP BY dominio_id
+) cl ON cl.dominio_id = d.dominio_id
+LEFT JOIN (
+    SELECT dominio_id, COUNT(*) AS total_servicios_activos
+    FROM servicios
+    WHERE activo = 1
+    GROUP BY dominio_id
+) sv ON sv.dominio_id = d.dominio_id
+LEFT JOIN (
+    SELECT dominio_id, COUNT(*) AS total_localidades_activas
+    FROM localidades
+    WHERE activo = 1
+    GROUP BY dominio_id
+) lo ON lo.dominio_id = d.dominio_id;
+GO
+PRINT '[06-views] vw_dashboard_dominio ... OK';
+GO
+
+-- 5. vw_estado_disponibilidad --------------------------------------------------
+-- Estado de cada bloque de disponibilidad: reservado si tiene una
+-- reservacion en un estado distinto de 'cancelada'.
+CREATE OR ALTER VIEW dbo.vw_estado_disponibilidad
+AS
+SELECT
+    b.bloque_disponibilidad_id AS bloque_id,
+    b.dominio_id,
+    d.slug                     AS dominio_slug,
+    b.localidad_id,
+    l.nombre                   AS localidad_nombre,
+    b.fecha_de_bloque,
+    b.fecha_inicio,
+    b.fecha_final,
+    b.activo                   AS bloque_activo,
+    CASE WHEN r.reserva_id IS NOT NULL THEN 1 ELSE 0 END AS reservado,
+    r.reserva_id
+FROM bloques_de_disponibilidad b
+JOIN localidades l ON l.localidad_id = b.localidad_id
+JOIN dominios d ON d.dominio_id = b.dominio_id
+LEFT JOIN reservaciones r
+    ON r.bloque_disponibilidad_id = b.bloque_disponibilidad_id
+   AND r.estado_reservacion_id <> (
+        SELECT er2.estado_reservacion_id
+        FROM estados_reservaciones er2
+        WHERE er2.nombre = N'cancelada'
+   );
+GO
+PRINT '[06-views] vw_estado_disponibilidad ... OK';
+GO
+
+-- 6. vw_historial_reservaciones_cliente ----------------------------------------
+CREATE OR ALTER VIEW dbo.vw_historial_reservaciones_cliente
+AS
+SELECT
+    c.cliente_id,
+    c.dominio_id,
+    CONCAT_WS(N' ', c.nombre, c.apellido_1, c.apellido_2) AS cliente_nombre,
+    c.correo,
+    r.reserva_id,
+    s.nombre AS servicio_nombre,
+    r.fecha_inicio,
+    er.nombre AS estado,
+    r.creado_en
+FROM clientes c
+JOIN reservaciones r ON r.cliente_id = c.cliente_id
+JOIN servicios s ON s.servicio_id = r.servicio_id
+JOIN estados_reservaciones er ON er.estado_reservacion_id = r.estado_reservacion_id;
+GO
+PRINT '[06-views] vw_historial_reservaciones_cliente ... OK';
+GO
+
+-- 7. vw_demanda_servicios -------------------------------------------------------
+CREATE OR ALTER VIEW dbo.vw_demanda_servicios
+AS
+SELECT
+    s.servicio_id,
+    d.dominio_id,
+    s.nombre               AS servicio_nombre,
+    COUNT(r.reserva_id)    AS total_reservaciones,
+    MAX(r.fecha_inicio)    AS ultima_reserva
+FROM servicios s
+JOIN dominios d ON d.dominio_id = s.dominio_id
+LEFT JOIN reservaciones r ON r.servicio_id = s.servicio_id
+GROUP BY s.servicio_id, d.dominio_id, s.nombre;
+GO
+PRINT '[06-views] vw_demanda_servicios ... OK';
+GO
+
+PRINT '[06-views] 7/7 vistas creadas';
+GO
+
+-- ============================================================
+-- SECCION 07. TRIGGERS
+-- Fuente: database/scripts/07-triggers.sql
+-- ============================================================
+
+-- ============================================================
+-- 07-triggers.sql
+-- Proyecto: MBM - Multi-Tenant Booking Manager
+-- Contenido: 7 triggers sobre reservaciones, dominios y servicios
+-- (identificadores en espanol, ASCII). Idempotente: CREATE OR ALTER
+-- TRIGGER, se puede reejecutar sin error.
+-- Ver docs/rename-map.csv para nombres de tablas/columnas y
+-- docs/sql-signatures.md para la referencia compacta de firmas.
+--
+-- THROW propio de este archivo (dentro del rango de conflicto/409 ya
+-- declarado en 04-procedures.sql, 50040-50059):
+--   50043  Conflicto: mas de una reservacion no cancelada apunta al
+--          mismo bloque de disponibilidad. Defensa en profundidad:
+--          el indice unico filtrado ux_reservaciones_bloque
+--          (02-create-tables.sql) y el UPDLOCK/HOLDLOCK de
+--          sp_crear_reservacion/sp_reagendar_reservacion
+--          (04-procedures.sql) ya deberian haberlo evitado; este
+--          trigger solo protege contra INSERT/UPDATE directos que
+--          se salten esos procedimientos.
+--
+-- Lista de triggers:
+--   1. trg_reservaciones_generar_rastreo   AFTER INSERT         reservaciones
+--   2. trg_reservaciones_auditar_insert    AFTER INSERT         reservaciones
+--   3. trg_reservaciones_auditar_update    AFTER UPDATE         reservaciones
+--   4. trg_dominios_actualizado_en         AFTER UPDATE         dominios
+--   5. trg_servicios_actualizado_en        AFTER UPDATE         servicios
+--   6. trg_prevenir_doble_reservacion      AFTER INSERT, UPDATE reservaciones
+--   7. trg_liberar_bloque_al_cancelar      AFTER UPDATE         reservaciones
+--
+-- Nota sobre recursion: la base de datos mbm_booking usa el valor por
+-- defecto de RECURSIVE_TRIGGERS (OFF), que ya bloquea la recursion
+-- directa (un UPDATE dentro de un trigger no vuelve a disparar ese
+-- mismo trigger sobre la misma tabla). Aun asi, los triggers 3, 6 y 7
+-- se escriben con guardas explicitas basadas en condiciones (no en
+-- TRIGGER_NESTLEVEL) para que el comportamiento sea correcto tambien
+-- si alguna vez se activa RECURSIVE_TRIGGERS. Ver el comentario de
+-- cada trigger para el detalle de su guarda.
+-- ============================================================
+
+USE mbm_booking;
+GO
+
+-- ------------------------------------------------------------
+-- 1. trg_reservaciones_generar_rastreo
+-- AFTER INSERT en reservaciones: crea una fila en codigos_de_rastreos
+-- por cada reserva insertada (soporta INSERT multifila). El codigo se
+-- genera con dbo.fn_generar_codigo_rastreo(NEWID()); las funciones
+-- escalares no pueden llamar NEWID() pero los triggers si, por eso la
+-- semilla se genera aqui (una semilla distinta por fila via
+-- CROSS APPLY) y se pasa como parametro a la funcion.
+-- ------------------------------------------------------------
+CREATE OR ALTER TRIGGER trg_reservaciones_generar_rastreo
+ON reservaciones
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO codigos_de_rastreos (reserva_id, codigo_rastreo, expira_en, activo)
+    SELECT
+        i.reserva_id,
+        dbo.fn_generar_codigo_rastreo(x.semilla),
+        DATEADD(DAY, 30, i.creado_en),
+        1
+    FROM inserted i
+    CROSS APPLY (SELECT NEWID() AS semilla) x;
+END
+GO
+PRINT ' [07-triggers] trg_reservaciones_generar_rastreo ... OK';
+GO
+
+-- ------------------------------------------------------------
+-- 2. trg_reservaciones_auditar_insert
+-- AFTER INSERT en reservaciones: registra en "registros" la creacion
+-- de cada reserva. dueno_id/superadmin_id quedan NULL; el actor lo
+-- registrara la API en un futuro work package.
+-- ------------------------------------------------------------
+CREATE OR ALTER TRIGGER trg_reservaciones_auditar_insert
+ON reservaciones
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO registros
+        (dominio_id, dueno_id, superadmin_id, accion, nombre_entidad, entidad_id, valor_anterior, nuevo_valor)
+    SELECT
+        i.dominio_id,
+        NULL,
+        NULL,
+        N'reserva_creada',
+        N'reservaciones',
+        i.reserva_id,
+        NULL,
+        N'estado=' + er.nombre
+            + N', fecha_inicio=' + CONVERT(NVARCHAR(19), i.fecha_inicio, 120)
+            + N', fecha_final=' + CONVERT(NVARCHAR(19), i.fecha_final, 120)
+    FROM inserted i
+    JOIN estados_reservaciones er ON er.estado_reservacion_id = i.estado_reservacion_id;
+END
+GO
+PRINT ' [07-triggers] trg_reservaciones_auditar_insert ... OK';
+GO
+
+-- ------------------------------------------------------------
+-- 3. trg_reservaciones_auditar_update
+-- AFTER UPDATE en reservaciones: registra en "registros" unicamente
+-- cuando cambia estado_reservacion_id (ignora otros cambios, por
+-- ejemplo el reagendamiento de fechas o la liberacion de bloque hecha
+-- por el trigger 7). Guarda anti-recursion: UPDATE(estado_reservacion_id)
+-- es FALSE cuando el UPDATE recursivo (trigger 7 poniendo
+-- bloque_disponibilidad_id = NULL) no toca esa columna, asi que este
+-- trigger no vuelve a insertar una fila de auditoria para ese caso.
+-- ------------------------------------------------------------
+CREATE OR ALTER TRIGGER trg_reservaciones_auditar_update
+ON reservaciones
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT UPDATE(estado_reservacion_id)
+        RETURN;
+
+    INSERT INTO registros
+        (dominio_id, dueno_id, superadmin_id, accion, nombre_entidad, entidad_id, valor_anterior, nuevo_valor)
+    SELECT
+        i.dominio_id,
+        NULL,
+        NULL,
+        N'reserva_actualizada',
+        N'reservaciones',
+        i.reserva_id,
+        er_old.nombre,
+        er_new.nombre
+    FROM inserted i
+    JOIN deleted d ON d.reserva_id = i.reserva_id
+    JOIN estados_reservaciones er_old ON er_old.estado_reservacion_id = d.estado_reservacion_id
+    JOIN estados_reservaciones er_new ON er_new.estado_reservacion_id = i.estado_reservacion_id
+    WHERE i.estado_reservacion_id <> d.estado_reservacion_id;
+END
+GO
+PRINT ' [07-triggers] trg_reservaciones_auditar_update ... OK';
+GO
+
+-- ------------------------------------------------------------
+-- 4. trg_dominios_actualizado_en
+-- AFTER UPDATE en dominios: mantiene actualizado_en = SYSUTCDATETIME().
+-- Guarda anti-recursion elegida: IF UPDATE(actualizado_en) RETURN.
+-- Si la sentencia que disparo el trigger ya referencio esa columna en
+-- su SET (por ejemplo sp_activar_dominio/sp_suspender_dominio, que la
+-- fijan explicitamente), el trigger no hace nada. Si el UPDATE externo
+-- NO toco actualizado_en, el trigger la fija aqui; ese UPDATE interno
+-- si referencia la columna, asi que una eventual re-ejecucion
+-- recursiva del trigger (solo posible si se activara
+-- RECURSIVE_TRIGGERS) encontraria UPDATE(actualizado_en) = TRUE y
+-- retornaria de inmediato, sin bucle infinito.
+-- ------------------------------------------------------------
+CREATE OR ALTER TRIGGER trg_dominios_actualizado_en
+ON dominios
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF UPDATE(actualizado_en)
+        RETURN;
+
+    UPDATE d
+    SET d.actualizado_en = SYSUTCDATETIME()
+    FROM dominios d
+    JOIN inserted i ON i.dominio_id = d.dominio_id;
+END
+GO
+PRINT ' [07-triggers] trg_dominios_actualizado_en ... OK';
+GO
+
+-- ------------------------------------------------------------
+-- 5. trg_servicios_actualizado_en
+-- AFTER UPDATE en servicios: mismo patron y misma guarda anti-recursion
+-- que trg_dominios_actualizado_en (IF UPDATE(actualizado_en) RETURN).
+-- ------------------------------------------------------------
+CREATE OR ALTER TRIGGER trg_servicios_actualizado_en
+ON servicios
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF UPDATE(actualizado_en)
+        RETURN;
+
+    UPDATE s
+    SET s.actualizado_en = SYSUTCDATETIME()
+    FROM servicios s
+    JOIN inserted i ON i.servicio_id = s.servicio_id;
+END
+GO
+PRINT ' [07-triggers] trg_servicios_actualizado_en ... OK';
+GO
+
+-- ------------------------------------------------------------
+-- 6. trg_prevenir_doble_reservacion
+-- AFTER INSERT, UPDATE en reservaciones: si mas de una reservacion NO
+-- cancelada apunta al mismo bloque_disponibilidad_id (no NULL),
+-- revierte la transaccion con ROLLBACK + THROW 50043 (409).
+--
+-- Defensa en profundidad: el indice unico filtrado
+-- ux_reservaciones_bloque ya impide fisicamente que dos filas de
+-- reservaciones tengan el mismo bloque_disponibilidad_id no nulo (la
+-- sentencia INSERT/UPDATE fallaria antes de llegar a este trigger), y
+-- el UPDLOCK/HOLDLOCK de sp_crear_reservacion/sp_reagendar_reservacion
+-- ya serializa el acceso concurrente al bloque. Este trigger es una
+-- red de seguridad adicional para INSERT/UPDATE directos a
+-- reservaciones que se salten esos stored procedures (por ejemplo, si
+-- en el futuro se relajara o se eliminara por error el indice unico
+-- filtrado).
+-- ------------------------------------------------------------
+CREATE OR ALTER TRIGGER trg_prevenir_doble_reservacion
+ON reservaciones
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF EXISTS (
+        SELECT r.bloque_disponibilidad_id
+        FROM reservaciones r
+        JOIN estados_reservaciones er ON er.estado_reservacion_id = r.estado_reservacion_id
+        WHERE r.bloque_disponibilidad_id IN (
+            SELECT i.bloque_disponibilidad_id FROM inserted i WHERE i.bloque_disponibilidad_id IS NOT NULL
+        )
+        AND er.nombre <> N'cancelada'
+        GROUP BY r.bloque_disponibilidad_id
+        HAVING COUNT(*) > 1
+    )
+    BEGIN
+        ROLLBACK TRAN;
+        THROW 50043, 'Conflicto: mas de una reservacion no cancelada apunta al mismo bloque de disponibilidad.', 1;
+    END
+END
+GO
+PRINT ' [07-triggers] trg_prevenir_doble_reservacion ... OK';
+GO
+
+-- ------------------------------------------------------------
+-- 7. trg_liberar_bloque_al_cancelar
+-- AFTER UPDATE en reservaciones. Dos comportamientos independientes:
+--
+-- (a) Cancelacion: cuando estado_reservacion_id TRANSICIONA hacia
+--     'cancelada' (antes distinto, ahora igual), reactiva el bloque de
+--     disponibilidad de la reserva (activo = 1) y pone
+--     reservaciones.bloque_disponibilidad_id = NULL para esa reserva,
+--     liberando el slot del indice unico filtrado. El historial de
+--     fechas queda preservado en reservaciones.fecha_inicio/fecha_final
+--     (denormalizadas exactamente para este proposito).
+--
+-- (b) Reagendamiento: cuando bloque_disponibilidad_id CAMBIA entre
+--     deleted e inserted (ambos no NULL), reactiva el bloque ANTERIOR
+--     (deleted.bloque_disponibilidad_id). El bloque nuevo ya fue
+--     ocupado por sp_reagendar_reservacion.
+--
+-- Guarda anti-recursion (por condiciones, no por TRIGGER_NESTLEVEL):
+-- el UPDATE interno de la rama (a) solo cambia bloque_disponibilidad_id
+-- a NULL y no toca estado_reservacion_id, por lo que en una eventual
+-- re-ejecucion recursiva de este mismo trigger (solo posible si se
+-- activara RECURSIVE_TRIGGERS; por defecto esta en OFF) la condicion
+-- de (a) (d.estado_reservacion_id <> cancelada) seria falsa (el estado
+-- ya es 'cancelada' en ambas imagenes) y la condicion de (b) tambien
+-- seria falsa (inserted.bloque_disponibilidad_id ya quedo NULL, y (b)
+-- exige que ambos lados sean no nulos). Ambas ramas son, ademas,
+-- mutuamente excluyentes por construccion: (a) exige un cambio de
+-- estado hacia 'cancelada'; (b) exige que el estado NO haya cambiado
+-- el bloque hacia NULL sino hacia otro bloque no nulo distinto.
+-- ------------------------------------------------------------
+CREATE OR ALTER TRIGGER trg_liberar_bloque_al_cancelar
+ON reservaciones
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @estado_cancelada_id INT =
+        (SELECT estado_reservacion_id FROM estados_reservaciones WHERE nombre = N'cancelada');
+
+    -- (a) Cancelacion: libera el bloque y desvincula la reserva de el.
+    IF EXISTS (
+        SELECT 1
+        FROM inserted i
+        JOIN deleted d ON d.reserva_id = i.reserva_id
+        WHERE i.estado_reservacion_id = @estado_cancelada_id
+          AND d.estado_reservacion_id <> @estado_cancelada_id
+          AND d.bloque_disponibilidad_id IS NOT NULL
+    )
+    BEGIN
+        UPDATE b
+        SET b.activo = 1,
+            b.actualizado_en = SYSUTCDATETIME()
+        FROM bloques_de_disponibilidad b
+        JOIN deleted d ON d.bloque_disponibilidad_id = b.bloque_disponibilidad_id
+        JOIN inserted i ON i.reserva_id = d.reserva_id
+        WHERE i.estado_reservacion_id = @estado_cancelada_id
+          AND d.estado_reservacion_id <> @estado_cancelada_id
+          AND d.bloque_disponibilidad_id IS NOT NULL;
+
+        UPDATE r
+        SET r.bloque_disponibilidad_id = NULL
+        FROM reservaciones r
+        JOIN inserted i ON i.reserva_id = r.reserva_id
+        JOIN deleted d ON d.reserva_id = i.reserva_id
+        WHERE i.estado_reservacion_id = @estado_cancelada_id
+          AND d.estado_reservacion_id <> @estado_cancelada_id
+          AND d.bloque_disponibilidad_id IS NOT NULL;
+    END
+
+    -- (b) Reagendamiento: reactiva unicamente el bloque ANTERIOR.
+    IF EXISTS (
+        SELECT 1
+        FROM inserted i
+        JOIN deleted d ON d.reserva_id = i.reserva_id
+        WHERE d.bloque_disponibilidad_id IS NOT NULL
+          AND i.bloque_disponibilidad_id IS NOT NULL
+          AND d.bloque_disponibilidad_id <> i.bloque_disponibilidad_id
+    )
+    BEGIN
+        UPDATE b
+        SET b.activo = 1,
+            b.actualizado_en = SYSUTCDATETIME()
+        FROM bloques_de_disponibilidad b
+        JOIN deleted d ON d.bloque_disponibilidad_id = b.bloque_disponibilidad_id
+        JOIN inserted i ON i.reserva_id = d.reserva_id
+        WHERE d.bloque_disponibilidad_id IS NOT NULL
+          AND i.bloque_disponibilidad_id IS NOT NULL
+          AND d.bloque_disponibilidad_id <> i.bloque_disponibilidad_id;
+    END
+END
+GO
+PRINT ' [07-triggers] trg_liberar_bloque_al_cancelar ... OK';
+GO
+
+PRINT ' [07-triggers] 7/7 triggers creados';
+GO
+

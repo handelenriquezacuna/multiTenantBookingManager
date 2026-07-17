@@ -47,20 +47,27 @@ echo "[setup] SQL Server está healthy."
 run_script() {
     local file="$1"
     echo "[setup] Ejecutando $file..."
+    # -I: QUOTED_IDENTIFIER ON (requerido por el indice unico FILTRADO
+    # ux_reservaciones_bloque de 02-create-tables.sql; sqlcmd lo deja OFF
+    # por defecto y CREATE INDEX de un indice filtrado falla sin esto).
     docker exec -i "$CONTAINER" \
-        "$SQLCMD" -S localhost -U sa -P "$SQLSERVER_PASSWORD" -C \
+        "$SQLCMD" -S localhost -U sa -P "$SQLSERVER_PASSWORD" -C -I \
         -i "/scripts/$(basename "$file")"
 }
 
 run_script "database/scripts/01-create-database.sql"
 run_script "database/scripts/02-create-tables.sql"
 run_script "database/scripts/03-seed-data.sql"
+run_script "database/scripts/04-procedures.sql"
+run_script "database/scripts/05-functions.sql"
+run_script "database/scripts/06-views.sql"
+run_script "database/scripts/07-triggers.sql"
 
 # ── 5. Listo ─────────────────────────────────────────────────────────────────
 echo ""
-echo "✓ Setup completo. Conecta DBeaver con:"
+echo "[OK] Setup completo. Conecta DBeaver con:"
 echo "  Host:     localhost"
 echo "  Port:     ${SQLSERVER_PORT:-1433}"
 echo "  Database: ${SQLSERVER_DB:-mbm_booking}"
 echo "  User:     sa"
-echo "  Driver Properties → trustServerCertificate = true"
+echo "  Driver Properties -> trustServerCertificate = true"

@@ -1,25 +1,29 @@
 # Diseño simplificado de la base de datos
 
+> PROPUESTA DE DISEÑO (se conserva como referencia historica). El estado real
+> construido esta en [database-and-sql-implementado.md](database-and-sql-implementado.md),
+> que abre con la tabla de diferencias propuesta vs construido.
+
 ## Indice
 
 - [Diseño simplificado de la base de datos](#diseño-simplificado-de-la-base-de-datos)
   - [Indice](#indice)
   - [Atributos por tabla](#atributos-por-tabla)
-    - [Tabla business\_types](#tabla-business_types)
-    - [Tabla tenant\_statuses](#tabla-tenant_statuses)
+    - [Tabla tipos\_negocios](#tabla-tipos_negocios)
+    - [Tabla estados\_dominios](#tabla-estados_dominios)
     - [Tabla superadmins](#tabla-superadmins)
-    - [Tabla tenants](#tabla-tenants)
-    - [Tabla tenant\_owners](#tabla-tenant_owners)
-    - [Tabla customers](#tabla-customers)
-    - [Tabla service\_categories](#tabla-service_categories)
-    - [Tabla services](#tabla-services)
-    - [Tabla locations](#tabla-locations)
-    - [Tabla business\_hours](#tabla-business_hours)
-    - [Tabla availability\_blocks](#tabla-availability_blocks)
-    - [Tabla booking\_statuses](#tabla-booking_statuses)
-    - [Tabla bookings](#tabla-bookings)
-    - [Tabla tracking\_codes](#tabla-tracking_codes)
-    - [Tabla audit\_logs](#tabla-audit_logs)
+    - [Tabla dominios](#tabla-dominios)
+    - [Tabla duenos\_de\_dominios](#tabla-duenos_de_dominios)
+    - [Tabla clientes](#tabla-clientes)
+    - [Tabla categorias\_servicios](#tabla-categorias_servicios)
+    - [Tabla servicios](#tabla-servicios)
+    - [Tabla localidades](#tabla-localidades)
+    - [Tabla horarios](#tabla-horarios)
+    - [Tabla bloques\_de\_disponibilidad](#tabla-bloques_de_disponibilidad)
+    - [Tabla estados\_reservaciones](#tabla-estados_reservaciones)
+    - [Tabla reservaciones](#tabla-reservaciones)
+    - [Tabla codigos\_de\_rastreos](#tabla-codigos_de_rastreos)
+    - [Tabla registros](#tabla-registros)
   - [Relaciones principales del modelo](#relaciones-principales-del-modelo)
   - [Normalización de la base de datos](#normalización-de-la-base-de-datos)
   - [Scripts SQL requeridos](#scripts-sql-requeridos)
@@ -31,29 +35,31 @@
 
 Para mantener el proyecto claro, se propone una base de datos con 15 tablas principales. Esto cumple de sobra con el mínimo de 10 tablas y mantiene el sistema entendible.
 
+Los nombres fisicos de tablas y columnas estan en espanol (ASCII puro). La equivalencia con los nombres originales en ingles y con el modelo MR con enie esta en `docs/rename-map.csv`.
+
 Tablas propuestas
 
 | Tabla | Proposito |
 | --- | --- |
-| business_types | Tipos de negocio permitidos. |
-| tenant_statuses | Estados posibles de un tenant. |
+| tipos_negocios | Tipos de negocio permitidos. |
+| estados_dominios | Estados posibles de un tenant. |
 | superadmins | Administradores globales de la plataforma MBM. |
-| tenants | Negocios registrados en MBM. |
-| tenant_owners | Duenos o administradores de cada tenant. |
-| customers | Clientes que realizan reservas. |
-| service_categories | Categorías de servicios por negocio. |
-| services | Servicios ofrecidos por cada tenant. |
-| locations | Ubicación o sede del negocio. |
-| business_hours | Horarios generales del negocio. |
-| availability_blocks | Bloques disponibles para reservar. |
-| booking_statuses | Estados posibles de una reserva. |
-| bookings | Reservas realizadas. |
-| tracking_codes | Codigos públicos para consultar reservas. |
-| audit_logs | Registro de acciones importantes. |
+| dominios | Negocios registrados en MBM. |
+| duenos_de_dominios | Duenos o administradores de cada tenant. |
+| clientes | Clientes que realizan reservas. |
+| categorias_servicios | Categorías de servicios por negocio. |
+| servicios | Servicios ofrecidos por cada tenant. |
+| localidades | Ubicación o sede del negocio. |
+| horarios | Horarios generales del negocio. |
+| bloques_de_disponibilidad | Bloques disponibles para reservar. |
+| estados_reservaciones | Estados posibles de una reserva. |
+| reservaciones | Reservas realizadas. |
+| codigos_de_rastreos | Codigos públicos para consultar reservas. |
+| registros | Registro de acciones importantes. |
 
 ## Atributos por tabla
 
-### Tabla business_types
+### Tabla tipos_negocios
 
 Contiene los tipos de negocio que pueden usar la plataforma.
 
@@ -69,81 +75,83 @@ Ejemplos:
 
 Atributos:
 
-- business_type_id: PK. Identificador único del tipo de negocio.
-- name: Nombre del tipo de negocio.
-- description: Descripción opcional.
-- is_active: Indica si el tipo de negocio esta activo.
+- tipo_negocio_id: PK. Identificador único del tipo de negocio.
+- nombre: Nombre del tipo de negocio.
+- descripcion: Descripción opcional.
+- activo: Indica si el tipo de negocio esta activo.
 
 Relación principal:
 
-- business_types 1:N tenants
+- tipos_negocios 1:N dominios
 
-Un tipo de negocio puede estar asociado a muchos tenants.
+Un tipo de negocio puede estar asociado a muchos dominios.
 
-### Tabla tenant_statuses
+### Tabla estados_dominios
 
 Contiene los estados posibles de un negocio dentro de la plataforma.
 
 Ejemplos:
 
-- pending
-- active
-- suspended
-- inactive
+- pendiente
+- activo
+- suspendido
+- inactivo
 
 Atributos:
 
-- tenant_status_id: PK. Identificador único del estado.
-- name: Nombre del estado.
-- description: Descripción del estado.
+- dominio_estado_id: PK. Identificador único del estado.
+- nombre: Nombre del estado.
+- descripcion: Descripción del estado.
 
 Relación principal:
 
-- tenant_statuses 1:N tenants
+- estados_dominios 1:N dominios
 
-Un estado puede pertenecer a muchos tenants.
+Un estado puede pertenecer a muchos dominios.
 
 ### Tabla superadmins
 
-Contiene los administradores globales de la plataforma MBM. Son los únicos que pueden activar o suspender tenants.
+Contiene los administradores globales de la plataforma MBM. Son los únicos que pueden activar o suspender dominios.
 
 Para el MVP puede existir un solo superadmin, pero la tabla permite agregar mas en el futuro.
 
 Atributos:
 
 - superadmin_id: PK. Identificador único del superadmin.
-- email: Correo de acceso.
-- password_hash: Contrasena cifrada.
-- full_name: Nombre completo.
-- is_active: Indica si el superadmin esta activo.
-- created_at: Fecha de creación.
-- updated_at: Fecha de actualización.
+- correo: Correo de acceso.
+- contrasena_encriptada: Contrasena cifrada.
+- nombre: Nombre de pila.
+- apellido_1: Primer apellido.
+- apellido_2: Segundo apellido, opcional.
+- activo: Indica si el superadmin esta activo.
+- creado_en: Fecha de creación.
+- actualizado_en: Fecha de actualización.
 
 Relación principal:
 
-- superadmins 1:N audit_logs
+- superadmins 1:N registros
 
-Un superadmin puede generar muchos registros de auditoría al gestionar tenants.
+Un superadmin puede generar muchos registros de auditoría al gestionar dominios.
 
-### Tabla tenants
+### Tabla dominios
 
 Representa cada negocio registrado en MBM.
 
 Atributos:
 
-- tenant_id: PK. Identificador único del negocio.
-- business_type_id: FK hacia business_types.
-- tenant_status_id: FK hacia tenant_statuses.
-- name: Nombre comercial del negocio.
+- dominio_id: PK. Identificador único del negocio.
+- tipo_negocio_id: FK hacia tipos_negocios.
+- dominio_estado_id: FK hacia estados_dominios.
+- nombre: Nombre comercial del negocio.
 - slug: Identificador público usado en la URL.
-- email: Correo del negocio.
-- phone: Teléfono del negocio.
-- description: Descripción pública del negocio.
+- correo: Correo del negocio.
+- telefono: Teléfono del negocio.
+- descripcion: Descripción pública del negocio.
 - logo_url: URL del logo, opcional.
-- public_message: Mensaje público para clientes.
-- is_active: Indica si el tenant esta activo.
-- created_at: Fecha de creación.
-- updated_at: Fecha de actualización.
+- mensaje_publico: Mensaje público para clientes.
+- activo: Indica si el tenant esta activo.
+- creado_en: Fecha de creación.
+- actualizado_en: Fecha de actualización.
 
 Ejemplos de slug:
 
@@ -158,59 +166,62 @@ Ejemplo de URL pública:
 
 Relaciones principales:
 
-- business_types 1:N tenants
-- tenant_statuses 1:N tenants
-- tenants 1:N tenant_owners
-- tenants 1:N customers
-- tenants 1:N services
-- tenants 1:N bookings
+- tipos_negocios 1:N dominios
+- estados_dominios 1:N dominios
+- dominios 1:N duenos_de_dominios
+- dominios 1:N clientes
+- dominios 1:N servicios
+- dominios 1:N reservaciones
 
-### Tabla tenant_owners
+### Tabla duenos_de_dominios
 
 Contiene los usuarios duenos o administradores de cada negocio.
 
 Atributos:
 
-- owner_id: PK. Identificador único del owner.
-- tenant_id: FK hacia tenants.
-- full_name: Nombre completo.
-- email: Correo de acceso.
-- password_hash: Contrasena cifrada.
-- phone: Teléfono.
-- is_active: Indica si el owner esta activo.
-- created_at: Fecha de creación.
-- updated_at: Fecha de actualización.
+- dueno_id: PK. Identificador único del owner.
+- dominio_id: FK hacia dominios.
+- nombre: Nombre de pila.
+- apellido_1: Primer apellido.
+- apellido_2: Segundo apellido, opcional.
+- correo: Correo de acceso.
+- contrasena_encriptada: Contrasena cifrada.
+- telefono: Teléfono.
+- activo: Indica si el owner esta activo.
+- creado_en: Fecha de creación.
+- actualizado_en: Fecha de actualización.
 
 Relación principal:
 
-- tenants 1:N tenant_owners
+- dominios 1:N duenos_de_dominios
 
 Un tenant puede tener uno o mas owners, aunque para el MVP se puede usar solo uno.
 
-### Tabla customers
+### Tabla clientes
 
 Contiene los clientes que hacen reservas en un tenant.
 
 Atributos:
 
-- customer_id: PK. Identificador único del cliente.
-- tenant_id: FK hacia tenants.
-- first_name: Nombre.
-- last_name: Apellido.
-- email: Correo.
-- phone: Teléfono.
-- notes: Notas opcionales.
-- created_at: Fecha de creación.
-- updated_at: Fecha de actualización.
+- cliente_id: PK. Identificador único del cliente.
+- dominio_id: FK hacia dominios.
+- nombre: Nombre de pila.
+- apellido_1: Primer apellido.
+- apellido_2: Segundo apellido, opcional.
+- correo: Correo.
+- telefono: Teléfono.
+- notas: Notas opcionales.
+- creado_en: Fecha de creación.
+- actualizado_en: Fecha de actualización.
 
 Relación principal:
 
-- tenants 1:N customers
-- customers 1:N bookings
+- dominios 1:N clientes
+- clientes 1:N reservaciones
 
 Un cliente pertenece a un tenant y puede tener varias reservas.
 
-### Tabla service_categories
+### Tabla categorias_servicios
 
 Contiene categorías para ordenar servicios.
 
@@ -225,20 +236,20 @@ Ejemplos:
 
 Atributos:
 
-- category_id: PK. Identificador único de la categoría.
-- tenant_id: FK hacia tenants.
-- name: Nombre de la categoría.
-- description: Descripción opcional.
-- is_active: Indica si la categoría esta activa.
-- created_at: Fecha de creación.
-- updated_at: Fecha de actualización.
+- categoria_id: PK. Identificador único de la categoría.
+- dominio_id: FK hacia dominios.
+- nombre: Nombre de la categoría.
+- descripcion: Descripción opcional.
+- activo: Indica si la categoría esta activa.
+- creado_en: Fecha de creación.
+- actualizado_en: Fecha de actualización.
 
 Relación principal:
 
-- tenants 1:N service_categories
-- service_categories 1:N services
+- dominios 1:N categorias_servicios
+- categorias_servicios 1:N servicios
 
-### Tabla services
+### Tabla servicios
 
 Contiene los servicios que ofrece cada tenant.
 
@@ -253,25 +264,25 @@ Ejemplos:
 
 Atributos:
 
-- service_id: PK. Identificador único del servicio.
-- tenant_id: FK hacia tenants.
-- category_id: FK hacia service_categories.
-- name: Nombre del servicio.
-- description: Descripción del servicio.
-- duration_minutes: Duración del servicio en minutos.
-- price: Precio informativo opcional.
-- show_price: Indica si el precio se muestra publicamente.
-- is_active: Indica si el servicio esta disponible.
-- created_at: Fecha de creación.
-- updated_at: Fecha de actualización.
+- servicio_id: PK. Identificador único del servicio.
+- dominio_id: FK hacia dominios.
+- categoria_id: FK hacia categorias_servicios.
+- nombre: Nombre del servicio.
+- descripcion: Descripción del servicio.
+- duracion_minutos: Duración del servicio en minutos.
+- precio: Precio informativo opcional.
+- mostrar_precio: Indica si el precio se muestra publicamente.
+- activo: Indica si el servicio esta disponible.
+- creado_en: Fecha de creación.
+- actualizado_en: Fecha de actualización.
 
 Relación principal:
 
-- tenants 1:N services
-- service_categories 1:N services
-- services 1:N bookings
+- dominios 1:N servicios
+- categorias_servicios 1:N servicios
+- servicios 1:N reservaciones
 
-### Tabla locations
+### Tabla localidades
 
 Contiene la ubicación fisica o sede del negocio.
 
@@ -279,39 +290,39 @@ Para el MVP puede existir una sede principal por tenant, pero la tabla permite c
 
 Atributos:
 
-- location_id: PK. Identificador único de la ubicación.
-- tenant_id: FK hacia tenants.
-- name: Nombre de la sede.
-- address: Dirección fisica.
-- phone: Teléfono.
-- is_main: Indica si es la sede principal.
-- is_active: Indica si la ubicación esta activa.
-- created_at: Fecha de creación.
-- updated_at: Fecha de actualización.
+- localidad_id: PK. Identificador único de la ubicación.
+- dominio_id: FK hacia dominios.
+- nombre: Nombre de la sede.
+- direccion: Dirección fisica.
+- telefono: Teléfono.
+- principal: Indica si es la sede principal.
+- activo: Indica si la ubicación esta activa.
+- creado_en: Fecha de creación.
+- actualizado_en: Fecha de actualización.
 
 Relación principal:
 
-- tenants 1:N locations
-- locations 1:N bookings
+- dominios 1:N localidades
+- localidades 1:N reservaciones
 
-### Tabla business_hours
+### Tabla horarios
 
 Contiene el horario general del negocio por sede. En el frontend esta configuracion corresponde a `/business-hours`.
 
-Un negocio puede tener dias activos o cerrados distintos a otros negocios. Por ejemplo, una clinica puede cerrar sabados y domingos, mientras una barberia puede abrir sabados. Tambien puede tener pausas durante el dia, como almuerzo. Para cubrir esto sin agregar tablas extra, `business_hours` puede tener mas de un registro por dia para la misma sede.
+Un negocio puede tener dias activos o cerrados distintos a otros negocios. Por ejemplo, una clinica puede cerrar sabados y domingos, mientras una barberia puede abrir sabados. Tambien puede tener pausas durante el dia, como almuerzo. Para cubrir esto sin agregar tablas extra, `horarios` puede tener mas de un registro por dia para la misma sede.
 
-Si el negocio tiene varias sedes, cada sede puede tener horarios distintos. Por eso `business_hours` incluye `location_id` y `/business-hours` debe permitir seleccionar una sede antes de editar su semana operativa.
+Si el negocio tiene varias sedes, cada sede puede tener horarios distintos. Por eso `horarios` incluye `localidad_id` y `/business-hours` debe permitir seleccionar una sede antes de editar su semana operativa.
 
 Atributos:
 
-- business_hour_id: PK. Identificador único del horario.
-- tenant_id: FK hacia tenants.
-- location_id: FK hacia locations.
-- day_of_week: Dia de la semana (0 = domingo, 6 = sabado).
-- open_time: Hora de apertura. NULL si is_closed es verdadero.
-- close_time: Hora de cierre. NULL si is_closed es verdadero.
-- is_closed: Indica si el negocio cierra ese dia.
-- updated_at: Fecha de actualización.
+- horario_id: PK. Identificador único del horario.
+- dominio_id: FK hacia dominios.
+- localidad_id: FK hacia localidades.
+- dia_semana: Dia de la semana (0 = domingo, 6 = sabado).
+- hora_apertura: Hora de apertura. NULL si cerrado es verdadero.
+- hora_cerrado: Hora de cierre. NULL si cerrado es verdadero.
+- cerrado: Indica si el negocio cierra ese dia.
+- actualizado_en: Fecha de actualización.
 
 Ejemplos:
 
@@ -322,36 +333,36 @@ Ejemplos:
 
 Relación principal:
 
-- tenants 1:N business_hours
-- locations 1:N business_hours
+- dominios 1:N horarios
+- localidades 1:N horarios
 
 Un tenant tendra varios registros por sede. Puede ser uno por dia si no hay pausas, o varios registros para el mismo dia y sede cuando existen bloques separados, como manana y tarde.
 
-### Tabla availability_blocks
+### Tabla bloques_de_disponibilidad
 
 Contiene bloques concretos disponibles para reservar en una sede especifica. No debe existir una pantalla privada `/availability` para que el owner publique horarios manualmente.
 
 Esta tabla simplifica el MVP porque evita manejar empleados y agendas individuales. El negocio define sedes en `/locations` y horarios por sede en `/business-hours`. Con esa informacion, el sistema puede calcular o generar internamente los bloques disponibles como 09:00-09:30, 09:30-10:00 y asi sucesivamente.
 
-Para efectos academicos y scripts SQL, estos bloques pueden insertarse manualmente como registros independientes en `availability_blocks`. En el frontend del owner no se editan como una pantalla separada; son resultado de horarios, sedes y reservas.
+Para efectos academicos y scripts SQL, estos bloques pueden insertarse manualmente como registros independientes en `bloques_de_disponibilidad`. En el frontend del owner no se editan como una pantalla separada; son resultado de horarios, sedes y reservas.
 
 Atributos:
 
-- availability_block_id: PK. Identificador único del bloque.
-- tenant_id: FK hacia tenants.
-- location_id: FK hacia locations.
-- block_date: Fecha disponible.
-- start_time: Hora de inicio.
-- end_time: Hora de fin.
-- is_active: Indica si el bloque esta disponible.
-- created_at: Fecha de creación.
-- updated_at: Fecha de actualización.
+- bloque_disponibilidad_id: PK. Identificador único del bloque.
+- dominio_id: FK hacia dominios.
+- localidad_id: FK hacia localidades.
+- fecha_de_bloque: Fecha disponible.
+- fecha_inicio: Fecha y hora de inicio (DATETIME2).
+- fecha_final: Fecha y hora de fin (DATETIME2).
+- activo: Indica si el bloque esta disponible.
+- creado_en: Fecha de creación.
+- actualizado_en: Fecha de actualización.
 
 Relación principal:
 
-- tenants 1:N availability_blocks
-- locations 1:N availability_blocks
-- availability_blocks 1:0..1 bookings
+- dominios 1:N bloques_de_disponibilidad
+- localidades 1:N bloques_de_disponibilidad
+- bloques_de_disponibilidad 1:0..1 reservaciones
 
 Ejemplo:
 
@@ -366,7 +377,7 @@ Ejemplo de flujo entre frontend y datos:
 - `/business-hours`: Sede central, lunes abierto 09:00-12:00 y 13:00-17:00.
 - `/locations`: existe la sede Sede central.
 - Página publica: el cliente elige Sede central y fecha 2026-06-10.
-- Sistema: calcula los horarios disponibles desde `business_hours` y reservas existentes, o consulta bloques ya generados internamente en `availability_blocks`.
+- Sistema: calcula los horarios disponibles desde `horarios` y reservas existentes, o consulta bloques ya generados internamente en `bloques_de_disponibilidad`.
 
 Ejemplo de bloques generados:
 
@@ -379,78 +390,77 @@ Ejemplo de bloques generados:
   - 10:00 a 10:30
   - 10:30 a 11:00
 
-### Tabla booking_statuses
+### Tabla estados_reservaciones
 
 Contiene los estados posibles de una reserva.
 
 Ejemplos:
 
-- pending
-- confirmed
-- cancelled
-- completed
-- rescheduled
+- pendiente
+- confirmada
+- cancelada
+- completada
+- reagendada
 
 Atributos:
 
-- booking_status_id: PK. Identificador único del estado.
-- name: Nombre del estado.
-- description: Descripción.
+- estado_reservacion_id: PK. Identificador único del estado.
+- nombre: Nombre del estado.
+- descripcion: Descripción.
 
 Relación principal:
 
-- booking_statuses 1:N bookings
+- estados_reservaciones 1:N reservaciones
 
-### Tabla bookings
+### Tabla reservaciones
 
 Contiene las reservas realizadas por clientes.
 
 Atributos:
 
-- booking_id: PK. Identificador único de la reserva.
-- tenant_id: FK hacia tenants.
-- customer_id: FK hacia customers.
-- service_id: FK hacia services.
-- location_id: FK hacia locations.
-- availability_block_id: FK hacia availability_blocks.
-- booking_status_id: FK hacia booking_statuses.
-- booking_date: Fecha de la reserva.
-- start_time: Hora de inicio.
-- end_time: Hora de fin.
-- customer_notes: Notas del cliente.
-- internal_notes: Notas internas del negocio.
-- created_at: Fecha de creación.
-- updated_at: Fecha de actualización.
+- reserva_id: PK. Identificador único de la reserva.
+- dominio_id: FK hacia dominios.
+- cliente_id: FK hacia clientes.
+- servicio_id: FK hacia servicios.
+- localidad_id: FK hacia localidades.
+- bloque_disponibilidad_id: FK hacia bloques_de_disponibilidad.
+- estado_reservacion_id: FK hacia estados_reservaciones.
+- fecha_inicio: Fecha y hora de inicio (DATETIME2).
+- fecha_final: Fecha y hora de fin (DATETIME2).
+- nota_cliente: Notas del cliente.
+- nota_interna: Notas internas del negocio.
+- creado_en: Fecha de creación.
+- actualizado_en: Fecha de actualización.
 
 Nota de diseño — denormalización intencional:
 
-booking_date, start_time y end_time se repiten en la reserva aunque ya existen en availability_block_id. Esta redundancia es intencional. Si el bloque es eliminado o modificado en el futuro, la reserva conserva el registro historico exacto de la fecha y hora acordadas. Esto protege la integridad histórica de los datos sin depender de que el bloque exista.
+fecha_inicio y fecha_final se repiten en la reserva aunque ya existen en el bloque referenciado por bloque_disponibilidad_id. Esta redundancia es intencional. Si el bloque es eliminado o modificado en el futuro, la reserva conserva el registro historico exacto de la fecha y hora acordadas. Esto protege la integridad histórica de los datos sin depender de que el bloque exista.
 
 Relaciones principales:
 
-- tenants 1:N bookings
-- customers 1:N bookings
-- services 1:N bookings
-- locations 1:N bookings
-- availability_blocks 1:0..1 bookings
-- booking_statuses 1:N bookings
+- dominios 1:N reservaciones
+- clientes 1:N reservaciones
+- servicios 1:N reservaciones
+- localidades 1:N reservaciones
+- bloques_de_disponibilidad 1:0..1 reservaciones
+- estados_reservaciones 1:N reservaciones
 
-### Tabla tracking_codes
+### Tabla codigos_de_rastreos
 
 Contiene el codigo público que permite consultar una reserva sin login.
 
 Atributos:
 
-- tracking_id: PK. Identificador único.
-- booking_id: FK hacia bookings.
-- tracking_code: Codigo único.
-- expires_at: Fecha de expiración. Requerido. Default de 30 dias desde la creación de la reserva. Un codigo sin expiración permite consulta indefinida, lo cual no es deseable por seguridad.
-- is_active: Indica si el codigo sigue activo.
-- created_at: Fecha de creación.
+- codigo_de_rastreo_id: PK. Identificador único.
+- reserva_id: FK hacia reservaciones.
+- codigo_rastreo: Codigo único.
+- expira_en: Fecha de expiración. Requerido. Default de 30 dias desde la creación de la reserva. Un codigo sin expiración permite consulta indefinida, lo cual no es deseable por seguridad.
+- activo: Indica si el codigo sigue activo.
+- creado_en: Fecha de creación.
 
 Relación principal:
 
-- bookings 1:1 tracking_codes
+- reservaciones 1:1 codigos_de_rastreos
 
 Cada reserva tendra un codigo de tracking.
 
@@ -458,62 +468,62 @@ Ejemplo de codigo:
 
 - MBM-8F3K2A
 
-### Tabla audit_logs
+### Tabla registros
 
 Contiene acciones importantes realizadas en el sistema.
 
 Atributos:
 
-- audit_id: PK. Identificador único del registro de auditoría.
-- tenant_id: FK hacia tenants. Nullable para acciones globales del superadmin.
-- owner_id: FK opcional hacia tenant_owners. Registra cuando la accion la ejecuta el business owner.
+- registro_id: PK. Identificador único del registro de auditoría.
+- dominio_id: FK hacia dominios. Nullable para acciones globales del superadmin.
+- dueno_id: FK opcional hacia duenos_de_dominios. Registra cuando la accion la ejecuta el business owner.
 - superadmin_id: FK opcional hacia superadmins. Registra cuando la accion la ejecuta un superadmin.
-- action: Accion realizada.
-- entity_name: Nombre de la entidad afectada.
-- entity_id: ID del registro afectado.
-- old_value: Valor anterior en formato texto. NVARCHAR(MAX) para admitir representaciones largas.
-- new_value: Valor nuevo en formato texto. NVARCHAR(MAX).
-- created_at: Fecha del evento.
+- accion: Accion realizada.
+- nombre_entidad: Nombre de la entidad afectada.
+- entidad_id: ID del registro afectado.
+- valor_anterior: Valor anterior en formato texto. NVARCHAR(MAX) para admitir representaciones largas.
+- nuevo_valor: Valor nuevo en formato texto. NVARCHAR(MAX).
+- creado_en: Fecha del evento.
 
-Nota: owner_id y superadmin_id son mutuamente excluyentes en la práctica. Solo uno debe tener valor por registro.
+Nota: dueno_id y superadmin_id son mutuamente excluyentes en la práctica. Solo uno debe tener valor por registro.
 
 Ejemplos de acciones:
 
-- booking_created
-- booking_cancelled
-- booking_rescheduled
-- service_created
-- tenant_activated
-- tenant_suspended
+- reserva_creada
+- reserva_cancelada
+- reserva_reagendada
+- servicio_creado
+- dominio_activado
+- dominio_suspendido
 
 Relación principal:
 
-- tenants 1:N audit_logs
-- tenant_owners 1:N audit_logs
-- superadmins 1:N audit_logs
+- dominios 1:N registros
+- duenos_de_dominios 1:N registros
+- superadmins 1:N registros
 
 ## Relaciones principales del modelo
 
 | Relación | Tipo | Explicación |
 | --- | --- | --- |
-| business_types -> tenants | 1:N | Un tipo de negocio puede tener muchos tenants. |
-| tenant_statuses -> tenants | 1:N | Un estado puede estar asignado a muchos tenants. |
-| tenants -> tenant_owners | 1:N | Un negocio puede tener uno o varios owners. |
-| tenants -> customers | 1:N | Un negocio puede tener muchos clientes. |
-| tenants -> service_categories | 1:N | Un negocio puede crear varias categorías. |
-| service_categories -> services | 1:N | Una categoría puede tener varios servicios. |
-| tenants -> services | 1:N | Un negocio puede ofrecer muchos servicios. |
-| tenants -> locations | 1:N | Un negocio puede tener una o varias ubicaciones. |
-| tenants -> business_hours | 1:N | Un negocio tiene varios horarios por dia. |
-| locations -> availability_blocks | 1:N | Una ubicación puede tener muchos bloques disponibles. |
-| availability_blocks -> bookings | 1:0..1 | Un bloque representa un horario reservable y solo puede quedar asociado a una reserva activa. |
-| customers -> bookings | 1:N | Un cliente puede hacer varias reservas. |
-| services -> bookings | 1:N | Un servicio puede estar en muchas reservas. |
-| booking_statuses -> bookings | 1:N | Un estado puede estar en muchas reservas. |
-| bookings -> tracking_codes | 1:1 | Cada reserva tiene un codigo de tracking. |
-| tenants -> audit_logs | 1:N | Un tenant puede tener muchos registros de auditoría. |
-| tenant_owners -> audit_logs | 1:N | Un owner puede generar muchos registros de auditoría. |
-| superadmins -> audit_logs | 1:N | Un superadmin puede generar muchos registros al gestionar tenants. |
+| tipos_negocios -> dominios | 1:N | Un tipo de negocio puede tener muchos dominios. |
+| estados_dominios -> dominios | 1:N | Un estado puede estar asignado a muchos dominios. |
+| dominios -> duenos_de_dominios | 1:N | Un negocio puede tener uno o varios owners. |
+| dominios -> clientes | 1:N | Un negocio puede tener muchos clientes. |
+| dominios -> categorias_servicios | 1:N | Un negocio puede crear varias categorías. |
+| categorias_servicios -> servicios | 1:N | Una categoría puede tener varios servicios. |
+| dominios -> servicios | 1:N | Un negocio puede ofrecer muchos servicios. |
+| dominios -> localidades | 1:N | Un negocio puede tener una o varias ubicaciones. |
+| dominios -> horarios | 1:N | Un negocio tiene varios horarios por dia. |
+| localidades -> bloques_de_disponibilidad | 1:N | Una ubicación puede tener muchos bloques disponibles. |
+| bloques_de_disponibilidad -> reservaciones | 1:0..1 | Un bloque representa un horario reservable y solo puede quedar asociado a una reserva activa. |
+| clientes -> reservaciones | 1:N | Un cliente puede hacer varias reservas. |
+| servicios -> reservaciones | 1:N | Un servicio puede estar en muchas reservas. |
+| estados_reservaciones -> reservaciones | 1:N | Un estado puede estar en muchas reservas. |
+| reservaciones -> codigos_de_rastreos | 1:1 | Cada reserva tiene un codigo de tracking. |
+| dominios -> registros | 1:N | Un tenant puede tener muchos registros de auditoría. |
+| duenos_de_dominios -> registros | 1:N | Un owner puede generar muchos registros de auditoría. |
+| superadmins -> registros | 1:N | Un superadmin puede generar muchos registros al gestionar dominios. |
 
 ## Normalización de la base de datos
 
@@ -526,8 +536,8 @@ La primera forma normal indica que cada campo debe contener un solo valor y no l
 Ejemplo aplicado:
 
 - No se guardan varios servicios en una sola columna.
-- Cada servicio esta en la tabla services.
-- Cada reserva apunta a un solo servicio mediante service_id.
+- Cada servicio esta en la tabla servicios.
+- Cada reserva apunta a un solo servicio mediante servicio_id.
 
 Segunda Forma Normal
 
@@ -535,8 +545,8 @@ La segunda forma normal indica que los atributos deben depender completamente de
 
 Ejemplo aplicado:
 
-- El nombre del servicio depende de service_id y se guarda en services.
-- El nombre del cliente depende de customer_id y se guarda en customers.
+- El nombre del servicio depende de servicio_id y se guarda en servicios.
+- El nombre del cliente depende de cliente_id y se guarda en clientes.
 - La reserva no repite el nombre del cliente ni el nombre del servicio.
 
 Tercera Forma Normal
@@ -545,10 +555,10 @@ La tercera forma normal indica que los datos no deben depender de otros campos q
 
 Ejemplo aplicado:
 
-- El tipo de negocio no se guarda como texto en tenants.
-- Se guarda en business_types y tenants usa business_type_id.
-- El estado de la reserva no se guarda como texto repetido en bookings.
-- Se guarda en booking_statuses y bookings usa booking_status_id.
+- El tipo de negocio no se guarda como texto en dominios.
+- Se guarda en tipos_negocios y dominios usa tipo_negocio_id.
+- El estado de la reserva no se guarda como texto repetido en reservaciones.
+- Se guarda en estados_reservaciones y reservaciones usa estado_reservacion_id.
 
 Con esto se reduce duplicacion, se mejora el mantenimiento y se evita inconsistencia de datos.
 
@@ -588,20 +598,20 @@ Como el sistema tiene 15 tablas, se deben preparar scripts de inserción con dat
 
 Ejemplos de datos:
 
-- business_types:
+- tipos_negocios:
   - Barberia, Salon, Spa, Veterinaria, Clinica, Consultorio, Centro Estetico.
-- tenant_statuses:
-  - pending, active, suspended, inactive.
+- estados_dominios:
+  - pendiente, activo, suspendido, inactivo.
 - superadmins:
-  - Admin principal de MBM con email y password_hash. Para llegar a 50 registros se crean superadmins de prueba adicionales con datos ficticios.
-- tenants:
+  - Admin principal de MBM con email y contrasena_encriptada. Para llegar a 50 registros se crean superadmins de prueba adicionales con datos ficticios.
+- dominios:
   - Barberia Elite, Spa Luna, Veterinaria Central, Salon Bella, Clinica Vida.
-- services:
+- servicios:
   - Corte de cabello, Manicure, Masaje relajante, Bano de mascota, Consulta general.
-- booking_statuses:
-  - pending, confirmed, cancelled, completed, rescheduled.
+- estados_reservaciones:
+  - pendiente, confirmada, cancelada, completada, reagendada.
 
-Para las tablas pequenas de catálogo como tenant_statuses o booking_statuses, puede ser artificial llegar a 50 registros reales. Sin embargo, como el requisito indica 50 registros por tabla, se recomienda crear datos de prueba adicionales controlados o consultar al docente si los catálogos quedan exceptuados. Para ir a lo seguro, el script puede insertar 50 registros en todas las tablas, aunque algunos sean estados o tipos demo.
+Para las tablas pequenas de catálogo como estados_dominios o estados_reservaciones, puede ser artificial llegar a 50 registros reales. Sin embargo, como el requisito indica 50 registros por tabla, se recomienda crear datos de prueba adicionales controlados o consultar al docente si los catálogos quedan exceptuados. Para ir a lo seguro, el script puede insertar 50 registros en todas las tablas, aunque algunos sean estados o tipos demo.
 
 ## Procedimientos almacenados propuestos
 
@@ -638,7 +648,7 @@ Debe encargarse de:
 - Validar que el bloque este disponible y no tenga una reserva activa.
 - Crear o reutilizar el cliente.
 - Insertar la reserva.
-- Asignar estado pending o confirmed.
+- Asignar estado pendiente o confirmada.
 - Marcar o tratar el bloque como reservado para que no vuelva a mostrarse publicamente.
 - Permitir que un trigger genere el tracking code o llamar una función para generarlo.
 
@@ -647,7 +657,7 @@ sp_cancel_booking
 Debe encargarse de:
 
 - Buscar la reserva.
-- Cambiar el estado a cancelled.
+- Cambiar el estado a cancelada.
 - Liberar el bloque de disponibilidad asociado.
 - Registrar auditoría.
 
@@ -659,7 +669,7 @@ Debe encargarse de:
 - Liberar el bloque anterior.
 - Asociar la reserva al nuevo bloque disponible.
 - Actualizar fecha y horas de la reserva.
-- Cambiar estado a rescheduled o confirmed.
+- Cambiar estado a reagendada o confirmada.
 - Registrar auditoría.
 
 ## Funciones SQL propuestas
@@ -701,9 +711,9 @@ El requisito general menciona 5 triggers, aunque en la entrega final se menciona
 | trg_bookings_generate_tracking | Generar codigo de tracking al crear una reserva. |
 | trg_bookings_audit_insert | Registrar auditoría cuando se crea una reserva. |
 | trg_bookings_audit_update | Registrar auditoría cuando cambia una reserva. |
-| trg_update_tenants_updated_at | Actualizar updated_at cuando cambia un tenant. |
-| trg_update_services_updated_at | Actualizar updated_at cuando cambia un servicio. |
-| trg_prevent_double_booking | Evitar que dos reservas activas usen el mismo availability_block. |
+| trg_update_tenants_updated_at | Actualizar actualizado_en cuando cambia un tenant. |
+| trg_update_services_updated_at | Actualizar actualizado_en cuando cambia un servicio. |
+| trg_prevent_double_booking | Evitar que dos reservas activas usen el mismo bloque de disponibilidad. |
 | trg_release_block_on_cancel | Permitir que un bloque vuelva a estar disponible cuando una reserva se cancela o reagenda. |
 
 Se proponen 7 para tener margen. La entrega final pide mínimo 3, el requisito general pide 5.
