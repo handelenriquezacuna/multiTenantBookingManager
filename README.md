@@ -25,9 +25,12 @@ MBM es una plataforma de reservas multi tenant para negocios de servicios. La ba
 - [docs/overview.md](docs/overview.md) vision general, objetivos, alcance, actores y requerimientos
 - [docs/database-and-sql.md](docs/database-and-sql.md) diseño de base de datos, normalizacion y SQL requerido
 - [docs/api-and-frontend.md](docs/api-and-frontend.md) backend, endpoints y frontend
+- [docs/api-handover.md](docs/api-handover.md) handover de la API para el equipo frontend: convenciones, tabla completa de endpoints, ejemplos curl, estados y pendientes de cableado
 - [docs/frontend-map.md](docs/frontend-map.md) mapa visual de rutas frontend y relacion con endpoints
 - [docs/structure-infra-workflow.md](docs/structure-infra-workflow.md) estructura del monorepo, carpetas, docker y git
 - [docs/plan-and-delivery.md](docs/plan-and-delivery.md) entregables, cronograma, demo y checklist
+- [docs/sql-signatures.md](docs/sql-signatures.md) referencia de stored procedures, vistas, funciones, triggers y codigos THROW
+- [database/docs/PASSWORDS.md](database/docs/PASSWORDS.md) credenciales de desarrollo (seed data)
 
 ## Estructura rapida
 
@@ -37,183 +40,257 @@ MBM es una plataforma de reservas multi tenant para negocios de servicios. La ba
 - [infra](infra) infraestructura y contenedores
 - [docs](docs) documentacion completa
 
+## Puesta en marcha
+
+### Prerequisitos
+
+- Docker Desktop (o Docker Engine + Docker Compose v2)
+- `openssl` (para generar el secreto JWT; viene instalado por defecto en macOS/Linux)
+- pnpm, opcional, solo si se va a correr el frontend fuera de Docker en modo desarrollo
+
+### Pasos
+
+1. Copiar el archivo de variables de entorno:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Generar un `JWT_SECRET` real (32+ caracteres) y reemplazar el valor de ejemplo en `.env`:
+
+   ```bash
+   openssl rand -hex 32
+   ```
+
+   Tambien se puede ajustar `SQLSERVER_PASSWORD` si se desea una distinta a la de ejemplo.
+
+3. Levantar SQL Server y crear el schema completo (tablas, seed data, procedimientos, funciones, vistas y triggers):
+
+   ```bash
+   bash scripts/setup-db.sh
+   ```
+
+   El script espera a que el contenedor de SQL Server este `healthy` y luego ejecuta en orden los scripts `database/scripts/01` a `07`. En Windows se puede usar `scripts/setup-db.ps1` como equivalente.
+
+4. Levantar API y frontend:
+
+   ```bash
+   docker compose up --build
+   ```
+
+### URLs locales
+
+| Servicio | URL |
+| --- | --- |
+| Frontend | http://localhost:3000 |
+| API | http://localhost:8000 |
+| Documentacion interactiva de la API (Swagger) | http://localhost:8000/docs |
+| Especificacion OpenAPI | http://localhost:8000/openapi.json |
+| Healthcheck | http://localhost:8000/health |
+
+### Credenciales de demo
+
+No se documentan contraseñas en claro en este README. Ver [database/docs/PASSWORDS.md](database/docs/PASSWORDS.md) para el detalle completo del seed data (dueños de negocio, superadmins, y el owner de prueba recomendado para demo: dominio `barberia-el-colocho`).
+
+### Correr los tests de la API
+
+```bash
+cd apps/api
+python3 -m venv .venv
+.venv/bin/pip install -e ".[dev]"
+
+# unitarios (96 tests, sin dependencia de base de datos)
+.venv/bin/pytest tests/unit -q
+
+# integracion (65 tests, requiere SQL Server corriendo con el schema aplicado)
+.venv/bin/pytest tests/integration -q
+```
+
+Mas detalle de variables de entorno, arquitectura por capas y lint/type-check en [apps/api/README.md](apps/api/README.md).
+
 ## Modelo de datos — vision general
+
+Nombres de tablas y columnas en español ASCII (los fisicos, usados por los scripts en `database/scripts/`). Equivalencia completa ingles/español en [docs/rename-map.csv](docs/rename-map.csv).
 
 ```mermaid
 erDiagram
-    business_types {
-        int business_type_id PK
-        nvarchar_100 name "NOT NULL UNIQUE"
-        nvarchar_500 description "NULL"
-        bit is_active "NOT NULL DEFAULT 1"
+    tipos_negocios {
+        int tipo_negocio_id PK
+        nvarchar_100 nombre "NOT NULL UNIQUE"
+        nvarchar_500 descripcion "NULL"
+        bit activo "NOT NULL DEFAULT 1"
     }
-    tenant_statuses {
-        int tenant_status_id PK
-        nvarchar_50 name "NOT NULL UNIQUE"
-        nvarchar_200 description "NULL"
+    estados_dominios {
+        int dominio_estado_id PK
+        nvarchar_50 nombre "NOT NULL UNIQUE"
+        nvarchar_200 descripcion "NULL"
     }
     superadmins {
         int superadmin_id PK
-        nvarchar_200 full_name "NOT NULL"
-        nvarchar_254 email "NOT NULL UNIQUE"
-        nvarchar_512 password_hash "NOT NULL"
-        bit is_active "NOT NULL DEFAULT 1"
-        datetime2 created_at "NOT NULL DEFAULT SYSUTCDATETIME"
-        datetime2 updated_at "NOT NULL DEFAULT SYSUTCDATETIME"
+        nvarchar_100 nombre "NOT NULL"
+        nvarchar_100 apellido_1 "NOT NULL"
+        nvarchar_100 apellido_2 "NULL"
+        nvarchar_254 correo "NOT NULL UNIQUE"
+        nvarchar_512 contrasena_encriptada "NOT NULL"
+        bit activo "NOT NULL DEFAULT 1"
+        datetime2 creado_en "NOT NULL DEFAULT SYSUTCDATETIME"
+        datetime2 actualizado_en "NOT NULL DEFAULT SYSUTCDATETIME"
     }
-    tenants {
-        int tenant_id PK
-        int business_type_id FK "NOT NULL"
-        int tenant_status_id FK "NOT NULL"
-        nvarchar_200 name "NOT NULL"
+    dominios {
+        int dominio_id PK
+        int tipo_negocio_id FK "NOT NULL"
+        int dominio_estado_id FK "NOT NULL"
+        nvarchar_200 nombre "NOT NULL"
         nvarchar_100 slug "NOT NULL UNIQUE"
-        nvarchar_254 email "NOT NULL"
-        nvarchar_30 phone "NULL"
-        nvarchar_max description "NULL"
+        nvarchar_254 correo "NOT NULL"
+        nvarchar_30 telefono "NULL"
+        nvarchar_max descripcion "NULL"
         nvarchar_500 logo_url "NULL"
-        nvarchar_500 public_message "NULL"
-        bit is_active "NOT NULL DEFAULT 1"
-        datetime2 created_at "NOT NULL DEFAULT SYSUTCDATETIME"
-        datetime2 updated_at "NOT NULL DEFAULT SYSUTCDATETIME"
+        nvarchar_500 mensaje_publico "NULL"
+        bit activo "NOT NULL DEFAULT 1"
+        datetime2 creado_en "NOT NULL DEFAULT SYSUTCDATETIME"
+        datetime2 actualizado_en "NOT NULL DEFAULT SYSUTCDATETIME"
     }
-    tenant_owners {
-        int owner_id PK
-        int tenant_id FK "NOT NULL"
-        nvarchar_200 full_name "NOT NULL"
-        nvarchar_254 email "NOT NULL"
-        nvarchar_512 password_hash "NOT NULL"
-        nvarchar_30 phone "NULL"
-        bit is_active "NOT NULL DEFAULT 1"
-        datetime2 created_at "NOT NULL DEFAULT SYSUTCDATETIME"
-        datetime2 updated_at "NOT NULL DEFAULT SYSUTCDATETIME"
+    duenos_de_dominios {
+        int dueno_id PK
+        int dominio_id FK "NOT NULL"
+        nvarchar_100 nombre "NOT NULL"
+        nvarchar_100 apellido_1 "NOT NULL"
+        nvarchar_100 apellido_2 "NULL"
+        nvarchar_254 correo "NOT NULL"
+        nvarchar_512 contrasena_encriptada "NOT NULL"
+        nvarchar_30 telefono "NULL"
+        bit activo "NOT NULL DEFAULT 1"
+        datetime2 creado_en "NOT NULL DEFAULT SYSUTCDATETIME"
+        datetime2 actualizado_en "NOT NULL DEFAULT SYSUTCDATETIME"
     }
-    customers {
-        int customer_id PK
-        int tenant_id FK "NOT NULL"
-        nvarchar_100 first_name "NOT NULL"
-        nvarchar_100 last_name "NOT NULL"
-        nvarchar_254 email "NOT NULL"
-        nvarchar_30 phone "NOT NULL"
-        nvarchar_500 notes "NULL"
-        datetime2 created_at "NOT NULL DEFAULT SYSUTCDATETIME"
-        datetime2 updated_at "NOT NULL DEFAULT SYSUTCDATETIME"
+    clientes {
+        int cliente_id PK
+        int dominio_id FK "NOT NULL"
+        nvarchar_100 nombre "NOT NULL"
+        nvarchar_100 apellido_1 "NOT NULL"
+        nvarchar_100 apellido_2 "NULL"
+        nvarchar_254 correo "NOT NULL"
+        nvarchar_30 telefono "NOT NULL"
+        nvarchar_500 notas "NULL"
+        datetime2 creado_en "NOT NULL DEFAULT SYSUTCDATETIME"
+        datetime2 actualizado_en "NOT NULL DEFAULT SYSUTCDATETIME"
     }
-    service_categories {
-        int category_id PK
-        int tenant_id FK "NOT NULL"
-        nvarchar_150 name "NOT NULL"
-        nvarchar_500 description "NULL"
-        bit is_active "NOT NULL DEFAULT 1"
-        datetime2 created_at "NOT NULL DEFAULT SYSUTCDATETIME"
-        datetime2 updated_at "NOT NULL DEFAULT SYSUTCDATETIME"
+    categorias_servicios {
+        int categoria_id PK
+        int dominio_id FK "NOT NULL"
+        nvarchar_150 nombre "NOT NULL"
+        nvarchar_500 descripcion "NULL"
+        bit activo "NOT NULL DEFAULT 1"
+        datetime2 creado_en "NOT NULL DEFAULT SYSUTCDATETIME"
+        datetime2 actualizado_en "NOT NULL DEFAULT SYSUTCDATETIME"
     }
-    services {
-        int service_id PK
-        int tenant_id FK "NOT NULL"
-        int category_id FK "NOT NULL"
-        nvarchar_200 name "NOT NULL"
-        nvarchar_max description "NULL"
-        int duration_minutes "NOT NULL"
-        decimal_10_2 price "NULL"
-        bit show_price "NOT NULL DEFAULT 0"
-        bit is_active "NOT NULL DEFAULT 1"
-        datetime2 created_at "NOT NULL DEFAULT SYSUTCDATETIME"
-        datetime2 updated_at "NOT NULL DEFAULT SYSUTCDATETIME"
+    servicios {
+        int servicio_id PK
+        int dominio_id FK "NOT NULL"
+        int categoria_id FK "NOT NULL"
+        nvarchar_200 nombre "NOT NULL"
+        nvarchar_max descripcion "NULL"
+        int duracion_minutos "NOT NULL"
+        decimal_10_2 precio "NULL"
+        bit mostrar_precio "NOT NULL DEFAULT 0"
+        bit activo "NOT NULL DEFAULT 1"
+        datetime2 creado_en "NOT NULL DEFAULT SYSUTCDATETIME"
+        datetime2 actualizado_en "NOT NULL DEFAULT SYSUTCDATETIME"
     }
-    locations {
-        int location_id PK
-        int tenant_id FK "NOT NULL"
-        nvarchar_200 name "NOT NULL"
-        nvarchar_500 address "NOT NULL"
-        nvarchar_30 phone "NULL"
-        bit is_main "NOT NULL DEFAULT 0"
-        bit is_active "NOT NULL DEFAULT 1"
-        datetime2 created_at "NOT NULL DEFAULT SYSUTCDATETIME"
-        datetime2 updated_at "NOT NULL DEFAULT SYSUTCDATETIME"
+    localidades {
+        int localidad_id PK
+        int dominio_id FK "NOT NULL"
+        nvarchar_200 nombre "NOT NULL"
+        nvarchar_500 direccion "NOT NULL"
+        nvarchar_30 telefono "NULL"
+        bit principal "NOT NULL DEFAULT 0"
+        bit activo "NOT NULL DEFAULT 1"
+        datetime2 creado_en "NOT NULL DEFAULT SYSUTCDATETIME"
+        datetime2 actualizado_en "NOT NULL DEFAULT SYSUTCDATETIME"
     }
-    business_hours {
-        int business_hour_id PK
-        int tenant_id FK "NOT NULL"
-        int location_id FK "NOT NULL"
-        tinyint day_of_week "NOT NULL"
-        time open_time "NULL"
-        time close_time "NULL"
-        bit is_closed "NOT NULL DEFAULT 0"
-        datetime2 updated_at "NOT NULL DEFAULT SYSUTCDATETIME"
+    horarios {
+        int horario_id PK
+        int dominio_id FK "NOT NULL"
+        int localidad_id FK "NOT NULL"
+        tinyint dia_semana "NOT NULL"
+        time hora_apertura "NULL"
+        time hora_cerrado "NULL"
+        bit cerrado "NOT NULL DEFAULT 0"
+        datetime2 actualizado_en "NOT NULL DEFAULT SYSUTCDATETIME"
     }
-    availability_blocks {
-        int availability_block_id PK
-        int tenant_id FK "NOT NULL"
-        int location_id FK "NOT NULL"
-        date block_date "NOT NULL"
-        time start_time "NOT NULL"
-        time end_time "NOT NULL"
-        bit is_active "NOT NULL DEFAULT 1"
-        datetime2 created_at "NOT NULL DEFAULT SYSUTCDATETIME"
-        datetime2 updated_at "NOT NULL DEFAULT SYSUTCDATETIME"
+    bloques_de_disponibilidad {
+        int bloque_disponibilidad_id PK
+        int dominio_id FK "NOT NULL"
+        int localidad_id FK "NOT NULL"
+        date fecha_de_bloque "NOT NULL"
+        datetime2 fecha_inicio "NOT NULL"
+        datetime2 fecha_final "NOT NULL"
+        bit activo "NOT NULL DEFAULT 1"
+        datetime2 creado_en "NOT NULL DEFAULT SYSUTCDATETIME"
+        datetime2 actualizado_en "NOT NULL DEFAULT SYSUTCDATETIME"
     }
-    booking_statuses {
-        int booking_status_id PK
-        nvarchar_50 name "NOT NULL UNIQUE"
-        nvarchar_200 description "NULL"
+    estados_reservaciones {
+        int estado_reservacion_id PK
+        nvarchar_50 nombre "NOT NULL UNIQUE"
+        nvarchar_200 descripcion "NULL"
     }
-    bookings {
-        int booking_id PK
-        int tenant_id FK "NOT NULL"
-        int customer_id FK "NOT NULL"
-        int service_id FK "NOT NULL"
-        int location_id FK "NOT NULL"
-        int availability_block_id FK "NULL UNIQUE ON DELETE SET NULL"
-        int booking_status_id FK "NOT NULL"
-        date booking_date "NOT NULL"
-        time start_time "NOT NULL"
-        time end_time "NOT NULL"
-        nvarchar_500 customer_notes "NULL"
-        nvarchar_500 internal_notes "NULL"
-        datetime2 created_at "NOT NULL DEFAULT SYSUTCDATETIME"
-        datetime2 updated_at "NOT NULL DEFAULT SYSUTCDATETIME"
+    reservaciones {
+        int reserva_id PK
+        int dominio_id FK "NOT NULL"
+        int cliente_id FK "NOT NULL"
+        int servicio_id FK "NOT NULL"
+        int localidad_id FK "NOT NULL"
+        int bloque_disponibilidad_id FK "NULL UNIQUE ON DELETE SET NULL"
+        int estado_reservacion_id FK "NOT NULL"
+        datetime2 fecha_inicio "NOT NULL"
+        datetime2 fecha_final "NOT NULL"
+        nvarchar_500 nota_cliente "NULL"
+        nvarchar_500 nota_interna "NULL"
+        datetime2 creado_en "NOT NULL DEFAULT SYSUTCDATETIME"
+        datetime2 actualizado_en "NOT NULL DEFAULT SYSUTCDATETIME"
     }
-    tracking_codes {
-        bigint tracking_id PK
-        int booking_id FK "NOT NULL UNIQUE"
-        nvarchar_50 tracking_code "NOT NULL UNIQUE"
-        datetime2 expires_at "NOT NULL"
-        bit is_active "NOT NULL DEFAULT 1"
-        datetime2 created_at "NOT NULL DEFAULT SYSUTCDATETIME"
+    codigos_de_rastreos {
+        int codigo_de_rastreo_id PK
+        int reserva_id FK "NOT NULL UNIQUE"
+        nvarchar_50 codigo_rastreo "NOT NULL UNIQUE"
+        datetime2 expira_en "NOT NULL"
+        bit activo "NOT NULL DEFAULT 1"
+        datetime2 creado_en "NOT NULL DEFAULT SYSUTCDATETIME"
     }
-    audit_logs {
-        bigint audit_id PK
-        int tenant_id FK "NULL"
-        int owner_id FK "NULL"
+    registros {
+        bigint registro_id PK
+        int dominio_id FK "NULL"
+        int dueno_id FK "NULL"
         int superadmin_id FK "NULL"
-        nvarchar_100 action "NOT NULL"
-        nvarchar_100 entity_name "NOT NULL"
-        int entity_id "NOT NULL"
-        nvarchar_max old_value "NULL"
-        nvarchar_max new_value "NULL"
-        datetime2 created_at "NOT NULL DEFAULT SYSUTCDATETIME"
+        nvarchar_100 accion "NOT NULL"
+        nvarchar_100 nombre_entidad "NOT NULL"
+        int entidad_id "NOT NULL"
+        nvarchar_max valor_anterior "NULL"
+        nvarchar_max nuevo_valor "NULL"
+        datetime2 creado_en "NOT NULL DEFAULT SYSUTCDATETIME"
     }
 
-    business_types ||--o{ tenants : "clasifica"
-    tenant_statuses ||--o{ tenants : "tiene estado"
-    tenants ||--o{ tenant_owners : "tiene"
-    tenants ||--o{ customers : "registra"
-    tenants ||--o{ service_categories : "define"
-    tenants ||--o{ services : "ofrece"
-    tenants ||--o{ locations : "opera en"
-    tenants ||--o{ business_hours : "define horario"
-    tenants ||--o{ availability_blocks : "crea bloques"
-    tenants ||--o{ bookings : "recibe reservas"
-    tenants ||--o{ audit_logs : "genera logs"
-    tenant_owners ||--o{ audit_logs : "ejecuta accion"
-    superadmins ||--o{ audit_logs : "ejecuta accion"
-    service_categories ||--o{ services : "agrupa"
-    locations ||--o{ business_hours : "define horario"
-    locations ||--o{ availability_blocks : "tiene bloques"
-    locations ||--o{ bookings : "aloja"
-    availability_blocks ||--o| bookings : "cubre 1 reserva"
-    customers ||--o{ bookings : "realiza"
-    services ||--o{ bookings : "es reservado como"
-    booking_statuses ||--o{ bookings : "clasifica estado"
-    bookings ||--|| tracking_codes : "identificada por"
+    tipos_negocios ||--o{ dominios : "clasifica"
+    estados_dominios ||--o{ dominios : "tiene estado"
+    dominios ||--o{ duenos_de_dominios : "tiene"
+    dominios ||--o{ clientes : "registra"
+    dominios ||--o{ categorias_servicios : "define"
+    dominios ||--o{ servicios : "ofrece"
+    dominios ||--o{ localidades : "opera en"
+    dominios ||--o{ horarios : "define horario"
+    dominios ||--o{ bloques_de_disponibilidad : "crea bloques"
+    dominios ||--o{ reservaciones : "recibe reservas"
+    dominios ||--o{ registros : "genera logs"
+    duenos_de_dominios ||--o{ registros : "ejecuta accion"
+    superadmins ||--o{ registros : "ejecuta accion"
+    categorias_servicios ||--o{ servicios : "agrupa"
+    localidades ||--o{ horarios : "define horario"
+    localidades ||--o{ bloques_de_disponibilidad : "tiene bloques"
+    localidades ||--o{ reservaciones : "aloja"
+    bloques_de_disponibilidad ||--o| reservaciones : "cubre 1 reserva"
+    clientes ||--o{ reservaciones : "realiza"
+    servicios ||--o{ reservaciones : "es reservado como"
+    estados_reservaciones ||--o{ reservaciones : "clasifica estado"
+    reservaciones ||--|| codigos_de_rastreos : "identificada por"
 ```
