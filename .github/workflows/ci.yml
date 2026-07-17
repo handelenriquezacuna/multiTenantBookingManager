@@ -102,6 +102,10 @@ jobs:
 
       - name: Install sqlcmd (mssql-tools18) on the runner
         run: |
+          # The ubuntu-22.04 runner already ships a Microsoft apt source; remove
+          # any pre-existing ones so our single clean entry doesn't collide on
+          # the Signed-By option (apt error 100: "Conflicting values ... Signed-By").
+          sudo rm -f /etc/apt/sources.list.d/microsoft*.list /etc/apt/sources.list.d/mssql-release.list
           curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
           curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
           sudo sed -i 's#deb \[arch=amd64,armhf,arm64\]#deb [arch=amd64,armhf,arm64 signed-by=/usr/share/keyrings/microsoft-prod.gpg]#g' /etc/apt/sources.list.d/mssql-release.list
