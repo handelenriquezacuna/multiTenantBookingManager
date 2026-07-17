@@ -79,7 +79,8 @@ jobs:
 
   integration:
     name: Integration tests against SQL Server
-    runs-on: ubuntu-latest
+    # Pinned to 22.04 to match the Microsoft packages repo config used below.
+    runs-on: ubuntu-22.04
     needs: [test-api, build-api]
     services:
       sqlserver:
@@ -101,7 +102,7 @@ jobs:
 
       - name: Install sqlcmd (mssql-tools18) on the runner
         run: |
-          curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+          curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
           curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
           sudo sed -i 's#deb \[arch=amd64,armhf,arm64\]#deb [arch=amd64,armhf,arm64 signed-by=/usr/share/keyrings/microsoft-prod.gpg]#g' /etc/apt/sources.list.d/mssql-release.list
           sudo apt-get update
