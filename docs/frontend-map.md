@@ -56,4 +56,4 @@ flowchart TD
   - `/admin/tenants` usa `GET /admin/tenants`
   - `/admin/tenants/[id]` usa `GET /admin/tenants/{id}`
 
-Actualmente todo funciona en modo mock hasta que backend y base de datos esten listos.
+Estado actual: el flujo publico de reserva (consulta de tenant, servicios y disponibilidad), el seguimiento por codigo y el login estan cableados a la API real (con `NEXT_PUBLIC_API_MODE=api`). El resto del back-office de owner/admin y las acciones de escritura del flujo publico siguen usando datos mock (`lib/mock-data.ts`) por ahora. El modo mock sigue disponible como respaldo mediante `NEXT_PUBLIC_API_MODE=mock` (valor por defecto).
