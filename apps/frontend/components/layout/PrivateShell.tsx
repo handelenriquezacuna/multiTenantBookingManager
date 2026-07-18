@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
-import { clearAuthToken } from "@/lib/api";
+import { useEffect, useState } from "react";
+import { apiGet, clearAuthToken, isMockMode } from "@/lib/api";
+import { endpoints } from "@/lib/endpoints";
+import { useAuth, userInitials } from "@/hooks/useAuth";
 
 const navItems = [
   ["/dashboard", "Resumen"],
@@ -16,15 +18,73 @@ const navItems = [
   ["/settings/business", "Configuracion"]
 ];
 
+type CurrentTenant = {
+  tenantId: number;
+  slug: string;
+  name: string;
+  status: string;
+};
+
+const MOCK_TENANT: CurrentTenant = {
+  tenantId: 1,
+  slug: "barberia-el-colocho",
+  name: "Negocio demo",
+  status: "activo"
+};
+
 export function PrivateShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [profileOpen, setProfileOpen] = useState(false);
+  const { user, loading } = useAuth();
+  const [tenant, setTenant] = useState<CurrentTenant | null>(null);
+
+  // Guarda: si termino de cargar la sesion y no hay usuario, redirige a login.
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/login");
+    }
+  }, [loading, user, router]);
+
+  // Nombre del negocio para el encabezado.
+  useEffect(() => {
+    let active = true;
+    if (isMockMode()) {
+      setTenant(MOCK_TENANT);
+      return;
+    }
+    if (!user) return;
+    apiGet<CurrentTenant>(endpoints.tenant.current)
+      .then((current) => {
+        if (active) setTenant(current);
+      })
+      .catch(() => {
+        if (active) setTenant(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [user]);
 
   function logout() {
     clearAuthToken();
     router.push("/login");
   }
+
+  if (loading || !user) {
+    return (
+      <div className="app-shell">
+        <section className="app-content" aria-busy="true">
+          <p>Cargando tu panel...</p>
+        </section>
+      </div>
+    );
+  }
+
+  const tenantName = tenant?.name ?? "Panel del negocio";
+  const tenantSlug = tenant?.slug ?? "";
+  const fullName = `${user.firstName} ${user.lastName}`.trim();
+  const initials = userInitials(user);
 
   return (
     <div className="app-shell">
@@ -47,26 +107,28 @@ export function PrivateShell({ children }: { children: React.ReactNode }) {
 
         <div className="sidebar-footer">
           <span className="tenant-state active">Negocio activo</span>
-          <p>Clinica Dental Sonrisa esta disponible para recibir reservas.</p>
+          <p>{tenantName} esta disponible para recibir reservas.</p>
         </div>
       </aside>
 
       <div className="app-main">
         <header className="app-topbar">
           <div>
-            <p className="breadcrumb">Clinica Dental Sonrisa</p>
+            <p className="breadcrumb">{tenantName}</p>
             <strong>Panel del negocio</strong>
           </div>
           <div className="topbar-actions">
-            <Link href="/book/clinica-dental-sonrisa" className="btn secondary">Ver pagina publica</Link>
+            {tenantSlug ? (
+              <Link href={`/book/${tenantSlug}`} className="btn secondary">Ver pagina publica</Link>
+            ) : null}
             <div className="profile-menu">
               <button className="owner-chip" type="button" aria-label="Abrir menu de perfil" onClick={() => setProfileOpen((open) => !open)}>
-                SC
+                {initials}
               </button>
               {profileOpen ? (
                 <div className="profile-popover" role="menu">
-                  <strong>Sofia Campos</strong>
-                  <small>Responsable de Clinica Dental Sonrisa</small>
+                  <strong>{fullName}</strong>
+                  <small>Responsable de {tenantName}</small>
                   <Link href="/settings/business" role="menuitem">Configuracion del negocio</Link>
                   <button type="button" role="menuitem" className="danger" onClick={logout}>Cerrar sesion</button>
                 </div>

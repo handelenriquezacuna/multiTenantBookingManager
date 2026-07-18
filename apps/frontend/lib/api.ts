@@ -72,6 +72,12 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     cache: "no-store"
   });
 
+  if (response.status === 401) {
+    // Token invalido o expirado: lo limpiamos para que la sesion se rehidrate
+    // como no autenticado (las guardas de ruta redirigen a login).
+    clearAuthToken();
+  }
+
   if (response.status === 204) {
     return undefined as T;
   }
