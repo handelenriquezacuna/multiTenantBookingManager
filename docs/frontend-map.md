@@ -1,6 +1,6 @@
 # Mapa de frontend
 
-Mapa visual de rutas del frontend MBM para guiar implementación, pruebas y conexión con backend.
+Mapa visual de rutas del frontend Citari para guiar implementación, pruebas y conexión con backend.
 
 ```mermaid
 flowchart TD

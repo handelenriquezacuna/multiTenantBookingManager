@@ -6,7 +6,7 @@ import { BookingShell } from "@/components/layout/BookingShell";
 
 export default function TrackLookupPage() {
   const router = useRouter();
-  const [code, setCode] = useState("MBM-8F3K2A");
+  const [code, setCode] = useState("CITARI-8F3K2A");
 
   function submitTrackingCode(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -26,7 +26,7 @@ export default function TrackLookupPage() {
         <form className="track-card" onSubmit={submitTrackingCode}>
           <label className="field-group">
             <span>Codigo de tracking</span>
-            <input value={code} onChange={(event) => setCode(event.target.value)} placeholder="MBM-8F3K2A" />
+            <input value={code} onChange={(event) => setCode(event.target.value)} placeholder="CITARI-8F3K2A" />
           </label>
           <button className="btn" type="submit">Consultar reserva</button>
         </form>

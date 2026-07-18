@@ -4,7 +4,7 @@ import { PublicShell } from "@/components/layout/PublicShell";
 
 export const metadata: Metadata = {
   title: "Inicio",
-  description: "MBM es un software de reservas online para negocios de servicios que necesitan agenda, disponibilidad y seguimiento en un solo lugar.",
+  description: "Citari es un software de reservas online para negocios de servicios que necesitan agenda, disponibilidad y seguimiento en un solo lugar.",
   alternates: {
     canonical: "/"
   }
@@ -14,7 +14,7 @@ const benefits = [
   ["Pagina de reservas por negocio", "Cada negocio tiene un espacio publico donde sus clientes pueden elegir servicio, fecha y hora."],
   ["Panel operativo", "El equipo administra servicios, horarios, disponibilidad, clientes y reservas desde una vista clara."],
   ["Seguimiento por codigo", "Cada cliente recibe un codigo para consultar, cancelar o reagendar sin crear una cuenta."],
-  ["Control multi negocio", "MBM permite operar distintos negocios dentro de una misma plataforma sin mezclar informacion."]
+  ["Control multi negocio", "Citari permite operar distintos negocios dentro de una misma plataforma sin mezclar informacion."]
 ];
 
 const industries = ["Clinicas", "Consultorios", "Barberias", "Salones", "Spas", "Veterinarias", "Centros esteticos", "Consultores"];
@@ -34,7 +34,7 @@ export default function HomePage() {
           <p className="hero-kicker">Software de reservas multi negocio</p>
           <h1>Reservas online para negocios que viven de su agenda.</h1>
           <p>
-            MBM centraliza paginas de reserva, servicios, disponibilidad y seguimiento para negocios de servicios.
+            Citari centraliza paginas de reserva, servicios, disponibilidad y seguimiento para negocios de servicios.
             Simple para el cliente, ordenado para cada negocio.
           </p>
           <div className="marketing-actions">
@@ -43,7 +43,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="marketing-device" aria-label="Vista previa de MBM">
+        <div className="marketing-device" aria-label="Vista previa de Citari">
           <div className="device-toolbar">
             <span>Clinica Dental Sonrisa</span>
             <span>Agenda activa</span>
@@ -79,7 +79,7 @@ export default function HomePage() {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "SoftwareApplication",
-            name: "MBM Booking Manager",
+            name: "Citari",
             applicationCategory: "BusinessApplication",
             operatingSystem: "Web",
             description: "Software de reservas para negocios de servicios"
@@ -101,7 +101,7 @@ export default function HomePage() {
           <h2>Una plataforma para negocios distintos, con una experiencia consistente.</h2>
         </div>
         <p>
-          MBM no esta pensado para un solo rubro. Cada negocio configura sus servicios, horarios y disponibilidad,
+          Citari no esta pensado para un solo rubro. Cada negocio configura sus servicios, horarios y disponibilidad,
           mientras sus clientes reservan desde una pagina publica propia.
         </p>
       </section>

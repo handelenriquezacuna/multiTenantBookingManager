@@ -1,13 +1,13 @@
 ﻿-- ============================================================
 -- 06-views.sql
--- Proyecto: MBM - Multi-Tenant Booking Manager
+-- Proyecto: Citari - Citari
 -- Contenido: 7 vistas de lectura sobre el esquema en espanol.
 -- Idempotente: usa CREATE OR ALTER, se puede reejecutar sin error.
 -- R6: toda vista referencia como minimo 2 tablas base.
 -- Ver docs/rename-map.csv para la equivalencia con los nombres en ingles.
 -- ============================================================
 
-USE mbm_booking;
+USE citari;
 GO
 
 -- 1. vw_detalle_reservaciones ---------------------------------------------

@@ -1,9 +1,11 @@
+name: citari
+
 services:
-  # 1. Base de datos SQL Server
-  sqlserver:
+  # Base de datos SQL Server
+  db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     platform: linux/amd64
-    container_name: mbm_sqlserver
+    container_name: db
     environment:
       ACCEPT_EULA: "Y"
       SA_PASSWORD: ${SQLSERVER_PASSWORD:-YourStrong!Passw0rd}
@@ -11,7 +13,6 @@ services:
     ports:
       # Puerto del host para conectar DataGrip/DBeaver/SSMS a la base dockerizada.
       # Por defecto 11433 para no chocar con un SQL Server local en 1433.
-      # El contenedor sigue usando 1433 internamente; la API se conecta por red interna.
       - "${SQLSERVER_HOST_PORT:-11433}:1433"
     volumes:
       - sqlserver_data:/var/opt/mssql
@@ -23,17 +24,17 @@ services:
       retries: 10
       start_period: 30s
     networks:
-      - mbm_network
+      - citari_network
 
-  # 2. Carga del esquema y el seed (una sola vez). Corre 01-07 en orden si la
-  #    base aun no existe; si ya esta cargada, no hace nada. Reutiliza la imagen
-  #    de SQL Server (ya trae sqlcmd), asi no se descarga nada extra.
+  # Carga del esquema y el seed (una sola vez). Corre 01-07 en orden si la base
+  # aun no existe; si ya esta cargada, no hace nada. Reutiliza la imagen de SQL
+  # Server (ya trae sqlcmd), asi no se descarga nada extra.
   db-init:
     image: mcr.microsoft.com/mssql/server:2022-latest
     platform: linux/amd64
-    container_name: mbm_db_init
+    container_name: db-init
     depends_on:
-      sqlserver:
+      db:
         condition: service_healthy
     environment:
       SA_PASSWORD: ${SQLSERVER_PASSWORD:-YourStrong!Passw0rd}
@@ -44,8 +45,8 @@ services:
       - -c
       - |
         set -e
-        ALREADY=$$(/opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P "$$SA_PASSWORD" -C -h -1 -W \
-          -Q "SET NOCOUNT ON; IF DB_ID('mbm_booking') IS NOT NULL AND OBJECT_ID('mbm_booking.dbo.dominios','U') IS NOT NULL SELECT 1 ELSE SELECT 0" \
+        ALREADY=$$(/opt/mssql-tools18/bin/sqlcmd -S db -U sa -P "$$SA_PASSWORD" -C -h -1 -W \
+          -Q "SET NOCOUNT ON; IF DB_ID('citari') IS NOT NULL AND OBJECT_ID('citari.dbo.dominios','U') IS NOT NULL SELECT 1 ELSE SELECT 0" \
           | tr -d '[:space:]')
         if [ "$$ALREADY" = "1" ]; then
           echo "La base de datos ya esta inicializada; se omite la carga."
@@ -55,25 +56,25 @@ services:
           echo "Ejecutando $$f"
           # -I activa SET QUOTED_IDENTIFIER ON (requerido por el indice filtrado
           # ux_reservaciones_bloque; sqlcmd lo trae OFF por defecto).
-          /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P "$$SA_PASSWORD" -C -b -I -i "$$f"
+          /opt/mssql-tools18/bin/sqlcmd -S db -U sa -P "$$SA_PASSWORD" -C -b -I -i "$$f"
         done
         echo "Base de datos inicializada (15 tablas + seed + procedimientos/funciones/vistas/triggers)."
     restart: "no"
     networks:
-      - mbm_network
+      - citari_network
 
-  # 3. API FastAPI. Arranca solo cuando la base ya quedo cargada.
+  # API FastAPI. Arranca solo cuando la base ya quedo cargada.
   api:
     build:
       context: ./apps/api
       dockerfile: Dockerfile
-    container_name: mbm_api
+    container_name: api
     environment:
-      SQLSERVER_HOST: sqlserver
+      SQLSERVER_HOST: db
       SQLSERVER_PORT: 1433
       SQLSERVER_USER: sa
       SQLSERVER_PASSWORD: ${SQLSERVER_PASSWORD:-YourStrong!Passw0rd}
-      SQLSERVER_DB: mbm_booking
+      SQLSERVER_DB: citari
       JWT_SECRET: ${JWT_SECRET:-dev-secret-cambiar-en-produccion-min-32-chars}
       JWT_EXPIRES_MIN: ${JWT_EXPIRES_MIN:-60}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
@@ -84,17 +85,17 @@ services:
     ports:
       - "${API_PORT:-8000}:8000"
     networks:
-      - mbm_network
+      - citari_network
 
-  # 4. Frontend Next.js. Consume la API real (NEXT_PUBLIC_API_MODE=api).
-  frontend:
+  # Frontend Next.js. Consume la API real (NEXT_PUBLIC_API_MODE=api).
+  web:
     build:
       context: ./apps/frontend
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
         NEXT_PUBLIC_API_MODE: ${NEXT_PUBLIC_API_MODE:-api}
-    container_name: mbm_frontend
+    container_name: web
     environment:
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
       NEXT_PUBLIC_API_MODE: ${NEXT_PUBLIC_API_MODE:-api}
@@ -103,11 +104,11 @@ services:
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     networks:
-      - mbm_network
+      - citari_network
 
 volumes:
   sqlserver_data:
 
 networks:
-  mbm_network:
+  citari_network:
     driver: bridge

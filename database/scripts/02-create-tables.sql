@@ -1,11 +1,11 @@
 ﻿-- ============================================================
 -- 02-create-tables.sql
--- Proyecto: MBM - Multi-Tenant Booking Manager
+-- Proyecto: Citari - Citari
 -- Contenido: crea las 15 tablas y relaciones (identificadores en espanol, ASCII)
 -- Ver docs/rename-map.csv para la equivalencia con los nombres en ingles.
 -- ============================================================
 
-USE mbm_booking;
+USE citari;
 GO
 
 -- Catalogos ---------------------------------------------------------------

@@ -52,7 +52,7 @@ def test_map_superadmin_user_has_no_tenant_id() -> None:
         "nombre": "Melanie",
         "apellido_1": "Campos",
         "apellido_2": "Arias",
-        "correo": "melanie.campos@mbm.admin",
+        "correo": "melanie.campos@citari.admin",
     }
 
     result = map_superadmin_user(row)
@@ -61,7 +61,7 @@ def test_map_superadmin_user_has_no_tenant_id() -> None:
         "id": 1,
         "first_name": "Melanie",
         "last_name": "Campos Arias",
-        "email": "melanie.campos@mbm.admin",
+        "email": "melanie.campos@citari.admin",
         "role": "superadmin",
         "tenant_id": None,
     }

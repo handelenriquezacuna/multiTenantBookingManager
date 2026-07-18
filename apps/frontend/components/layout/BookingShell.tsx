@@ -5,7 +5,7 @@ export function BookingShell({ children }: { children: React.ReactNode }) {
     <main className="booking-shell">
       <section className="booking-shell-content">{children}</section>
       <footer className="powered-footer">
-        <Link href="/">Powered by MBM</Link>
+        <Link href="/">Powered by Citari</Link>
       </footer>
     </main>
   );

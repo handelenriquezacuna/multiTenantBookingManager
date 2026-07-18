@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     sqlserver_port: int = 1433
     sqlserver_user: str = "sa"
     sqlserver_password: str = ""
-    sqlserver_db: str = "mbm_booking"
+    sqlserver_db: str = "citari"
     sqlserver_driver: str = "ODBC Driver 18 for SQL Server"
 
     # Auth

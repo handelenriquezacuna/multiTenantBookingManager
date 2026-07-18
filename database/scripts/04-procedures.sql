@@ -1,6 +1,6 @@
 ﻿-- ============================================================
 -- 04-procedures.sql
--- Proyecto: MBM - Multi-Tenant Booking Manager
+-- Proyecto: Citari - Citari
 -- Contenido: 13 stored procedures de dominios, servicios, disponibilidad,
 -- clientes y reservaciones (identificadores en espanol, ASCII).
 -- Idempotente: CREATE OR ALTER PROCEDURE.
@@ -36,7 +36,7 @@
 -- quedan a cargo de los triggers del Work Package WP4.
 -- ============================================================
 
-USE mbm_booking;
+USE citari;
 GO
 
 -- ------------------------------------------------------------

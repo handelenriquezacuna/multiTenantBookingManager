@@ -4,7 +4,7 @@
 set -e
 
 SQLCMD="/opt/mssql-tools18/bin/sqlcmd"
-CONTAINER="mbm_sqlserver"
+CONTAINER="citari-db"
 ENV_FILE=".env"
 ENV_EXAMPLE=".env.example"
 
@@ -68,6 +68,6 @@ echo ""
 echo "[OK] Setup completo. Conecta DBeaver con:"
 echo "  Host:     localhost"
 echo "  Port:     ${SQLSERVER_PORT:-1433}"
-echo "  Database: ${SQLSERVER_DB:-mbm_booking}"
+echo "  Database: ${SQLSERVER_DB:-citari}"
 echo "  User:     sa"
 echo "  Driver Properties -> trustServerCertificate = true"

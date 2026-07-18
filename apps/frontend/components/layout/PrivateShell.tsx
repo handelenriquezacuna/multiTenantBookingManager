@@ -29,8 +29,8 @@ export function PrivateShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="app-shell">
       <aside className="app-sidebar">
-        <Link href="/dashboard" className="app-brand" aria-label="Panel MBM">
-          <span className="app-brand-word">MBM</span>
+        <Link href="/dashboard" className="app-brand" aria-label="Panel Citari">
+          <span className="app-brand-word">Citari</span>
           <span className="app-brand-copy">Reservas</span>
         </Link>
 

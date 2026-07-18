@@ -122,7 +122,7 @@ def test_reschedule_moves_to_new_block_and_frees_old_one(
 
 
 def test_track_unknown_code_returns_404(client: TestClient) -> None:
-    response = client.get("/api/v1/track/MBM-ZZZZZZ")
+    response = client.get("/api/v1/track/CITARI-ZZZZZZ")
 
     assert response.status_code == 404
     body = response.json()

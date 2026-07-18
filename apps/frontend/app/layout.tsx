@@ -2,10 +2,10 @@ import "./globals.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://mbm-booking.example"),
+  metadataBase: new URL("https://citari.example"),
   title: {
-    default: "MBM Booking Manager | Reservas multi tenant",
-    template: "%s | MBM Booking Manager"
+    default: "Citari | Reservas multi tenant",
+    template: "%s | Citari"
   },
   description: "Plataforma de reservas multi tenant para negocios de servicios.",
   robots: {
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     follow: true
   },
   openGraph: {
-    title: "MBM Booking Manager",
+    title: "Citari",
     description: "Reservas multi tenant para negocios de servicios.",
     type: "website"
   }

@@ -5,7 +5,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $SQLCMD   = "/opt/mssql-tools18/bin/sqlcmd"
-$CONTAINER = "mbm_sqlserver"
+$CONTAINER = "citari-db"
 $ENV_FILE  = ".env"
 $ENV_EXAMPLE = ".env.example"
 
@@ -78,6 +78,6 @@ Write-Host ""
 Write-Host "Setup completo. Conecta DBeaver con:"
 Write-Host "  Host:     localhost"
 Write-Host "  Port:     $($SA_PORT ?? '1433')"
-Write-Host "  Database: $($SA_DB ?? 'mbm_booking')"
+Write-Host "  Database: $($SA_DB ?? 'citari')"
 Write-Host "  User:     sa"
 Write-Host "  Driver Properties -> trustServerCertificate = true"

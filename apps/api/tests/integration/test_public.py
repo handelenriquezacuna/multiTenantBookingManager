@@ -89,7 +89,7 @@ def test_create_public_booking_returns_201_with_tracking_code(
     body = response.json()
     cleanup_tracker["reserva_ids"].append(body["bookingId"])
 
-    assert body["trackingCode"].startswith("MBM-")
+    assert body["trackingCode"].startswith("CITARI-")
     assert body["status"] == "pending"
     assert body["serviceName"]
     assert body["customerName"].startswith("Ana")

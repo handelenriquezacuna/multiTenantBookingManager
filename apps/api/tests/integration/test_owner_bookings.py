@@ -161,7 +161,7 @@ def test_booking_lifecycle_confirm_then_complete(
     created = _create_booking(client, owner_headers, booking_env, block_id)
     booking_id = created["bookingId"]
     assert created["status"] == "pending"
-    assert created["trackingCode"].startswith("MBM-")
+    assert created["trackingCode"].startswith("CITARI-")
 
     confirmed = client.post(f"/api/v1/bookings/{booking_id}/confirm", headers=owner_headers)
     assert confirmed.status_code == 200, confirmed.text

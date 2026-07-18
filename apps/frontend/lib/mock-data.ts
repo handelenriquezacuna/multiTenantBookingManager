@@ -44,7 +44,7 @@ export const mockBookings: Booking[] = [
     bookingDate: "2026-05-20",
     startTime: "09:00",
     status: "confirmed",
-    trackingCode: "MBM-8F3K2A"
+    trackingCode: "CITARI-8F3K2A"
   },
   {
     bookingId: 3002,
@@ -53,6 +53,6 @@ export const mockBookings: Booking[] = [
     bookingDate: "2026-05-20",
     startTime: "10:00",
     status: "pending",
-    trackingCode: "MBM-1X7D9Q"
+    trackingCode: "CITARI-1X7D9Q"
   }
 ];

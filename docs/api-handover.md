@@ -1,6 +1,6 @@
 # Handover de la API para el equipo frontend
 
-Documento de entrega de la API MBM (FastAPI) al equipo frontend (Next.js). Cubre
+Documento de entrega de la API Citari (FastAPI) al equipo frontend (Next.js). Cubre
 convenciones de la API, el catálogo completo de endpoints, ejemplos curl
 probados contra la API real, los estados de dominio y de reservación, el
 estándar de logging, y el trabajo que queda pendiente del lado del frontend.
@@ -103,7 +103,7 @@ parametrizado sin SP (no existe SP para esa tabla, ver
 `docs/sql-signatures.md`).
 
 Tabla generada a partir de `openapi.json` de la API en ejecución (imagen
-`mbm-api:wp8`) y verificada contra el código de `apps/api/app/routers/`.
+`citari-api:wp8`) y verificada contra el código de `apps/api/app/routers/`.
 60 operaciones (método+path), 43 paths únicos, cobertura 100%.
 
 ### Salud
@@ -285,7 +285,7 @@ cae en `500 Internal Server Error` genérico.
 
 ## Ejemplos curl
 
-Todos probados contra la API real (`mbm-api:wp8`, `docker compose` local)
+Todos probados contra la API real (`citari-api:wp8`, `docker compose` local)
 con el seed data de `database/docs/PASSWORDS.md`. Reemplazar
 `http://localhost:8000` por la URL real del entorno.
 
@@ -319,7 +319,7 @@ Respuesta (200):
 ```bash
 curl -s -X POST http://localhost:8000/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"handel.enriquez@mbm.admin","password":"Admin123","role":"superadmin"}'
+  -d '{"email":"handel.enriquez@citari.admin","password":"Admin123","role":"superadmin"}'
 ```
 
 Respuesta (200): mismo shape, `role: "superadmin"` y `tenantId: null`.
@@ -364,7 +364,7 @@ necesita guardar:
   "bookingDate": "2026-08-20",
   "startTime": "10:00:00",
   "status": "pending",
-  "trackingCode": "MBM-R287GU",
+  "trackingCode": "CITARI-R287GU",
   "endTime": "10:30:00",
   "locationName": "Sede Central",
   "customerNotes": "Primera visita"
@@ -373,10 +373,10 @@ necesita guardar:
 
 ```bash
 # 5. consultar por codigo de rastreo
-curl -s http://localhost:8000/api/v1/track/MBM-R287GU
+curl -s http://localhost:8000/api/v1/track/CITARI-R287GU
 
 # 6. cancelar por codigo de rastreo
-curl -s -X POST http://localhost:8000/api/v1/track/MBM-R287GU/cancel
+curl -s -X POST http://localhost:8000/api/v1/track/CITARI-R287GU/cancel
 ```
 
 El paso 6 responde 200 con `"status":"cancelled"`.

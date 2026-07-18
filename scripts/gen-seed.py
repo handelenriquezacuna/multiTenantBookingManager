@@ -109,11 +109,11 @@ ESTADOS_RESERVACIONES_REALES = [
 # superadmins reales (mismos correos y hash del seed original):
 # (nombre, apellido_1, apellido_2, correo)
 SUPERADMINS_REALES = [
-    ("Melanie Yeonsuk", "Campos", "Arias", "melanie.campos@mbm.admin"),
-    ("Isaac", "Chavez", "Zumbado", "isaac.chavez@mbm.admin"),
-    ("Luna", "Delgado", "Durango", "luna.delgado@mbm.admin"),
-    ("Handel Simón", "Enriquez", "Acuña", "handel.enriquez@mbm.admin"),
-    ("Jeferson Andrew", "Fuentes", "García", "jeferson.fuentes@mbm.admin"),
+    ("Melanie Yeonsuk", "Campos", "Arias", "melanie.campos@citari.admin"),
+    ("Isaac", "Chavez", "Zumbado", "isaac.chavez@citari.admin"),
+    ("Luna", "Delgado", "Durango", "luna.delgado@citari.admin"),
+    ("Handel Simón", "Enriquez", "Acuña", "handel.enriquez@citari.admin"),
+    ("Jeferson Andrew", "Fuentes", "García", "jeferson.fuentes@citari.admin"),
 ]
 
 # Pools deterministas para los 45 superadmins de prueba (indexados, sin random).
@@ -509,7 +509,7 @@ def codigo_rastreo(i):
     a = CODIGO_ALFABETO[(i * 5) % len(CODIGO_ALFABETO)]
     b = CODIGO_ALFABETO[(i * 11) % len(CODIGO_ALFABETO)]
     c = CODIGO_ALFABETO[(i * 17) % len(CODIGO_ALFABETO)]
-    return f"MBM-{a}{b}{c}{i:02d}"
+    return f"CITARI-{a}{b}{c}{i:02d}"
 
 
 # ---------------------------------------------------------------------------
@@ -521,7 +521,7 @@ def build_sql():
     lines = []
     lines.append("-- ============================================================")
     lines.append("-- 03-seed-data.sql")
-    lines.append("-- Proyecto: MBM - Multi-Tenant Booking Manager")
+    lines.append("-- Proyecto: Citari - Citari")
     lines.append("-- Contenido: datos de prueba (50 registros por tabla, 15 tablas)")
     lines.append("-- GENERADO por scripts/gen-seed.py -- NO editar a mano.")
     lines.append("--   Regenerar:  python3 scripts/gen-seed.py")
@@ -530,7 +530,7 @@ def build_sql():
     lines.append("-- inician en 1 y las FKs se emiten como literales 1..50.")
     lines.append("-- ============================================================")
     lines.append("")
-    lines.append("USE mbm_booking;")
+    lines.append("USE citari;")
     lines.append("GO")
     lines.append("")
     lines.append("SET NOCOUNT ON;")
@@ -562,7 +562,7 @@ def build_sql():
         nom = SA_NOMBRES[idx % len(SA_NOMBRES)]
         ap1 = SA_APELLIDOS_1[idx % len(SA_APELLIDOS_1)]
         ap2 = SA_APELLIDOS_2[idx % len(SA_APELLIDOS_2)]
-        correo = f"superadmin{i:02d}@mbm.local"
+        correo = f"superadmin{i:02d}@citari.local"
         rows.append([qs(nom), qs(ap1), qs(ap2), qs(correo), qs(HASH_ADMIN123), "1"])
     emit_insert(
         lines, "superadmins",

@@ -1,16 +1,16 @@
 ﻿-- ============================================================
 -- 05-functions.sql
--- Proyecto: MBM - Multi-Tenant Booking Manager
+-- Proyecto: Citari - Citari
 -- Contenido: 6 funciones escalares de utilidad sobre el esquema en espanol.
 -- Idempotente: usa CREATE OR ALTER, se puede reejecutar sin error.
 -- Ver docs/rename-map.csv para la equivalencia con los nombres en ingles.
 -- ============================================================
 
-USE mbm_booking;
+USE citari;
 GO
 
 -- 1. fn_generar_codigo_rastreo ---------------------------------------------
--- Formatea 'MBM-' + 6 caracteres alfanumericos derivados deterministicamente
+-- Formatea 'CITARI-' + 6 caracteres alfanumericos derivados deterministicamente
 -- de @semilla. Las funciones escalares no pueden llamar NEWID(); el llamador
 -- debe generar la semilla (por ejemplo con NEWID()) y pasarla como parametro.
 -- Se excluyen los caracteres ambiguos 0/O y 1/I del alfabeto de salida.
@@ -34,7 +34,7 @@ BEGIN
         SET @i = @i + 1;
     END
 
-    RETURN N'MBM-' + @resultado;
+    RETURN N'CITARI-' + @resultado;
 END
 GO
 PRINT '[05-functions] fn_generar_codigo_rastreo ... OK';

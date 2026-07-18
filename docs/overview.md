@@ -1,4 +1,4 @@
-# MBM: Multi tenant Booking Manager
+# Citari: Citari
 
 Documento base para el proyecto SC-404
 
@@ -10,18 +10,18 @@ Documento base para el proyecto SC-404
 - [Alcance del Proyecto](#alcance-del-proyecto)
 - [Actores del sistema](#actores-del-sistema)
 - [Flujo general del sistema](#flujo-general-del-sistema)
-- [Requisitos del curso y aplicación directa en MBM](#requisitos-del-curso-y-aplicación-directa-en-mbm)
+- [Requisitos del curso y aplicación directa en Citari](#requisitos-del-curso-y-aplicación-directa-en-citari)
 - [Conceptos importantes para el equipo](#conceptos-importantes-para-el-equipo)
 - [Requerimientos funcionales](#requerimientos-funcionales)
 - [Requerimientos no funcionales](#requerimientos-no-funcionales)
 
-Se plantea una versión clara, defendible y realista del proyecto MBM (Multi tenant Booking Manager), alineada con los requisitos del curso SC-404 Fundamentos de Diseño de Base de Datos Relacionales.
+Se plantea una versión clara, defendible y realista del proyecto Citari (Citari), alineada con los requisitos del curso SC-404 Fundamentos de Diseño de Base de Datos Relacionales.
 
 La idea principal es desarrollar una plataforma de reservas para negocios de servicios, donde cada negocio pueda configurar su información, servicios, horarios y reservas. El sistema será multi tenant, lo que significa que varios negocios podrán usar la misma plataforma, pero cada uno manejará únicamente sus propios datos.
 
 ## Descripción general del proyecto
 
-MBM es una plataforma web de reservas para negocios de servicios como barberías, salones de belleza, spas, veterinarias, clínicas pequeñas, consultorios, centros estéticos o negocios similares.
+Citari es una plataforma web de reservas para negocios de servicios como barberías, salones de belleza, spas, veterinarias, clínicas pequeñas, consultorios, centros estéticos o negocios similares.
 
 Cada negocio tendrá su propio espacio dentro del sistema. Ese espacio se llamará tenant.
 
@@ -112,7 +112,7 @@ Para simplificar el sistema, se plantea manejar tres actores principales.
 
 | Actor | Descripción | Acceso |
 | --- | --- | --- |
-| Superadmin | Representa a los dueños de MBM. Puede activar o suspender tenants. | Panel interno simple. |
+| Superadmin | Representa a los dueños de Citari. Puede activar o suspender tenants. | Panel interno simple. |
 | Business owner | Dueño del negocio. Administra su tenant, servicios, horarios y reservas. | Panel privado. |
 | Cliente | Persona que reserva un servicio. No necesita cuenta. | Página pública y tracking. |
 
@@ -155,9 +155,9 @@ Este flujo será simple. No es el centro del proyecto, pero permite justificar q
 9. El cliente puede consultar su reserva usando ese código.
 10. El cliente puede cancelar o reagendar la reserva sin iniciar sesión.
 
-## Requisitos del curso y aplicación directa en MBM
+## Requisitos del curso y aplicación directa en Citari
 
-| Requisito del curso | Aplicación directa en MBM |
+| Requisito del curso | Aplicación directa en Citari |
 | --- | --- |
 | 1. Análisis de requisitos | Se analiza una plataforma de reservas para negocios de servicios. |
 | 2. Definir requerimientos de base de datos | Se definen entidades como tenants, owners, clientes, servicios, horarios y reservas. |

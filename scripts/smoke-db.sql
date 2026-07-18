@@ -1,6 +1,6 @@
 ﻿-- ============================================================
 -- smoke-db.sql
--- Proyecto: MBM - Multi-Tenant Booking Manager
+-- Proyecto: Citari - Citari
 -- Prueba de humo (re-ejecutable) para los 13 stored procedures de
 -- database/scripts/04-procedures.sql y los 7 triggers de
 -- database/scripts/07-triggers.sql.
@@ -9,7 +9,7 @@
 --    1. sp_crear_reservacion sobre un bloque libre -> reserva creada y
 --       bloque ocupado (activo = 0).
 --    2. Trigger trg_reservaciones_generar_rastreo -> existe fila en
---       codigos_de_rastreos con codigo_rastreo formato 'MBM-%' para la
+--       codigos_de_rastreos con codigo_rastreo formato 'CITARI-%' para la
 --       reserva del caso 1.
 --    3. Trigger trg_reservaciones_auditar_insert -> existe fila en
 --       registros con accion='reserva_creada' para la reserva del
@@ -46,7 +46,7 @@
 -- cliente de prueba, dejando la base de datos igual que al inicio.
 -- ============================================================
 
-USE mbm_booking;
+USE citari;
 GO
 
 SET NOCOUNT ON;
@@ -172,22 +172,22 @@ ELSE
 
 -- ------------------------------------------------------------
 -- Caso 2 (WP4): trigger trg_reservaciones_generar_rastreo genera un
--- codigo de rastreo formato 'MBM-%' para la reserva del caso 1.
+-- codigo de rastreo formato 'CITARI-%' para la reserva del caso 1.
 -- ------------------------------------------------------------
 DECLARE @caso2_ok BIT = 0;
 
 IF EXISTS (
     SELECT 1 FROM codigos_de_rastreos
     WHERE reserva_id = @reserva_1_id
-      AND codigo_rastreo LIKE N'MBM-%'
+      AND codigo_rastreo LIKE N'CITARI-%'
       AND activo = 1
 )
     SET @caso2_ok = 1;
 
 IF @caso2_ok = 1
-    PRINT ' [smoke-db] caso 2 (trigger genera codigo de rastreo MBM-%) ... OK';
+    PRINT ' [smoke-db] caso 2 (trigger genera codigo de rastreo CITARI-%) ... OK';
 ELSE
-    PRINT ' [smoke-db] caso 2 (trigger genera codigo de rastreo MBM-%) ... FAIL';
+    PRINT ' [smoke-db] caso 2 (trigger genera codigo de rastreo CITARI-%) ... FAIL';
 
 -- ------------------------------------------------------------
 -- Caso 3 (WP4): trigger trg_reservaciones_auditar_insert registra la
