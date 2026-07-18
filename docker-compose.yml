@@ -1,26 +1,68 @@
 services:
+  # 1. Base de datos SQL Server
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     platform: linux/amd64
     container_name: mbm_sqlserver
     environment:
       ACCEPT_EULA: "Y"
-      SA_PASSWORD: ${SQLSERVER_PASSWORD}
+      SA_PASSWORD: ${SQLSERVER_PASSWORD:-YourStrong!Passw0rd}
       MSSQL_PID: Developer
     ports:
-      - "${SQLSERVER_PORT:-1433}:1433"
+      # Puerto del host para conectar DataGrip/DBeaver/SSMS a la base dockerizada.
+      # Por defecto 11433 para no chocar con un SQL Server local en 1433.
+      # El contenedor sigue usando 1433 internamente; la API se conecta por red interna.
+      - "${SQLSERVER_HOST_PORT:-11433}:1433"
     volumes:
       - sqlserver_data:/var/opt/mssql
-      - ./database/scripts:/scripts
+      - ./database/scripts:/scripts:ro
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${SA_PASSWORD}\" -C -Q 'SELECT 1' || exit 1"]
-      interval: 15s
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${SA_PASSWORD:-YourStrong!Passw0rd}\" -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
       timeout: 10s
-      retries: 5
+      retries: 10
       start_period: 30s
     networks:
       - mbm_network
 
+  # 2. Carga del esquema y el seed (una sola vez). Corre 01-07 en orden si la
+  #    base aun no existe; si ya esta cargada, no hace nada. Reutiliza la imagen
+  #    de SQL Server (ya trae sqlcmd), asi no se descarga nada extra.
+  db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    container_name: mbm_db_init
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      SA_PASSWORD: ${SQLSERVER_PASSWORD:-YourStrong!Passw0rd}
+    volumes:
+      - ./database/scripts:/scripts:ro
+    entrypoint:
+      - bash
+      - -c
+      - |
+        set -e
+        ALREADY=$$(/opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P "$$SA_PASSWORD" -C -h -1 -W \
+          -Q "SET NOCOUNT ON; IF DB_ID('mbm_booking') IS NOT NULL AND OBJECT_ID('mbm_booking.dbo.dominios','U') IS NOT NULL SELECT 1 ELSE SELECT 0" \
+          | tr -d '[:space:]')
+        if [ "$$ALREADY" = "1" ]; then
+          echo "La base de datos ya esta inicializada; se omite la carga."
+          exit 0
+        fi
+        for f in /scripts/01-*.sql /scripts/02-*.sql /scripts/03-*.sql /scripts/04-*.sql /scripts/05-*.sql /scripts/06-*.sql /scripts/07-*.sql; do
+          echo "Ejecutando $$f"
+          # -I activa SET QUOTED_IDENTIFIER ON (requerido por el indice filtrado
+          # ux_reservaciones_bloque; sqlcmd lo trae OFF por defecto).
+          /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P "$$SA_PASSWORD" -C -b -I -i "$$f"
+        done
+        echo "Base de datos inicializada (15 tablas + seed + procedimientos/funciones/vistas/triggers)."
+    restart: "no"
+    networks:
+      - mbm_network
+
+  # 3. API FastAPI. Arranca solo cuando la base ya quedo cargada.
   api:
     build:
       context: ./apps/api
@@ -30,20 +72,21 @@ services:
       SQLSERVER_HOST: sqlserver
       SQLSERVER_PORT: 1433
       SQLSERVER_USER: sa
-      SQLSERVER_PASSWORD: ${SQLSERVER_PASSWORD}
+      SQLSERVER_PASSWORD: ${SQLSERVER_PASSWORD:-YourStrong!Passw0rd}
       SQLSERVER_DB: mbm_booking
-      JWT_SECRET: ${JWT_SECRET}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-cambiar-en-produccion-min-32-chars}
       JWT_EXPIRES_MIN: ${JWT_EXPIRES_MIN:-60}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
       LOG_FORMAT: ${LOG_FORMAT:-json}
     depends_on:
-      sqlserver:
-        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8000}:8000"
     networks:
       - mbm_network
 
+  # 4. Frontend Next.js. Consume la API real (NEXT_PUBLIC_API_MODE=api).
   frontend:
     build:
       context: ./apps/frontend
@@ -58,7 +101,7 @@ services:
     depends_on:
       - api
     ports:
-      - "3000:3000"
+      - "${FRONTEND_PORT:-3000}:3000"
     networks:
       - mbm_network
 
