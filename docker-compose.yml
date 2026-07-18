@@ -94,12 +94,15 @@ services:
     image: node:22-bookworm-slim
     container_name: web
     working_dir: /app
-    command: sh -c "corepack enable && pnpm install && pnpm exec next dev -H 0.0.0.0 -p 3000"
+    # webpack (no turbopack): respeta el polling para que el hot reload funcione
+    # sobre bind mounts de Windows/Docker.
+    command: sh -c "corepack enable && pnpm install && pnpm exec next dev --webpack -H 0.0.0.0 -p 3000"
     environment:
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
       NEXT_PUBLIC_API_MODE: ${NEXT_PUBLIC_API_MODE:-api}
       # Polling para que el hot reload detecte cambios sobre bind mounts de Windows.
       WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
     volumes:
       - ./apps/frontend:/app
       - web_node_modules:/app/node_modules
