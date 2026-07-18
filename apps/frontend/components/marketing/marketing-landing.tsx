@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { SiteHeader } from "@/components/marketing/site-header";
+import { SiteFooter } from "@/components/marketing/site-footer";
 
 const sectors = ["Clinicas", "Barberias", "Salones", "Spas", "Veterinarias", "Consultorios", "Centros esteticos"];
 
@@ -39,23 +41,7 @@ export function MarketingLanding() {
         <div className="absolute right-[-5%] top-[30%] h-[380px] w-[380px] rounded-full bg-primary/5 blur-[100px]" />
       </div>
 
-      {/* nav */}
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-        <span className="font-serif text-2xl font-semibold tracking-tight">Citari</span>
-        <nav className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">
-          <a href="#producto" className="transition-colors hover:text-foreground">Producto</a>
-          <a href="#sectores" className="transition-colors hover:text-foreground">Sectores</a>
-          <a href="#reservar" className="transition-colors hover:text-foreground">Reservar</a>
-        </nav>
-        <div className="flex items-center gap-2">
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/login">Ingresar</Link>
-          </Button>
-          <Button asChild variant="ink" size="sm">
-            <Link href="/register">Crear cuenta</Link>
-          </Button>
-        </div>
-      </header>
+      <SiteHeader />
 
       {/* hero */}
       <motion.section
@@ -171,12 +157,7 @@ export function MarketingLanding() {
         </div>
       </section>
 
-      <footer className="mx-auto max-w-6xl px-6 py-10 text-sm text-muted-foreground">
-        <div className="flex flex-col items-center justify-between gap-3 border-t border-border pt-8 md:flex-row">
-          <span className="font-serif text-lg text-foreground">Citari</span>
-          <span>Reservas para negocios de servicios</span>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
