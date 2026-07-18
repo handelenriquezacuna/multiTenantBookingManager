@@ -9,7 +9,7 @@ const MOCK_USER: AuthUser = {
   id: 1,
   firstName: "Sofia",
   lastName: "Campos",
-  email: "owner@demo.mbm",
+  email: "owner@demo.citari",
   role: "owner",
   tenantId: 1
 };

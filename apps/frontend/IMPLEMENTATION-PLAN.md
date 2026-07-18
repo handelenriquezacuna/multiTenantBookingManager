@@ -21,7 +21,7 @@ Objetivo: que el frontend Next.js consuma la **API real** (la que construyó Han
 **Ya cableado a la API real** (modo `api`): lookup de tenant público, servicios y disponibilidad
 del flujo público (lecturas), lookup de tracking, y el `POST /auth/login` (owner y superadmin).
 `lib/api.ts` ya expone `apiGet/apiPost/apiPatch/apiPut/apiDelete`, `ApiError` (RFC 7807) y el
-manejo de token en `localStorage` (`mbm_token`). `lib/endpoints.ts` ya mapea **todos** los
+manejo de token en `localStorage` (`citari_token`). `lib/endpoints.ts` ya mapea **todos** los
 endpoints. `PrivateShell` ya tiene logout real.
 
 **Todavía en mock / estado local (lo que falta):**
@@ -55,7 +55,7 @@ endpoints. `PrivateShell` ya tiene logout real.
 ### Milestone 1 — Auth sólida + flujo público completo
 - Fundamentos 1–3 arriba.
 - `CustomerStep` → `POST /public/{slug}/bookings`; usar el `trackingCode` real de la respuesta
-  en la página de confirmación (quitar el `"MBM-8F3K2A"` hardcodeado).
+  en la página de confirmación (quitar el `"CITARI-8F3K2A"` hardcodeado).
 - `track/[code]/cancel` → `POST /track/{code}/cancel`; `track/[code]/reschedule` →
   `POST /track/{code}/reschedule`.
 - **DoD:** un cliente puede reservar de punta a punta y consultar/cancelar/reagendar por código,
