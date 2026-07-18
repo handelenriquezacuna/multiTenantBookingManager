@@ -1,3 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   Citari, direccion "editorial calido": tokens de diseño.
+   Namespaced (--ct-*) para convivir con el CSS legacy de abajo
+   mientras se migra el frontend pantalla por pantalla.
+   ============================================================ */
+:root {
+  --ct-background: 40 33% 95%;        /* marfil #F7F3EC */
+  --ct-foreground: 34 15% 9%;         /* tinta  #1A1712 */
+  --ct-card: 40 40% 99%;
+  --ct-card-foreground: 34 15% 9%;
+  --ct-popover: 40 40% 99%;
+  --ct-popover-foreground: 34 15% 9%;
+  --ct-primary: 13 63% 48%;           /* terracota #C8502E */
+  --ct-primary-foreground: 40 33% 97%;
+  --ct-secondary: 40 22% 91%;
+  --ct-secondary-foreground: 34 15% 12%;
+  --ct-muted: 40 20% 90%;
+  --ct-muted-foreground: 34 8% 40%;
+  --ct-accent: 13 63% 48%;
+  --ct-accent-foreground: 40 33% 97%;
+  --ct-destructive: 0 62% 45%;
+  --ct-destructive-foreground: 40 33% 97%;
+  --ct-border: 34 14% 86%;
+  --ct-input: 34 14% 86%;
+  --ct-ring: 13 63% 48%;
+  --ct-radius: 0.85rem;
+  --font-serif: "Newsreader Variable", Georgia, serif;
+  --font-sans: "Hanken Grotesk Variable", system-ui, sans-serif;
+}
+
+/* Reset minimo solo para los arboles rediseñados (preflight esta off).
+   Se activa envolviendo la pantalla en un contenedor con data-ct. */
+[data-ct],
+[data-ct] *,
+[data-ct] *::before,
+[data-ct] *::after {
+  box-sizing: border-box;
+}
+[data-ct] button,
+[data-ct] input,
+[data-ct] textarea,
+[data-ct] select {
+  font: inherit;
+  color: inherit;
+}
+
+/* ============================================================
+   LEGACY: estilos de las pantallas aun no rediseñadas.
+   Se iran eliminando a medida que cada pantalla migre a Tailwind.
+   ============================================================ */
 :root {
   --bg: #ffffff;
   --surface: #ffffff;

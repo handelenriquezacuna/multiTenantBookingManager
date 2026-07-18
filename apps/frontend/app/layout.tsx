@@ -1,3 +1,8 @@
+// Fuentes self-hosted (fontsource, sin fetch a Google Fonts en build).
+// Newsreader (serif editorial con italicas) para titulares; Hanken Grotesk para el cuerpo.
+import "@fontsource-variable/newsreader";
+import "@fontsource-variable/newsreader/wght-italic.css";
+import "@fontsource-variable/hanken-grotesk";
 import "./globals.css";
 import type { Metadata } from "next";
 
