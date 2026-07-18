@@ -1,16 +1,16 @@
 # MBM: Multi tenant Booking Manager
 
-Plataforma de reservas multi tenant para negocios de servicios. Este repositorio contiene la base de datos, API, frontend y documentacion del proyecto SC-404.
+Plataforma de reservas multi tenant para negocios de servicios. Este repositorio contiene la base de datos, la API, el frontend y la documentación del proyecto SC-404.
 
 Resumen
 
-MBM es una plataforma de reservas multi tenant para negocios de servicios. La base de datos es el eje principal y el proyecto incluye API, frontend y docker para el flujo completo de reservas, administracion y tracking.
+MBM es una plataforma de reservas multi tenant para negocios de servicios. La base de datos es el eje principal y el proyecto incluye API, frontend y docker para el flujo completo de reservas, administración y seguimiento.
 
-## Indice
+## Índice
 
 - [Integrantes](#integrantes)
-- [Documentacion](#documentacion)
-- [Estructura rapida](#estructura-rapida)
+- [Documentación](#documentación)
+- [Estructura rápida](#estructura-rápida)
 
 ## Integrantes
 
@@ -20,74 +20,66 @@ MBM es una plataforma de reservas multi tenant para negocios de servicios. La ba
 - Luna Delgado Durango
 - Melannie Yeonsuk Campos Arias
 
-## Documentacion
+## Documentación
 
 **Curso / base de datos (fuente de verdad para la entrega):**
 
-- [docs/overview.md](docs/overview.md) vision general, objetivos, alcance, actores y requerimientos
+- [docs/overview.md](docs/overview.md) visión general, objetivos, alcance, actores y requerimientos
 - [docs/database-and-sql-implementado.md](docs/database-and-sql-implementado.md) base de datos **construida** (as-built): 15 tablas, ER, ciclo de vida, seed, e inventario de procedures/vistas/funciones/triggers
-- [docs/sql-signatures.md](docs/sql-signatures.md) referencia de stored procedures, vistas, funciones, triggers y codigos THROW
-- [docs/rename-map.csv](docs/rename-map.csv) equivalencia de nombres ingles / modelo (con ñ) / fisico ASCII
+- [docs/sql-signatures.md](docs/sql-signatures.md) referencia de stored procedures, vistas, funciones, triggers y códigos THROW
+- [docs/rename-map.csv](docs/rename-map.csv) equivalencia de nombres inglés / modelo (con ñ) / físico ASCII
 - [docs/plan-and-delivery.md](docs/plan-and-delivery.md) entregables, cronograma, demo y matriz de requisitos R1-R6
 - [docs/domain-questions.md](docs/domain-questions.md) decisiones de dominio que guiaron el diseño
-- [docs/database-and-sql.md](docs/database-and-sql.md) propuesta de diseño original (referencia historica; los nombres en ingles quedaron superados por la version construida)
+- [docs/database-and-sql.md](docs/database-and-sql.md) propuesta de diseño original (referencia histórica; los nombres en inglés quedaron superados por la versión construida)
 
-**Aplicacion (API + frontend):**
+**Aplicación (API + frontend):**
 
 - [docs/api-handover.md](docs/api-handover.md) handover de la API: convenciones, tabla completa de endpoints, ejemplos curl, estados y pendientes de cableado
 - [docs/arquitectura-visual.md](docs/arquitectura-visual.md) arquitectura visual, puertos, secuencia de login JWT y bootstrap
-- [docs/frontend-map.md](docs/frontend-map.md) mapa de rutas frontend y su relacion con endpoints
+- [docs/frontend-map.md](docs/frontend-map.md) mapa de rutas frontend y su relación con endpoints
 
 **Otros:**
 
 - [database/docs/PASSWORDS.md](database/docs/PASSWORDS.md) credenciales de desarrollo (seed data)
-- [docs/archive/](docs/archive/) documentos historicos superados (no son fuente de verdad)
+- [docs/archive/](docs/archive/) documentos históricos superados (no son fuente de verdad)
 
-## Estructura rapida
+## Estructura rápida
 
-- [apps/frontend](apps/frontend) aplicacion Next.js
+- [apps/frontend](apps/frontend) aplicación Next.js
 - [apps/api](apps/api) backend FastAPI
 - [database](database) scripts y recursos de base de datos
 - [infra](infra) infraestructura y contenedores
-- [docs](docs) documentacion completa
+- [docs](docs) documentación completa
 
 ## Puesta en marcha
 
-### Prerequisitos
+### Requisitos
 
-- Docker Desktop (o Docker Engine + Docker Compose v2)
-- `openssl` (para generar el secreto JWT; viene instalado por defecto en macOS/Linux)
-- pnpm, opcional, solo si se va a correr el frontend fuera de Docker en modo desarrollo
+- Docker Desktop (o Docker Engine + Docker Compose v2).
 
-### Pasos
+### Un solo comando
 
-1. Copiar el archivo de variables de entorno:
+```bash
+docker compose up --build
+```
 
-   ```bash
-   cp .env.example .env
-   ```
+El compose trae valores por defecto para desarrollo, así que no se necesita configuración previa. La primera vez, un servicio de inicialización ejecuta en orden los scripts `database/scripts/01` a `07` (esquema, seed, procedimientos, funciones, vistas y triggers); en arranques posteriores detecta que la base ya existe y no la vuelve a cargar.
 
-2. Generar un `JWT_SECRET` real (32+ caracteres) y reemplazar el valor de ejemplo en `.env`:
+Para detener o reiniciar:
 
-   ```bash
-   openssl rand -hex 32
-   ```
+```bash
+docker compose down       # detiene y conserva los datos
+docker compose down -v    # borra la base para empezar desde cero
+```
 
-   Tambien se puede ajustar `SQLSERVER_PASSWORD` si se desea una distinta a la de ejemplo.
+Configuración opcional: copiar `.env.example` a `.env` para cambiar contraseñas, el `JWT_SECRET` o los puertos. La base queda expuesta en el host en el puerto `11433` (para DataGrip, DBeaver o SSMS), de modo que no choca con un SQL Server local en `1433`.
 
-3. Levantar SQL Server y crear el schema completo (tablas, seed data, procedimientos, funciones, vistas y triggers):
+Para cargar la base fuera de Docker, contra un SQL Server propio:
 
-   ```bash
-   bash scripts/setup-db.sh
-   ```
-
-   El script espera a que el contenedor de SQL Server este `healthy` y luego ejecuta en orden los scripts `database/scripts/01` a `07`. En Windows se puede usar `scripts/setup-db.ps1` como equivalente.
-
-4. Levantar API y frontend:
-
-   ```bash
-   docker compose up --build
-   ```
+```bash
+.\scripts\setup-db.ps1     # Windows (principal)
+bash scripts/setup-db.sh   # macOS / Linux
+```
 
 ### URLs locales
 
@@ -95,8 +87,8 @@ MBM es una plataforma de reservas multi tenant para negocios de servicios. La ba
 | --- | --- |
 | Frontend | http://localhost:3000 |
 | API | http://localhost:8000 |
-| Documentacion interactiva de la API (Swagger) | http://localhost:8000/docs |
-| Especificacion OpenAPI | http://localhost:8000/openapi.json |
+| Documentación interactiva de la API (Swagger) | http://localhost:8000/docs |
+| Especificación OpenAPI | http://localhost:8000/openapi.json |
 | Healthcheck | http://localhost:8000/health |
 
 ### Credenciales de demo
@@ -113,15 +105,15 @@ python3 -m venv .venv
 # unitarios (96 tests, sin dependencia de base de datos)
 .venv/bin/pytest tests/unit -q
 
-# integracion (65 tests, requiere SQL Server corriendo con el schema aplicado)
+# integración (65 tests, requiere SQL Server corriendo con el schema aplicado)
 .venv/bin/pytest tests/integration -q
 ```
 
-Mas detalle de variables de entorno, arquitectura por capas y lint/type-check en [apps/api/README.md](apps/api/README.md).
+Más detalle de variables de entorno, arquitectura por capas y lint/type-check en [apps/api/README.md](apps/api/README.md).
 
-## Modelo de datos — vision general
+## Modelo de datos: visión general
 
-Nombres de tablas y columnas en español ASCII (los fisicos, usados por los scripts en `database/scripts/`). Equivalencia completa ingles/español en [docs/rename-map.csv](docs/rename-map.csv).
+Nombres de tablas y columnas en español ASCII (los físicos, usados por los scripts en `database/scripts/`). Equivalencia completa inglés/español en [docs/rename-map.csv](docs/rename-map.csv).
 
 ```mermaid
 erDiagram

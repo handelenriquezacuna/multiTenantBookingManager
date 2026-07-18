@@ -1,13 +1,13 @@
 # Diseño simplificado de la base de datos
 
-> PROPUESTA DE DISEÑO (se conserva como referencia historica). El estado real
-> construido esta en [database-and-sql-implementado.md](database-and-sql-implementado.md),
+> PROPUESTA DE DISEÑO (se conserva como referencia histórica). El estado real
+> construido está en [database-and-sql-implementado.md](database-and-sql-implementado.md),
 > que abre con la tabla de diferencias propuesta vs construido.
 
-## Indice
+## Índice
 
 - [Diseño simplificado de la base de datos](#diseño-simplificado-de-la-base-de-datos)
-  - [Indice](#indice)
+  - [Índice](#índice)
   - [Atributos por tabla](#atributos-por-tabla)
     - [Tabla tipos\_negocios](#tabla-tipos_negocios)
     - [Tabla estados\_dominios](#tabla-estados_dominios)
@@ -35,17 +35,17 @@
 
 Para mantener el proyecto claro, se propone una base de datos con 15 tablas principales. Esto cumple de sobra con el mínimo de 10 tablas y mantiene el sistema entendible.
 
-Los nombres fisicos de tablas y columnas estan en espanol (ASCII puro). La equivalencia con los nombres originales en ingles y con el modelo MR con enie esta en `docs/rename-map.csv`.
+Los nombres físicos de tablas y columnas están en español (ASCII puro). La equivalencia con los nombres originales en inglés y con el modelo MR con eñe está en `docs/rename-map.csv`.
 
 Tablas propuestas
 
-| Tabla | Proposito |
+| Tabla | Propósito |
 | --- | --- |
 | tipos_negocios | Tipos de negocio permitidos. |
 | estados_dominios | Estados posibles de un tenant. |
 | superadmins | Administradores globales de la plataforma MBM. |
 | dominios | Negocios registrados en MBM. |
-| duenos_de_dominios | Duenos o administradores de cada tenant. |
+| duenos_de_dominios | Dueños o administradores de cada tenant. |
 | clientes | Clientes que realizan reservas. |
 | categorias_servicios | Categorías de servicios por negocio. |
 | servicios | Servicios ofrecidos por cada tenant. |
@@ -54,7 +54,7 @@ Tablas propuestas
 | bloques_de_disponibilidad | Bloques disponibles para reservar. |
 | estados_reservaciones | Estados posibles de una reserva. |
 | reservaciones | Reservas realizadas. |
-| codigos_de_rastreos | Codigos públicos para consultar reservas. |
+| codigos_de_rastreos | Códigos públicos para consultar reservas. |
 | registros | Registro de acciones importantes. |
 
 ## Atributos por tabla
@@ -71,14 +71,14 @@ Ejemplos:
 - Veterinaria
 - Clinica
 - Consultorio
-- Centro estetico
+- Centro estético
 
 Atributos:
 
 - tipo_negocio_id: PK. Identificador único del tipo de negocio.
 - nombre: Nombre del tipo de negocio.
 - descripcion: Descripción opcional.
-- activo: Indica si el tipo de negocio esta activo.
+- activo: Indica si el tipo de negocio está activo.
 
 Relación principal:
 
@@ -113,7 +113,7 @@ Un estado puede pertenecer a muchos dominios.
 
 Contiene los administradores globales de la plataforma MBM. Son los únicos que pueden activar o suspender dominios.
 
-Para el MVP puede existir un solo superadmin, pero la tabla permite agregar mas en el futuro.
+Para el MVP puede existir un solo superadmin, pero la tabla permite agregar más en el futuro.
 
 Atributos:
 
@@ -123,7 +123,7 @@ Atributos:
 - nombre: Nombre de pila.
 - apellido_1: Primer apellido.
 - apellido_2: Segundo apellido, opcional.
-- activo: Indica si el superadmin esta activo.
+- activo: Indica si el superadmin está activo.
 - creado_en: Fecha de creación.
 - actualizado_en: Fecha de actualización.
 
@@ -149,7 +149,7 @@ Atributos:
 - descripcion: Descripción pública del negocio.
 - logo_url: URL del logo, opcional.
 - mensaje_publico: Mensaje público para clientes.
-- activo: Indica si el tenant esta activo.
+- activo: Indica si el tenant está activo.
 - creado_en: Fecha de creación.
 - actualizado_en: Fecha de actualización.
 
@@ -175,7 +175,7 @@ Relaciones principales:
 
 ### Tabla duenos_de_dominios
 
-Contiene los usuarios duenos o administradores de cada negocio.
+Contiene los usuarios dueños o administradores de cada negocio.
 
 Atributos:
 
@@ -187,7 +187,7 @@ Atributos:
 - correo: Correo de acceso.
 - contrasena_encriptada: Contrasena cifrada.
 - telefono: Teléfono.
-- activo: Indica si el owner esta activo.
+- activo: Indica si el owner está activo.
 - creado_en: Fecha de creación.
 - actualizado_en: Fecha de actualización.
 
@@ -195,7 +195,7 @@ Relación principal:
 
 - dominios 1:N duenos_de_dominios
 
-Un tenant puede tener uno o mas owners, aunque para el MVP se puede usar solo uno.
+Un tenant puede tener uno o más owners, aunque para el MVP se puede usar solo uno.
 
 ### Tabla clientes
 
@@ -232,7 +232,7 @@ Ejemplos:
 - Masajes
 - Consulta
 - Mascotas
-- Estetica
+- Estética
 
 Atributos:
 
@@ -240,7 +240,7 @@ Atributos:
 - dominio_id: FK hacia dominios.
 - nombre: Nombre de la categoría.
 - descripcion: Descripción opcional.
-- activo: Indica si la categoría esta activa.
+- activo: Indica si la categoría está activa.
 - creado_en: Fecha de creación.
 - actualizado_en: Fecha de actualización.
 
@@ -257,7 +257,7 @@ Ejemplos:
 
 - Corte de cabello
 - Masaje relajante
-- Bano de mascota
+- Baño de mascota
 - Consulta general
 - Manicure
 - Limpieza facial
@@ -271,8 +271,8 @@ Atributos:
 - descripcion: Descripción del servicio.
 - duracion_minutos: Duración del servicio en minutos.
 - precio: Precio informativo opcional.
-- mostrar_precio: Indica si el precio se muestra publicamente.
-- activo: Indica si el servicio esta disponible.
+- mostrar_precio: Indica si el precio se muestra públicamente.
+- activo: Indica si el servicio está disponible.
 - creado_en: Fecha de creación.
 - actualizado_en: Fecha de actualización.
 
@@ -284,7 +284,7 @@ Relación principal:
 
 ### Tabla localidades
 
-Contiene la ubicación fisica o sede del negocio.
+Contiene la ubicación física o sede del negocio.
 
 Para el MVP puede existir una sede principal por tenant, pero la tabla permite crecer a varias ubicaciones en el futuro.
 
@@ -293,10 +293,10 @@ Atributos:
 - localidad_id: PK. Identificador único de la ubicación.
 - dominio_id: FK hacia dominios.
 - nombre: Nombre de la sede.
-- direccion: Dirección fisica.
+- direccion: Dirección física.
 - telefono: Teléfono.
 - principal: Indica si es la sede principal.
-- activo: Indica si la ubicación esta activa.
+- activo: Indica si la ubicación está activa.
 - creado_en: Fecha de creación.
 - actualizado_en: Fecha de actualización.
 
@@ -307,9 +307,9 @@ Relación principal:
 
 ### Tabla horarios
 
-Contiene el horario general del negocio por sede. En el frontend esta configuracion corresponde a `/business-hours`.
+Contiene el horario general del negocio por sede. En el frontend esta configuración corresponde a `/business-hours`.
 
-Un negocio puede tener dias activos o cerrados distintos a otros negocios. Por ejemplo, una clinica puede cerrar sabados y domingos, mientras una barberia puede abrir sabados. Tambien puede tener pausas durante el dia, como almuerzo. Para cubrir esto sin agregar tablas extra, `horarios` puede tener mas de un registro por dia para la misma sede.
+Un negocio puede tener días activos o cerrados distintos a otros negocios. Por ejemplo, una clinica puede cerrar sábados y domingos, mientras una barberia puede abrir sábados. También puede tener pausas durante el día, como almuerzo. Para cubrir esto sin agregar tablas extra, `horarios` puede tener más de un registro por día para la misma sede.
 
 Si el negocio tiene varias sedes, cada sede puede tener horarios distintos. Por eso `horarios` incluye `localidad_id` y `/business-hours` debe permitir seleccionar una sede antes de editar su semana operativa.
 
@@ -318,10 +318,10 @@ Atributos:
 - horario_id: PK. Identificador único del horario.
 - dominio_id: FK hacia dominios.
 - localidad_id: FK hacia localidades.
-- dia_semana: Dia de la semana (0 = domingo, 6 = sabado).
+- dia_semana: Día de la semana (0 = domingo, 6 = sábado).
 - hora_apertura: Hora de apertura. NULL si cerrado es verdadero.
 - hora_cerrado: Hora de cierre. NULL si cerrado es verdadero.
-- cerrado: Indica si el negocio cierra ese dia.
+- cerrado: Indica si el negocio cierra ese día.
 - actualizado_en: Fecha de actualización.
 
 Ejemplos:
@@ -336,15 +336,15 @@ Relación principal:
 - dominios 1:N horarios
 - localidades 1:N horarios
 
-Un tenant tendra varios registros por sede. Puede ser uno por dia si no hay pausas, o varios registros para el mismo dia y sede cuando existen bloques separados, como manana y tarde.
+Un tenant tendrá varios registros por sede. Puede ser uno por día si no hay pausas, o varios registros para el mismo día y sede cuando existen bloques separados, como mañana y tarde.
 
 ### Tabla bloques_de_disponibilidad
 
-Contiene bloques concretos disponibles para reservar en una sede especifica. No debe existir una pantalla privada `/availability` para que el owner publique horarios manualmente.
+Contiene bloques concretos disponibles para reservar en una sede específica. No debe existir una pantalla privada `/availability` para que el owner publique horarios manualmente.
 
-Esta tabla simplifica el MVP porque evita manejar empleados y agendas individuales. El negocio define sedes en `/locations` y horarios por sede en `/business-hours`. Con esa informacion, el sistema puede calcular o generar internamente los bloques disponibles como 09:00-09:30, 09:30-10:00 y asi sucesivamente.
+Esta tabla simplifica el MVP porque evita manejar empleados y agendas individuales. El negocio define sedes en `/locations` y horarios por sede en `/business-hours`. Con esa información, el sistema puede calcular o generar internamente los bloques disponibles como 09:00-09:30, 09:30-10:00 y así sucesivamente.
 
-Para efectos academicos y scripts SQL, estos bloques pueden insertarse manualmente como registros independientes en `bloques_de_disponibilidad`. En el frontend del owner no se editan como una pantalla separada; son resultado de horarios, sedes y reservas.
+Para efectos académicos y scripts SQL, estos bloques pueden insertarse manualmente como registros independientes en `bloques_de_disponibilidad`. En el frontend del owner no se editan como una pantalla separada; son resultado de horarios, sedes y reservas.
 
 Atributos:
 
@@ -354,7 +354,7 @@ Atributos:
 - fecha_de_bloque: Fecha disponible.
 - fecha_inicio: Fecha y hora de inicio (DATETIME2).
 - fecha_final: Fecha y hora de fin (DATETIME2).
-- activo: Indica si el bloque esta disponible.
+- activo: Indica si el bloque está disponible.
 - creado_en: Fecha de creación.
 - actualizado_en: Fecha de actualización.
 
@@ -376,7 +376,7 @@ Ejemplo de flujo entre frontend y datos:
 
 - `/business-hours`: Sede central, lunes abierto 09:00-12:00 y 13:00-17:00.
 - `/locations`: existe la sede Sede central.
-- Página publica: el cliente elige Sede central y fecha 2026-06-10.
+- Página pública: el cliente elige Sede central y fecha 2026-06-10.
 - Sistema: calcula los horarios disponibles desde `horarios` y reservas existentes, o consulta bloques ya generados internamente en `bloques_de_disponibilidad`.
 
 Ejemplo de bloques generados:
@@ -432,9 +432,9 @@ Atributos:
 - creado_en: Fecha de creación.
 - actualizado_en: Fecha de actualización.
 
-Nota de diseño — denormalización intencional:
+Nota de diseño, denormalización intencional:
 
-fecha_inicio y fecha_final se repiten en la reserva aunque ya existen en el bloque referenciado por bloque_disponibilidad_id. Esta redundancia es intencional. Si el bloque es eliminado o modificado en el futuro, la reserva conserva el registro historico exacto de la fecha y hora acordadas. Esto protege la integridad histórica de los datos sin depender de que el bloque exista.
+fecha_inicio y fecha_final se repiten en la reserva aunque ya existen en el bloque referenciado por bloque_disponibilidad_id. Esta redundancia es intencional. Si el bloque es eliminado o modificado en el futuro, la reserva conserva el registro histórico exacto de la fecha y hora acordadas. Esto protege la integridad histórica de los datos sin depender de que el bloque exista.
 
 Relaciones principales:
 
@@ -447,24 +447,24 @@ Relaciones principales:
 
 ### Tabla codigos_de_rastreos
 
-Contiene el codigo público que permite consultar una reserva sin login.
+Contiene el código público que permite consultar una reserva sin login.
 
 Atributos:
 
 - codigo_de_rastreo_id: PK. Identificador único.
 - reserva_id: FK hacia reservaciones.
-- codigo_rastreo: Codigo único.
-- expira_en: Fecha de expiración. Requerido. Default de 30 dias desde la creación de la reserva. Un codigo sin expiración permite consulta indefinida, lo cual no es deseable por seguridad.
-- activo: Indica si el codigo sigue activo.
+- codigo_rastreo: Código único.
+- expira_en: Fecha de expiración. Requerido. Default de 30 días desde la creación de la reserva. Un código sin expiración permite consulta indefinida, lo cual no es deseable por seguridad.
+- activo: Indica si el código sigue activo.
 - creado_en: Fecha de creación.
 
 Relación principal:
 
 - reservaciones 1:1 codigos_de_rastreos
 
-Cada reserva tendra un codigo de tracking.
+Cada reserva tendrá un código de tracking.
 
-Ejemplo de codigo:
+Ejemplo de código:
 
 - MBM-8F3K2A
 
@@ -514,20 +514,20 @@ Relación principal:
 | categorias_servicios -> servicios | 1:N | Una categoría puede tener varios servicios. |
 | dominios -> servicios | 1:N | Un negocio puede ofrecer muchos servicios. |
 | dominios -> localidades | 1:N | Un negocio puede tener una o varias ubicaciones. |
-| dominios -> horarios | 1:N | Un negocio tiene varios horarios por dia. |
+| dominios -> horarios | 1:N | Un negocio tiene varios horarios por día. |
 | localidades -> bloques_de_disponibilidad | 1:N | Una ubicación puede tener muchos bloques disponibles. |
 | bloques_de_disponibilidad -> reservaciones | 1:0..1 | Un bloque representa un horario reservable y solo puede quedar asociado a una reserva activa. |
 | clientes -> reservaciones | 1:N | Un cliente puede hacer varias reservas. |
 | servicios -> reservaciones | 1:N | Un servicio puede estar en muchas reservas. |
 | estados_reservaciones -> reservaciones | 1:N | Un estado puede estar en muchas reservas. |
-| reservaciones -> codigos_de_rastreos | 1:1 | Cada reserva tiene un codigo de tracking. |
+| reservaciones -> codigos_de_rastreos | 1:1 | Cada reserva tiene un código de tracking. |
 | dominios -> registros | 1:N | Un tenant puede tener muchos registros de auditoría. |
 | duenos_de_dominios -> registros | 1:N | Un owner puede generar muchos registros de auditoría. |
 | superadmins -> registros | 1:N | Un superadmin puede generar muchos registros al gestionar dominios. |
 
 ## Normalización de la base de datos
 
-La base debe estar normalizada al menos hasta tercera forma normal, tambien conocida como 3FN.
+La base debe estar normalizada al menos hasta tercera forma normal, también conocida como 3FN.
 
 Primera Forma Normal
 
@@ -536,7 +536,7 @@ La primera forma normal indica que cada campo debe contener un solo valor y no l
 Ejemplo aplicado:
 
 - No se guardan varios servicios en una sola columna.
-- Cada servicio esta en la tabla servicios.
+- Cada servicio está en la tabla servicios.
 - Cada reserva apunta a un solo servicio mediante servicio_id.
 
 Segunda Forma Normal
@@ -560,7 +560,7 @@ Ejemplo aplicado:
 - El estado de la reserva no se guarda como texto repetido en reservaciones.
 - Se guarda en estados_reservaciones y reservaciones usa estado_reservacion_id.
 
-Con esto se reduce duplicacion, se mejora el mantenimiento y se evita inconsistencia de datos.
+Con esto se reduce duplicación, se mejora el mantenimiento y se evita inconsistencia de datos.
 
 ## Scripts SQL requeridos
 
@@ -582,7 +582,7 @@ database/
 | Archivo | Contenido |
 | --- | --- |
 | 01-create-database.sql | Crea la base de datos. |
-| 02-create-tables.sql | Crea tablas, llaves primarias, llaves foraneas y restricciones. |
+| 02-create-tables.sql | Crea tablas, llaves primarias, llaves foráneas y restricciones. |
 | 03-seed-data.sql | Inserta datos iniciales de prueba. |
 | 04-procedures.sql | Crea procedimientos almacenados. |
 | 05-functions.sql | Crea funciones SQL. |
@@ -599,7 +599,7 @@ Como el sistema tiene 15 tablas, se deben preparar scripts de inserción con dat
 Ejemplos de datos:
 
 - tipos_negocios:
-  - Barberia, Salon, Spa, Veterinaria, Clinica, Consultorio, Centro Estetico.
+  - Barberia, Salon, Spa, Veterinaria, Clinica, Consultorio, Centro Estético.
 - estados_dominios:
   - pendiente, activo, suspendido, inactivo.
 - superadmins:
@@ -607,11 +607,11 @@ Ejemplos de datos:
 - dominios:
   - Barberia Elite, Spa Luna, Veterinaria Central, Salon Bella, Clinica Vida.
 - servicios:
-  - Corte de cabello, Manicure, Masaje relajante, Bano de mascota, Consulta general.
+  - Corte de cabello, Manicure, Masaje relajante, Baño de mascota, Consulta general.
 - estados_reservaciones:
   - pendiente, confirmada, cancelada, completada, reagendada.
 
-Para las tablas pequenas de catálogo como estados_dominios o estados_reservaciones, puede ser artificial llegar a 50 registros reales. Sin embargo, como el requisito indica 50 registros por tabla, se recomienda crear datos de prueba adicionales controlados o consultar al docente si los catálogos quedan exceptuados. Para ir a lo seguro, el script puede insertar 50 registros en todas las tablas, aunque algunos sean estados o tipos demo.
+Para las tablas pequeñas de catálogo como estados_dominios o estados_reservaciones, puede ser artificial llegar a 50 registros reales. Sin embargo, como el requisito indica 50 registros por tabla, se recomienda crear datos de prueba adicionales controlados o consultar al docente si los catálogos quedan exceptuados. Para ir a lo seguro, el script puede insertar 50 registros en todas las tablas, aunque algunos sean estados o tipos demo.
 
 ## Procedimientos almacenados propuestos
 
@@ -619,7 +619,7 @@ El curso pide mínimo 10 procedimientos almacenados.
 
 Lista propuesta
 
-| Procedimiento | Proposito |
+| Procedimiento | Propósito |
 | --- | --- |
 | sp_create_tenant | Crear un tenant nuevo con estado inicial pending. |
 | sp_activate_tenant | Activar un tenant desde superadmin. |
@@ -642,14 +642,14 @@ sp_create_booking
 
 Debe encargarse de:
 
-- Validar que el tenant este activo.
+- Validar que el tenant esté activo.
 - Validar que el servicio pertenezca al tenant.
 - Validar que el bloque de disponibilidad pertenezca al tenant.
-- Validar que el bloque este disponible y no tenga una reserva activa.
+- Validar que el bloque esté disponible y no tenga una reserva activa.
 - Crear o reutilizar el cliente.
 - Insertar la reserva.
 - Asignar estado pendiente o confirmada.
-- Marcar o tratar el bloque como reservado para que no vuelva a mostrarse publicamente.
+- Marcar o tratar el bloque como reservado para que no vuelva a mostrarse públicamente.
 - Permitir que un trigger genere el tracking code o llamar una función para generarlo.
 
 sp_cancel_booking
@@ -676,22 +676,22 @@ Debe encargarse de:
 
 El curso pide mínimo 5 funciones.
 
-| Función | Proposito |
+| Función | Propósito |
 | --- | --- |
-| fn_generate_tracking_code | Generar un codigo único para una reserva. |
-| fn_is_tenant_active | Validar si un tenant esta activo. |
+| fn_generate_tracking_code | Generar un código único para una reserva. |
+| fn_is_tenant_active | Validar si un tenant está activo. |
 | fn_is_availability_block_available | Validar si un bloque puede reservarse. |
 | fn_total_bookings_by_tenant | Calcular total de reservas de un tenant. |
 | fn_total_bookings_by_service | Calcular total de reservas por servicio. |
-| fn_get_booking_duration | Obtener duración de una reserva segun el servicio. |
+| fn_get_booking_duration | Obtener duración de una reserva según el servicio. |
 
 Se proponen 6 para tener margen.
 
 ## Vistas SQL propuestas
 
-El curso pide mínimo 5 vistas que integren datos de multiples tablas.
+El curso pide mínimo 5 vistas que integren datos de múltiples tablas.
 
-| Vista | Proposito |
+| Vista | Propósito |
 | --- | --- |
 | vw_booking_details | Muestra reservas con tenant, cliente, servicio, ubicación, estado y tracking. |
 | vw_daily_agenda | Muestra agenda diaria de reservas por tenant. |
@@ -706,9 +706,9 @@ Se proponen 6 para tener margen.
 
 El requisito general menciona 5 triggers, aunque en la entrega final se mencionan 3. Para evitar riesgos, el proyecto debe llevar 5.
 
-| Trigger | Proposito |
+| Trigger | Propósito |
 | --- | --- |
-| trg_bookings_generate_tracking | Generar codigo de tracking al crear una reserva. |
+| trg_bookings_generate_tracking | Generar código de tracking al crear una reserva. |
 | trg_bookings_audit_insert | Registrar auditoría cuando se crea una reserva. |
 | trg_bookings_audit_update | Registrar auditoría cuando cambia una reserva. |
 | trg_update_tenants_updated_at | Actualizar actualizado_en cuando cambia un tenant. |

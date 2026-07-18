@@ -1,24 +1,24 @@
-# Modelo Relacional — MBM Booking
+# Modelo Relacional: MBM Booking
 
-> Esquema logico de la base de datos `mbm_booking`. 15 tablas normalizadas.
+> Esquema lógico de la base de datos `mbm_booking`. 15 tablas normalizadas.
 > PK = PRIMARY KEY, FK = FOREIGN KEY, UQ = UNIQUE, NN = NOT NULL
 
-## Transliteracion
+## Transliteración
 
 El modelo MR del drawio (`infra/MultiTenantBookingManager.drawio`, tab MR) usa
-enie en algunos identificadores; el schema fisico en SQL Server usa ASCII puro.
+eñe en algunos identificadores; el schema físico en SQL Server usa ASCII puro.
 Las equivalencias son:
 
-| Modelo MR (con enie) | Fisico (ASCII) |
+| Modelo MR (con eñe) | Físico (ASCII) |
 |---|---|
 | dueños_de_dominios | duenos_de_dominios |
 | dueño_id | dueno_id |
 | contraseña_encriptada | contrasena_encriptada |
 
-El resto de identificadores no lleva enie ni acentos. La fuente unica de
-equivalencias (ingles -> MR -> fisico) es `docs/rename-map.csv`.
+El resto de identificadores no lleva eñe ni acentos. La fuente única de
+equivalencias (inglés -> MR -> físico) es `docs/rename-map.csv`.
 
-## Catalogos
+## Catálogos
 
 ### tipos_negocios
 | Columna | Tipo | Restricciones |
@@ -61,7 +61,7 @@ equivalencias (ingles -> MR -> fisico) es `docs/rename-map.csv`.
 
 ---
 
-## Dominios y Duenos
+## Dominios y Dueños
 
 ### dominios
 | Columna | Tipo | Restricciones |
@@ -166,7 +166,7 @@ equivalencias (ingles -> MR -> fisico) es `docs/rename-map.csv`.
 | horario_id | INT | **PK** IDENTITY(1,1) |
 | dominio_id | INT | **FK** → dominios(dominio_id), NN |
 | localidad_id | INT | **FK** → localidades(localidad_id), NN |
-| dia_semana | TINYINT | NN (0=Domingo .. 6=Sabado) |
+| dia_semana | TINYINT | NN (0=Domingo .. 6=Sábado) |
 | hora_apertura | TIME | NULL |
 | hora_cerrado | TIME | NULL |
 | cerrado | BIT | NN DEFAULT 0 |
@@ -218,7 +218,7 @@ equivalencias (ingles -> MR -> fisico) es `docs/rename-map.csv`.
 
 ---
 
-## Auditoria
+## Auditoría
 
 ### registros
 | Columna | Tipo | Restricciones |
@@ -238,7 +238,7 @@ equivalencias (ingles -> MR -> fisico) es `docs/rename-map.csv`.
 
 ## Resumen de Relaciones
 
-| # | Tabla Padre | Cardinalidad | Tabla Hija | Via FK |
+| # | Tabla Padre | Cardinalidad | Tabla Hija | Vía FK |
 |---|---|---|---|---|
 | 1 | tipos_negocios | 1:N | dominios | tipo_negocio_id |
 | 2 | estados_dominios | 1:N | dominios | dominio_estado_id |

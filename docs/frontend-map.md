@@ -1,6 +1,6 @@
 # Mapa de frontend
 
-Mapa visual de rutas del frontend MBM para guiar implementacion, pruebas y conexion con backend.
+Mapa visual de rutas del frontend MBM para guiar implementación, pruebas y conexión con backend.
 
 ```mermaid
 flowchart TD
@@ -33,9 +33,9 @@ flowchart TD
   W --> X[/"\/admin\/tenants\/[id]\/"/]
 ```
 
-## Relacion frontend -> endpoint backend (objetivo)
+## Relación frontend -> endpoint backend (objetivo)
 
-- Publico:
+- Público:
   - `/book/[slug]` usa `GET /public/{tenantSlug}`
   - `/book/[slug]/service` usa `GET /public/{tenantSlug}/services`
   - `/book/[slug]/datetime` usa `GET /public/{tenantSlug}/availability`
@@ -56,4 +56,4 @@ flowchart TD
   - `/admin/tenants` usa `GET /admin/tenants`
   - `/admin/tenants/[id]` usa `GET /admin/tenants/{id}`
 
-Estado actual: el flujo publico de reserva (consulta de tenant, servicios y disponibilidad), el seguimiento por codigo y el login estan cableados a la API real (con `NEXT_PUBLIC_API_MODE=api`). El resto del back-office de owner/admin y las acciones de escritura del flujo publico siguen usando datos mock (`lib/mock-data.ts`) por ahora. El modo mock sigue disponible como respaldo mediante `NEXT_PUBLIC_API_MODE=mock` (valor por defecto).
+Estado actual: el flujo público de reserva (consulta de tenant, servicios y disponibilidad), el seguimiento por código y el login están cableados a la API real (con `NEXT_PUBLIC_API_MODE=api`). El resto del back-office de owner/admin y las acciones de escritura del flujo público siguen usando datos mock (`lib/mock-data.ts`) por ahora. El modo mock sigue disponible como respaldo mediante `NEXT_PUBLIC_API_MODE=mock` (valor por defecto).
