@@ -76,7 +76,7 @@ sequenceDiagram
     API->>DB: busca por correo, verifica bcrypt
     DB-->>API: usuario valido (dueno del dominio 1)
     API-->>F: { accessToken: "eyJ...", user: {...} }
-    F->>F: setAuthToken(token)  // localStorage "mbm_token"
+    F->>F: setAuthToken(token)  // localStorage "citari_token"
 
     Note over U,DB: PASO 2 - Cualquier peticion privada
     F->>API: GET /bookings + header Authorization: Bearer eyJ...
@@ -105,7 +105,7 @@ import { endpoints } from "@/lib/endpoints";
 const res = await apiPost<LoginResponse>(endpoints.auth.login, {
   email, password, role: "owner",
 });
-setAuthToken(res.accessToken);   // queda en localStorage "mbm_token"
+setAuthToken(res.accessToken);   // queda en localStorage "citari_token"
 ```
 
 ```ts
@@ -149,7 +149,7 @@ flowchart TD
 ```
 
 - El flujo público de reserva nunca pide login: el cliente recibe un **código de
-  rastreo** (`MBM-XXXXXX`, lo genera un trigger) y con el consulta/cancela/reagenda.
+  rastreo** (`CITARI-XXXXXX`, lo genera un trigger) y con el consulta/cancela/reagenda.
 - Un owner solo ve SU dominio: el `tenantId` sale del token, por eso es imposible
   pedir datos de otro negocio (la API responde 404).
 

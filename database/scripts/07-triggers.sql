@@ -1,6 +1,6 @@
 ﻿-- ============================================================
 -- 07-triggers.sql
--- Proyecto: MBM - Multi-Tenant Booking Manager
+-- Proyecto: Citari - Citari
 -- Contenido: 7 triggers sobre reservaciones, dominios y servicios
 -- (identificadores en espanol, ASCII). Idempotente: CREATE OR ALTER
 -- TRIGGER, se puede reejecutar sin error.
@@ -27,7 +27,7 @@
 --   6. trg_prevenir_doble_reservacion      AFTER INSERT, UPDATE reservaciones
 --   7. trg_liberar_bloque_al_cancelar      AFTER UPDATE         reservaciones
 --
--- Nota sobre recursion: la base de datos mbm_booking usa el valor por
+-- Nota sobre recursion: la base de datos citari usa el valor por
 -- defecto de RECURSIVE_TRIGGERS (OFF), que ya bloquea la recursion
 -- directa (un UPDATE dentro de un trigger no vuelve a disparar ese
 -- mismo trigger sobre la misma tabla). Aun asi, los triggers 3, 6 y 7
@@ -37,7 +37,7 @@
 -- cada trigger para el detalle de su guarda.
 -- ============================================================
 
-USE mbm_booking;
+USE citari;
 GO
 
 -- ------------------------------------------------------------

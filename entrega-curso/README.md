@@ -26,7 +26,7 @@ corresponde al subgrupo y KN al horario del curso.
 | 2 | Requerimientos definidos | N/A | Cumple | [docs/overview.md](../docs/overview.md), [docs/domain-questions.md](../docs/domain-questions.md) |
 | 3 | Diagrama Entidad-Relación | N/A | Cumple | [infra/MultiTenantBookingManager.drawio](../infra/MultiTenantBookingManager.drawio) |
 | 4 | Diagrama Relacional | N/A | Cumple | [database/diagrams/MODELO-RELACIONAL.md](../database/diagrams/MODELO-RELACIONAL.md) |
-| 5 | Normalización a la 3FN | 3FN | Cumple | [database/diagrams/MBM-Normalizacion.xlsx](../database/diagrams/MBM-Normalizacion.xlsx), [docs/database-and-sql.md](../docs/database-and-sql.md) |
+| 5 | Normalización a la 3FN | 3FN | Cumple | [database/diagrams/CITARI-Normalizacion.xlsx](../database/diagrams/CITARI-Normalizacion.xlsx), [docs/database-and-sql.md](../docs/database-and-sql.md) |
 | 6 | Creación de la base mediante DDL | N/A | Cumple | [database/scripts/01-create-database.sql](../database/scripts/01-create-database.sql) |
 | 7 | Tablas | ≥ 10 | 15 | [database/scripts/02-create-tables.sql](../database/scripts/02-create-tables.sql) |
 | 8 | Registros por tabla | ≥ 50 | 50 por tabla | [database/scripts/03-seed-data.sql](../database/scripts/03-seed-data.sql); generador: [scripts/gen-seed.py](../scripts/gen-seed.py) |

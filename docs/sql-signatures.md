@@ -1,4 +1,4 @@
-# Firmas SQL - referencia compacta (MBM)
+# Firmas SQL - referencia compacta (Citari)
 
 Referencia rápida para los agentes de la API (WP6/WP7) sobre los stored
 procedures, vistas, funciones y triggers del schema en español de
@@ -51,7 +51,7 @@ base (requisito R6).
 
 | Función | Firma | Retorno |
 | --- | --- | --- |
-| `dbo.fn_generar_codigo_rastreo` | `(@semilla UNIQUEIDENTIFIER)` | `NVARCHAR(50)`: `'MBM-'` + 6 caracteres alfanumericos (alfabeto sin 0/O/1/I) derivados determinísticamente de `@semilla`. NULL si `@semilla` es NULL. No puede llamar `NEWID()` internamente (restricción de UDF escalares); el llamador genera la semilla (los triggers si pueden usar `NEWID()`, ver `trg_reservaciones_generar_rastreo`). |
+| `dbo.fn_generar_codigo_rastreo` | `(@semilla UNIQUEIDENTIFIER)` | `NVARCHAR(50)`: `'CITARI-'` + 6 caracteres alfanumericos (alfabeto sin 0/O/1/I) derivados determinísticamente de `@semilla`. NULL si `@semilla` es NULL. No puede llamar `NEWID()` internamente (restricción de UDF escalares); el llamador genera la semilla (los triggers si pueden usar `NEWID()`, ver `trg_reservaciones_generar_rastreo`). |
 | `dbo.fn_dominio_activo` | `(@dominio_id INT)` | `BIT`: 1 si el dominio existe, `activo = 1` y su estado (`estados_dominios`) es `'activo'`. |
 | `dbo.fn_bloque_disponible` | `(@bloque_id INT)` | `BIT`: 1 si el bloque existe, `activo = 1` y ninguna reservación no cancelada le apunta. |
 | `dbo.fn_total_reservaciones_por_dominio` | `(@dominio_id INT)` | `INT`: total de filas en `reservaciones` para ese dominio (0 si no hay). |

@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mbm-api"
+name = "citari-api"
 version = "0.1.0"
 description = "MultiTenantBookingManager API (FastAPI + pyodbc, sync)"
 requires-python = ">=3.11"

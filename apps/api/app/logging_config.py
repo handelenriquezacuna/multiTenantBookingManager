@@ -86,11 +86,11 @@ def setup_logging(log_format: str) -> None:
     root.setLevel(logging.INFO)
 
     for handler in list(root.handlers):
-        if getattr(handler, "_mbm_handler", False):
+        if getattr(handler, "_citari_handler", False):
             root.removeHandler(handler)
 
     handler = logging.StreamHandler(stream=sys.stdout)
-    handler._mbm_handler = True  # type: ignore[attr-defined]
+    handler._citari_handler = True  # type: ignore[attr-defined]
     handler.addFilter(RequestIdFilter())
 
     if log_format == "dev":

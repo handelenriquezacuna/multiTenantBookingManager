@@ -57,7 +57,7 @@ export default function LoginPage() {
         </div>
 
         <section className="auth-card" aria-labelledby="login-title">
-          <p className="section-eyebrow">MBM Booking Manager</p>
+          <p className="section-eyebrow">Citari</p>
           <h2 id="login-title" style={{ margin: 0, fontSize: "1.65rem" }}>Iniciar sesion</h2>
           <p style={{ color: "var(--muted)", lineHeight: 1.65 }}>
             Accede al espacio privado para administrar servicios, disponibilidad, clientes y reservas.

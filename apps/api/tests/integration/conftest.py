@@ -1,5 +1,5 @@
 """Shared fixtures for the WP6 integration suite: real SQL Server (the live
-`mbm_sqlserver` container / `mbm_booking` database, seed already loaded - see
+`citari-db` container / `citari` database, seed already loaded - see
 docs/sql-signatures.md and scripts/smoke-db.sql for the conventions this
 mirrors).
 

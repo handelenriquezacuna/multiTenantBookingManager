@@ -1,10 +1,10 @@
-# MBM: Multi tenant Booking Manager
+# Citari: Citari
 
 Plataforma de reservas multi tenant para negocios de servicios. Este repositorio contiene la base de datos, la API, el frontend y la documentación del proyecto SC-404.
 
 Resumen
 
-MBM es una plataforma de reservas multi tenant para negocios de servicios. La base de datos es el eje principal y el proyecto incluye API, frontend y docker para el flujo completo de reservas, administración y seguimiento.
+Citari es una plataforma de reservas multi tenant para negocios de servicios. La base de datos es el eje principal y el proyecto incluye API, frontend y docker para el flujo completo de reservas, administración y seguimiento.
 
 ## Índice
 

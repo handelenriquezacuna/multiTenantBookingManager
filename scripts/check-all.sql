@@ -1,13 +1,13 @@
 ﻿-- ============================================================
 -- check-all.sql
--- Proyecto: MBM - Multi-Tenant Booking Manager
+-- Proyecto: Citari - Citari
 -- Contenido: conteo de filas por tabla (schema en espanol) y
 --            matriz de requisitos R3/R4/R5/R6.
 -- Uso: sqlcmd -i check-all.sql (ver scripts/setup-db.sh para el
 --      patron docker exec ... sqlcmd ... -C)
 -- ============================================================
 
-USE mbm_booking;
+USE citari;
 GO
 
 SET NOCOUNT ON;

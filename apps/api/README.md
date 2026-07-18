@@ -1,4 +1,4 @@
-# MBM API (apps/api)
+# Citari API (apps/api)
 
 FastAPI + pyodbc (synchronous) API for the MultiTenantBookingManager project.
 
@@ -61,7 +61,7 @@ seeding and cleaning up its own rows, and includes cross-tenant isolation checks
 | `SQLSERVER_PORT` | `1433` | SQL Server port |
 | `SQLSERVER_USER` | `sa` | SQL Server login |
 | `SQLSERVER_PASSWORD` | (none) | SQL Server password |
-| `SQLSERVER_DB` | `mbm_booking` | Database name |
+| `SQLSERVER_DB` | `citari` | Database name |
 | `JWT_SECRET` | `change-me` | HS256 signing secret - set a real one outside dev |
 | `JWT_EXPIRES_MIN` | `60` | Access token lifetime in minutes |
 | `CORS_ORIGINS` | `http://localhost:3000` | Comma-separated allowed origins |
@@ -70,8 +70,8 @@ seeding and cleaning up its own rows, and includes cross-tenant isolation checks
 ## Docker
 
 ```bash
-docker build -t mbm-api apps/api
+docker build -t citari-api apps/api
 docker run --rm -p 8000:8000 \
   -e SQLSERVER_HOST=sqlserver -e SQLSERVER_PASSWORD=... -e JWT_SECRET=... \
-  mbm-api
+  citari-api
 ```

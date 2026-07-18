@@ -4,8 +4,8 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
   return (
     <main className="public-shell">
       <header className="public-nav">
-        <Link href="/" className="brand-mark" aria-label="Inicio MBM">
-          MBM
+        <Link href="/" className="brand-mark" aria-label="Inicio Citari">
+          Citari
         </Link>
         <nav className="public-nav-links" aria-label="Navegacion principal">
           <Link href="/book/clinica-dental-sonrisa">Demo de reserva</Link>
@@ -16,7 +16,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
       </header>
       <section className="public-content">{children}</section>
       <footer className="public-footer">
-        <span>MBM Booking Manager</span>
+        <span>Citari</span>
         <nav aria-label="Enlaces secundarios">
           <Link href="/book/clinica-dental-sonrisa">Reserva demo</Link>
           <Link href="/track">Consultar reserva</Link>

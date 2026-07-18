@@ -1,5 +1,5 @@
 .venv/
-mbm_api.egg-info/
+citari_api.egg-info/
 __pycache__/
 *.pyc
 .pytest_cache/

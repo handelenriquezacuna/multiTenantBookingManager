@@ -43,8 +43,8 @@ Tablas propuestas
 | --- | --- |
 | tipos_negocios | Tipos de negocio permitidos. |
 | estados_dominios | Estados posibles de un tenant. |
-| superadmins | Administradores globales de la plataforma MBM. |
-| dominios | Negocios registrados en MBM. |
+| superadmins | Administradores globales de la plataforma Citari. |
+| dominios | Negocios registrados en Citari. |
 | duenos_de_dominios | Dueños o administradores de cada tenant. |
 | clientes | Clientes que realizan reservas. |
 | categorias_servicios | Categorías de servicios por negocio. |
@@ -111,7 +111,7 @@ Un estado puede pertenecer a muchos dominios.
 
 ### Tabla superadmins
 
-Contiene los administradores globales de la plataforma MBM. Son los únicos que pueden activar o suspender dominios.
+Contiene los administradores globales de la plataforma Citari. Son los únicos que pueden activar o suspender dominios.
 
 Para el MVP puede existir un solo superadmin, pero la tabla permite agregar más en el futuro.
 
@@ -135,7 +135,7 @@ Un superadmin puede generar muchos registros de auditoría al gestionar dominios
 
 ### Tabla dominios
 
-Representa cada negocio registrado en MBM.
+Representa cada negocio registrado en Citari.
 
 Atributos:
 
@@ -466,7 +466,7 @@ Cada reserva tendrá un código de tracking.
 
 Ejemplo de código:
 
-- MBM-8F3K2A
+- CITARI-8F3K2A
 
 ### Tabla registros
 
@@ -603,7 +603,7 @@ Ejemplos de datos:
 - estados_dominios:
   - pendiente, activo, suspendido, inactivo.
 - superadmins:
-  - Admin principal de MBM con email y contrasena_encriptada. Para llegar a 50 registros se crean superadmins de prueba adicionales con datos ficticios.
+  - Admin principal de Citari con email y contrasena_encriptada. Para llegar a 50 registros se crean superadmins de prueba adicionales con datos ficticios.
 - dominios:
   - Barberia Elite, Spa Luna, Veterinaria Central, Salon Bella, Clinica Vida.
 - servicios:

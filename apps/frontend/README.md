@@ -1,6 +1,6 @@
-# Frontend MBM (Next.js)
+# Frontend Citari (Next.js)
 
-Frontend del proyecto MBM siguiendo la arquitectura definida en `AGENTS.md` y `docs/api-and-frontend.md`.
+Frontend del proyecto Citari siguiendo la arquitectura definida en `AGENTS.md` y `docs/api-and-frontend.md`.
 
 ## Objetivo actual
 

@@ -1,1 +1,1 @@
-"""MBM API application package."""
+"""Citari API application package."""

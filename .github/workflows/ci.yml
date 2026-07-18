@@ -72,10 +72,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build API Docker image
-        run: docker build -t mbm-api:ci apps/api
+        run: docker build -t citari-api:ci apps/api
 
       - name: Verify ODBC Driver 18 is available in the image
-        run: docker run --rm mbm-api:ci python -c "import pyodbc; assert 'ODBC Driver 18 for SQL Server' in pyodbc.drivers()"
+        run: docker run --rm citari-api:ci python -c "import pyodbc; assert 'ODBC Driver 18 for SQL Server' in pyodbc.drivers()"
 
   integration:
     name: Integration tests against SQL Server
@@ -163,7 +163,7 @@ jobs:
           SQLSERVER_PORT: "1433"
           SQLSERVER_USER: sa
           SQLSERVER_PASSWORD: ${{ secrets.SQLSERVER_PASSWORD || 'YourStrong!Passw0rd' }}
-          SQLSERVER_DB: mbm_booking
+          SQLSERVER_DB: citari
           JWT_SECRET: ci-secret-not-for-production-use-only-32b
         run: |
           if [ -d tests/integration ] && [ -n "$(find tests/integration -name 'test_*.py' -print -quit)" ]; then
@@ -187,4 +187,4 @@ jobs:
           docker build \
             --build-arg NEXT_PUBLIC_API_BASE_URL=http://localhost:8000 \
             --build-arg NEXT_PUBLIC_API_MODE=api \
-            -t mbm-frontend:ci apps/frontend
+            -t citari-frontend:ci apps/frontend

@@ -32,14 +32,14 @@ Adicional a los seis requisitos mínimos: 6 funciones escalares
 
 ### Salida real de `scripts/check-all.sql`
 
-Ejecutado contra el contenedor `mbm_sqlserver` (schema + seed aplicados vía
+Ejecutado contra el contenedor `citari-db` (schema + seed aplicados vía
 `scripts/setup-db.sh`):
 
 ```bash
 source .env
-docker cp scripts/check-all.sql mbm_sqlserver:/tmp/ca.sql
-docker exec mbm_sqlserver /opt/mssql-tools18/bin/sqlcmd \
-  -S localhost -U sa -P "$SQLSERVER_PASSWORD" -C -I -d mbm_booking -i /tmp/ca.sql
+docker cp scripts/check-all.sql citari-db:/tmp/ca.sql
+docker exec citari-db /opt/mssql-tools18/bin/sqlcmd \
+  -S localhost -U sa -P "$SQLSERVER_PASSWORD" -C -I -d citari -i /tmp/ca.sql
 ```
 
 Muestra de conteos por tabla (las 15 tablas, mínimo 50 filas cada una;
@@ -189,7 +189,7 @@ Durante la defensa deben demostrar:
 
 | Semana | Trabajo principal | Resultado esperado |
 | --- | --- | --- |
-| 1 | Definir idea y alcance | Tema cerrado: MBM Booking Manager. |
+| 1 | Definir idea y alcance | Tema cerrado: Citari. |
 | 2 | Definir entidades | Lista inicial de tablas y módulos. |
 | 3 | Diseñar DER | Diagrama inicial. |
 | 4 | Crear modelo relacional | Tablas, atributos, PK y FK. |
@@ -301,7 +301,7 @@ Defensa
 
 ## Recap final del proyecto
 
-MBM es una plataforma multi tenant de reservas para negocios de servicios. Cada negocio cuenta con un business owner que administra su información, servicios, horarios y reservas. Los clientes pueden reservar desde una página pública sin iniciar sesión y reciben un código de tracking para consultar, cancelar o reagendar su reserva.
+Citari es una plataforma multi tenant de reservas para negocios de servicios. Cada negocio cuenta con un business owner que administra su información, servicios, horarios y reservas. Los clientes pueden reservar desde una página pública sin iniciar sesión y reciben un código de tracking para consultar, cancelar o reagendar su reserva.
 
 El sistema será desarrollado con SQL Server, FastAPI, Uvicorn, Python, Next.js, TypeScript y Docker. La base de datos será el componente principal del proyecto, cumpliendo con los requisitos del curso: análisis, modelo entidad-relación, modelo relacional, normalización, creación de tablas, registros de prueba, procedimientos almacenados, funciones, vistas, triggers y scripts completos.
 

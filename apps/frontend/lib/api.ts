@@ -3,7 +3,7 @@ import { frontendConfig } from "@/lib/frontend-config";
 const API_BASE_URL = frontendConfig.apiBaseUrl;
 const API_MODE = frontendConfig.apiMode;
 const API_PREFIX = "/api/v1";
-const TOKEN_STORAGE_KEY = "mbm_token";
+const TOKEN_STORAGE_KEY = "citari_token";
 
 export function isMockMode() {
   return API_MODE !== "api";

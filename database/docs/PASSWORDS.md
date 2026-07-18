@@ -10,15 +10,15 @@ Las columnas de nombre son `nombre`, `apellido_1` y `apellido_2` (opcional).
 
 | Nombre | Apellido 1 | Apellido 2 | Correo | Password |
 |--------|------------|------------|--------|----------|
-| Melannie Yeonsuk | Campos | Arias | melanie.campos@mbm.admin | Admin123 |
-| Isaac | Chaves | Zumbado | isaac.chavez@mbm.admin | Admin123 |
-| Luna | Delgado | Durango | luna.delgado@mbm.admin | Admin123 |
-| Handel Simón | Enriquez | Acuña | handel.enriquez@mbm.admin | Admin123 |
-| Jeferson Andrew | Fuentes | García | jeferson.fuentes@mbm.admin | Admin123 |
+| Melannie Yeonsuk | Campos | Arias | melanie.campos@citari.admin | Admin123 |
+| Isaac | Chaves | Zumbado | isaac.chavez@citari.admin | Admin123 |
+| Luna | Delgado | Durango | luna.delgado@citari.admin | Admin123 |
+| Handel Simón | Enriquez | Acuña | handel.enriquez@citari.admin | Admin123 |
+| Jeferson Andrew | Fuentes | García | jeferson.fuentes@citari.admin | Admin123 |
 
 ### Superadmins de prueba (45)
 
-Correos `superadmin06@mbm.local` a `superadmin50@mbm.local`, generados de forma
+Correos `superadmin06@citari.local` a `superadmin50@citari.local`, generados de forma
 determinista por `scripts/gen-seed.py` con nombres/apellidos de prueba y el
 mismo hash literal de Admin123.
 

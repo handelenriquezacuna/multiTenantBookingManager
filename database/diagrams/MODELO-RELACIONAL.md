@@ -1,6 +1,6 @@
-# Modelo Relacional: MBM Booking
+# Modelo Relacional: Citari Booking
 
-> Esquema lógico de la base de datos `mbm_booking`. 15 tablas normalizadas.
+> Esquema lógico de la base de datos `citari`. 15 tablas normalizadas.
 > PK = PRIMARY KEY, FK = FOREIGN KEY, UQ = UNIQUE, NN = NOT NULL
 
 ## Transliteración

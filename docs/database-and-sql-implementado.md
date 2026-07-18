@@ -36,8 +36,8 @@ se construyo igual que la propuesta, solo con los nombres físicos en español.
 | --- | --- |
 | tipos_negocios | Tipos de negocio permitidos. |
 | estados_dominios | Estados posibles de un tenant. |
-| superadmins | Administradores globales de la plataforma MBM. |
-| dominios | Negocios registrados en MBM. |
+| superadmins | Administradores globales de la plataforma Citari. |
+| dominios | Negocios registrados en Citari. |
 | duenos_de_dominios | Dueños o administradores de cada tenant. |
 | clientes | Clientes que realizan reservas. |
 | categorias_servicios | Categorías de servicios por negocio. |
@@ -64,7 +64,7 @@ estas precisiones del as-built:
   como en reservaciones (denormalización intencional para historial).
 - Los identificadores físicos son ASCII puro (duenos_de_dominios,
   contrasena_encriptada); la eñe vive solo en el modelo MR del drawio.
-- La base se llama mbm_booking, colación Latin1_General_CI_AI (los DATOS si
+- La base se llama citari, colación Latin1_General_CI_AI (los DATOS si
   llevan acentos y eñes).
 
 ## Diagrama de relaciones (visión rápida)
@@ -118,7 +118,7 @@ Paso 2, el bloque reservable y la reserva:
 | --- | --- |
 | bloques_de_disponibilidad | id 1: 2026-07-02 de 08:00 a 08:30, activo 0 (ocupado) |
 | reservaciones | id 1: cliente 1 + servicio 1 + localidad 1 + bloque 1, estado pendiente, 2026-07-02 08:00 a 08:30 |
-| codigos_de_rastreos | MBM-FMT01, expira 2026-08-01 |
+| codigos_de_rastreos | CITARI-FMT01, expira 2026-08-01 |
 | registros | accion reserva_creada sobre la reserva 1 |
 
 Observa que la duración de la reserva (08:00 a 08:30 = 30 min) coincide con
@@ -133,7 +133,7 @@ flowchart TD
     B -- alguna falla --> X[THROW 50xxx<br/>la API lo traduce a 400/404/409]
     B -- todo OK --> C[INSERT reservacion<br/>estado pendiente,<br/>fechas copiadas del bloque]
     C --> D[UPDATE bloque activo = 0<br/>queda ocupado]
-    C -. dispara automaticamente .-> E[trigger genera codigo<br/>MBM-XXXXXX en codigos_de_rastreos]
+    C -. dispara automaticamente .-> E[trigger genera codigo<br/>CITARI-XXXXXX en codigos_de_rastreos]
     C -. dispara automaticamente .-> F[trigger inserta auditoria<br/>reserva_creada en registros]
 ```
 
@@ -169,7 +169,7 @@ flowchart LR
 ```
 
 Ejemplo real en el seed: la reserva 3 (Spa La Garita, estado cancelada,
-código MBM-RKD03) tiene bloque_disponibilidad_id NULL, pero conserva sus
+código CITARI-RKD03) tiene bloque_disponibilidad_id NULL, pero conserva sus
 fechas 2026-07-04 10:00 a 10:20 en las columnas denormalizadas; su bloque
 (id 3) quedo activo = 1 y puede reservarse de nuevo. Así el índice único
 filtrado permite que muchas reservas canceladas convivan sin chocar.
@@ -206,10 +206,10 @@ reales:
 
 | reserva | dominio | bloque | estado | fechas (copiadas del bloque) | código |
 | --- | --- | --- | --- | --- | --- |
-| 1 | Barberia El Colocho | 1 (ocupado) | pendiente | 2026-07-02 08:00 a 08:30 | MBM-FMT01 |
-| 2 | Salon Elegance | 2 (ocupado) | confirmada | 2026-07-03 09:30 a 10:15 | MBM-LYL02 |
-| 3 | Spa La Garita | NULL (liberado) | cancelada | 2026-07-04 10:00 a 10:20 | MBM-RKD03 |
-| 4 | Veterinaria San Jorge | 4 (ocupado) | completada | 2026-07-05 11:30 a 11:55 | MBM-... |
+| 1 | Barberia El Colocho | 1 (ocupado) | pendiente | 2026-07-02 08:00 a 08:30 | CITARI-FMT01 |
+| 2 | Salon Elegance | 2 (ocupado) | confirmada | 2026-07-03 09:30 a 10:15 | CITARI-LYL02 |
+| 3 | Spa La Garita | NULL (liberado) | cancelada | 2026-07-04 10:00 a 10:20 | CITARI-RKD03 |
+| 4 | Veterinaria San Jorge | 4 (ocupado) | completada | 2026-07-05 11:30 a 11:55 | CITARI-... |
 
 La fila 3 es el caso interesante: cancelada, sin bloque (FK NULL) pero con sus
 fechas históricas intactas, exactamente lo que el trigger de liberación
@@ -219,7 +219,7 @@ produce en runtime.
 
 ```text
 database/scripts/
-├── 01-create-database.sql   crea mbm_booking desde cero
+├── 01-create-database.sql   crea citari desde cero
 ├── 02-create-tables.sql     15 tablas, PK/FK/UQ + indice filtrado
 ├── 03-seed-data.sql         seed generado por scripts/gen-seed.py
 ├── 04-procedures.sql        13 stored procedures
@@ -290,7 +290,7 @@ En `database/scripts/05-functions.sql`.
 
 | Función | Propósito |
 | --- | --- |
-| fn_generar_codigo_rastreo | Código único MBM-XXXXXX desde una semilla UNIQUEIDENTIFIER (el trigger pasa NEWID(); alfabeto sin caracteres ambiguos 0/O/1/I). |
+| fn_generar_codigo_rastreo | Código único CITARI-XXXXXX desde una semilla UNIQUEIDENTIFIER (el trigger pasa NEWID(); alfabeto sin caracteres ambiguos 0/O/1/I). |
 | fn_dominio_activo | 1 si el dominio existe, activo = 1 y estado 'activo'. |
 | fn_bloque_disponible | 1 si el bloque existe, activo = 1 y sin reserva vigente. |
 | fn_total_reservaciones_por_dominio | Total de reservas de un dominio. |
@@ -345,20 +345,20 @@ Acciones que la implementación genera en la tabla registros:
 OJO con el contexto de base: las vistas de catálogo (sys.tables, sys.views...)
 son POR base de datos. Si tu editor (DBeaver/SSMS/ADS) está parado en `master`
 , el default de la conexión sa, todos los conteos dan 0 aunque el script haya
-corrido bien. Por eso estas consultas van calificadas con `mbm_booking.`:
+corrido bien. Por eso estas consultas van calificadas con `citari.`:
 funcionan sin importar el contexto. Alternativa: cambiar la base activa en el
-dropdown del editor (o `USE mbm_booking;`) y consultar sin calificar.
+dropdown del editor (o `USE citari;`) y consultar sin calificar.
 
 ```sql
 -- 0. La base existe?
-SELECT name FROM sys.databases WHERE name = 'mbm_booking';
+SELECT name FROM sys.databases WHERE name = 'citari';
 
 -- conteos esperados (o ejecutar scripts/check-all.sql completo,
--- con el editor parado en mbm_booking)
-SELECT COUNT(*) AS tablas    FROM mbm_booking.sys.tables;                              -- 15
-SELECT COUNT(*) AS sps       FROM mbm_booking.sys.procedures;                          -- 13
-SELECT COUNT(*) AS vistas    FROM mbm_booking.sys.views;                               -- 7
-SELECT COUNT(*) AS triggers  FROM mbm_booking.sys.triggers;                            -- 7
-SELECT COUNT(*) AS funciones FROM mbm_booking.sys.objects WHERE type IN ('FN','IF','TF'); -- 6
-SELECT COUNT(*) AS reservas  FROM mbm_booking.dbo.reservaciones;                       -- 50
+-- con el editor parado en citari)
+SELECT COUNT(*) AS tablas    FROM citari.sys.tables;                              -- 15
+SELECT COUNT(*) AS sps       FROM citari.sys.procedures;                          -- 13
+SELECT COUNT(*) AS vistas    FROM citari.sys.views;                               -- 7
+SELECT COUNT(*) AS triggers  FROM citari.sys.triggers;                            -- 7
+SELECT COUNT(*) AS funciones FROM citari.sys.objects WHERE type IN ('FN','IF','TF'); -- 6
+SELECT COUNT(*) AS reservas  FROM citari.dbo.reservaciones;                       -- 50
 ```

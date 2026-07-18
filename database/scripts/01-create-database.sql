@@ -1,7 +1,7 @@
 ﻿-- ============================================================
 -- 01-create-database.sql
--- Proyecto: MBM - Multi-Tenant Booking Manager
--- Contenido: crea la base de datos mbm_booking desde cero.
+-- Proyecto: Citari - Citari
+-- Contenido: crea la base de datos citari desde cero.
 -- Nota: el schema usa identificadores en espanol (ASCII puro);
 --       ver docs/rename-map.csv para la equivalencia con los
 --       nombres originales en ingles y el modelo MR con enie.
@@ -10,18 +10,18 @@
 USE master;
 GO
 
-IF EXISTS (SELECT name FROM sys.databases WHERE name = N'mbm_booking')
+IF EXISTS (SELECT name FROM sys.databases WHERE name = N'citari')
 BEGIN
-    ALTER DATABASE mbm_booking SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-    DROP DATABASE mbm_booking;
+    ALTER DATABASE citari SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE citari;
 END
 
-CREATE DATABASE mbm_booking
+CREATE DATABASE citari
 COLLATE Latin1_General_CI_AI;
 GO
 
-USE mbm_booking;
+USE citari;
 GO
 
-PRINT '[01-create-database] base de datos mbm_booking creada ... OK';
+PRINT '[01-create-database] base de datos citari creada ... OK';
 GO
