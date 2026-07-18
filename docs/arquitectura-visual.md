@@ -1,7 +1,7 @@
-# Arquitectura visual — como se conecta todo
+# Arquitectura visual: como se conecta todo
 
-> Guia rapida para cualquier desarrollador del equipo. Los diagramas se renderizan
-> automaticamente en GitHub. Version detallada de la API en [api-handover.md](api-handover.md).
+> Guía rápida para cualquier desarrollador del equipo. Los diagramas se renderizan
+> automáticamente en GitHub. Versión detallada de la API en [api-handover.md](api-handover.md).
 
 ## 1. El mapa completo en un vistazo
 
@@ -28,7 +28,7 @@ flowchart LR
         SP[13 stored procedures]
         VW[7 vistas]
         TR[7 triggers<br/>tracking, auditoria,<br/>liberar bloques]
-        T[(15 tablas<br/>en espanol)]
+        T[(15 tablas<br/>en español)]
     end
 
     B --> N
@@ -46,22 +46,22 @@ Reglas de oro:
 
 | Regla | Que significa |
 |---|---|
-| El frontend habla ingles | JSON camelCase (`serviceId`, `firstName`) |
-| La base habla espanol | tablas/columnas (`servicios`, `nombre`) |
-| La API traduce | los mappers convierten espanol -> camelCase, en un solo lugar |
-| La logica vive en SQL | escrituras via stored procedures, lecturas via vistas |
-| Los triggers hacen la magia | codigo de rastreo, auditoria y liberacion de bloques son AUTOMATICOS: nunca los programes en la API ni en el frontend |
+| El frontend habla inglés | JSON camelCase (`serviceId`, `firstName`) |
+| La base habla español | tablas/columnas (`servicios`, `nombre`) |
+| La API traduce | los mappers convierten español -> camelCase, en un solo lugar |
+| La lógica vive en SQL | escrituras vía stored procedures, lecturas vía vistas |
+| Los triggers hacen la magia | código de rastreo, auditoría y liberación de bloques son AUTOMÁTICOS: nunca los programes en la API ni en el frontend |
 
 ## 2. Que puerto es que
 
-| URL | Que hay ahi |
+| URL | Que hay ahí |
 |---|---|
 | http://localhost:3000 | Frontend Next.js |
 | http://localhost:8000/api/v1/... | API (todos los endpoints) |
 | http://localhost:8000/docs | OpenAPI interactivo (probar endpoints sin frontend) |
 | localhost:1433 | SQL Server (DBeaver/Azure Data Studio, credenciales en `.env`) |
 
-## 3. JWT en 3 pasos (asi funciona el login)
+## 3. JWT en 3 pasos (así funciona el login)
 
 ```mermaid
 sequenceDiagram
@@ -93,9 +93,9 @@ Dentro del token viajan tres datos: `sub` (id del usuario), `role` (`owner` o
 `superadmin`) y `tenantId` (solo owners). Expira en 60 minutos; al expirar la API
 devuelve 401 y el frontend debe redirigir al login.
 
-## 4. Como se usa desde el codigo del frontend
+## 4. Como se usa desde el código del frontend
 
-Todo ya esta implementado en `apps/frontend/lib/api.ts`. Solo se usa asi:
+Todo ya está implementado en `apps/frontend/lib/api.ts`. Solo se usa así:
 
 ```ts
 // LOGIN (una sola vez): guarda el token
@@ -138,7 +138,7 @@ clearAuthToken();
 router.push("/login");
 ```
 
-## 5. Publico vs privado — quien necesita token
+## 5. Público vs privado: quien necesita token
 
 ```mermaid
 flowchart TD
@@ -148,7 +148,7 @@ flowchart TD
     Q -->|"administracion de la plataforma"| ADM[Token role=superadmin<br/>/admin/tenants /audit-logs]
 ```
 
-- El flujo publico de reserva nunca pide login: el cliente recibe un **codigo de
+- El flujo público de reserva nunca pide login: el cliente recibe un **código de
   rastreo** (`MBM-XXXXXX`, lo genera un trigger) y con el consulta/cancela/reagenda.
 - Un owner solo ve SU dominio: el `tenantId` sale del token, por eso es imposible
   pedir datos de otro negocio (la API responde 404).

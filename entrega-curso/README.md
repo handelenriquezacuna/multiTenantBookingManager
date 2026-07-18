@@ -1,4 +1,4 @@
-# Entrega del curso — SC-404 Fundamentos de Diseño de Bases de Datos Relacionales
+# Entrega del curso: SC-404 Fundamentos de Diseño de Bases de Datos Relacionales
 
 Este documento reúne los entregables de la base de datos, organizados según la rúbrica del
 curso, e indica la ubicación de cada uno en el repositorio. No se duplican archivos: cada
@@ -22,33 +22,33 @@ corresponde al subgrupo y KN al horario del curso.
 
 | # | Requisito | Mínimo | Entregado | Evidencia |
 |---|-----------|--------|-----------|-----------|
-| 1 | Propósito de la base de datos | — | Cumple | [docs/overview.md](../docs/overview.md) |
-| 2 | Requerimientos definidos | — | Cumple | [docs/overview.md](../docs/overview.md), [docs/domain-questions.md](../docs/domain-questions.md) |
-| 3 | Diagrama Entidad-Relación | — | Cumple | [infra/MultiTenantBookingManager.drawio](../infra/MultiTenantBookingManager.drawio) |
-| 4 | Diagrama Relacional | — | Cumple | [database/diagrams/MODELO-RELACIONAL.md](../database/diagrams/MODELO-RELACIONAL.md) |
+| 1 | Propósito de la base de datos | N/A | Cumple | [docs/overview.md](../docs/overview.md) |
+| 2 | Requerimientos definidos | N/A | Cumple | [docs/overview.md](../docs/overview.md), [docs/domain-questions.md](../docs/domain-questions.md) |
+| 3 | Diagrama Entidad-Relación | N/A | Cumple | [infra/MultiTenantBookingManager.drawio](../infra/MultiTenantBookingManager.drawio) |
+| 4 | Diagrama Relacional | N/A | Cumple | [database/diagrams/MODELO-RELACIONAL.md](../database/diagrams/MODELO-RELACIONAL.md) |
 | 5 | Normalización a la 3FN | 3FN | Cumple | [database/diagrams/MBM-Normalizacion.xlsx](../database/diagrams/MBM-Normalizacion.xlsx), [docs/database-and-sql.md](../docs/database-and-sql.md) |
-| 6 | Creación de la base mediante DDL | — | Cumple | [database/scripts/01-create-database.sql](../database/scripts/01-create-database.sql) |
+| 6 | Creación de la base mediante DDL | N/A | Cumple | [database/scripts/01-create-database.sql](../database/scripts/01-create-database.sql) |
 | 7 | Tablas | ≥ 10 | 15 | [database/scripts/02-create-tables.sql](../database/scripts/02-create-tables.sql) |
 | 8 | Registros por tabla | ≥ 50 | 50 por tabla | [database/scripts/03-seed-data.sql](../database/scripts/03-seed-data.sql); generador: [scripts/gen-seed.py](../scripts/gen-seed.py) |
 | 9 | Procedimientos almacenados | ≥ 10 | 13 | [database/scripts/04-procedures.sql](../database/scripts/04-procedures.sql) |
 | 10 | Vistas multi-tabla | ≥ 5 | 7 | [database/scripts/06-views.sql](../database/scripts/06-views.sql) |
 | 11 | Funciones | ≥ 5 | 6 | [database/scripts/05-functions.sql](../database/scripts/05-functions.sql) |
 | 12 | Triggers | ≥ 5 | 7 | [database/scripts/07-triggers.sql](../database/scripts/07-triggers.sql) |
-| 13 | Script único con todas las estructuras | — | Cumple | [database/scripts/08-full-script.sql](../database/scripts/08-full-script.sql) |
+| 13 | Script único con todas las estructuras | N/A | Cumple | [database/scripts/08-full-script.sql](../database/scripts/08-full-script.sql) |
 
 ## Referencias de apoyo
 
 - Firmas de procedimientos, funciones, vistas y triggers, y códigos THROW: [docs/sql-signatures.md](../docs/sql-signatures.md)
 - Base de datos construida (as-built), diagrama ER y ciclo de vida de una reserva: [docs/database-and-sql-implementado.md](../docs/database-and-sql-implementado.md)
-- Cronograma, guion de defensa y matriz de requisitos R1–R6: [docs/plan-and-delivery.md](../docs/plan-and-delivery.md)
+- Cronograma, guion de defensa y matriz de requisitos R1-R6: [docs/plan-and-delivery.md](../docs/plan-and-delivery.md)
 - Credenciales de desarrollo (seed): [database/docs/PASSWORDS.md](../database/docs/PASSWORDS.md)
 
 ## Montaje y verificación de la base de datos
 
-Montaje de la base de datos (ejecuta los scripts 01–07 en orden):
+Montaje de la base de datos (ejecuta los scripts 01-07 en orden):
 
 ```powershell
-# Windows (PowerShell) — principal
+# Windows (PowerShell): principal
 .\scripts\setup-db.ps1
 ```
 
@@ -57,7 +57,7 @@ Montaje de la base de datos (ejecuta los scripts 01–07 en orden):
 bash scripts/setup-db.sh
 ```
 
-Verificación de los conteos por tabla y de la matriz de requisitos R3–R6:
+Verificación de los conteos por tabla y de la matriz de requisitos R3-R6:
 
 ```
 sqlcmd -S localhost -U sa -P "<password>" -C -i scripts/check-all.sql
@@ -70,7 +70,7 @@ sqlcmd -S localhost -U sa -P "<password>" -C -i scripts/smoke-db.sql
 ```
 
 Como alternativa, el archivo [database/scripts/08-full-script.sql](../database/scripts/08-full-script.sql)
-es equivalente a ejecutar los scripts 01–07 sobre un servidor limpio.
+es equivalente a ejecutar los scripts 01-07 sobre un servidor limpio.
 
 ## Nota sobre los catálogos de estado
 

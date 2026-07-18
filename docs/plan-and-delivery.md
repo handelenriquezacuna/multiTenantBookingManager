@@ -1,13 +1,13 @@
 # Trabajo del equipo
 
-## Indice
+## Índice
 
 - [Trabajo del equipo](#trabajo-del-equipo)
-  - [Indice](#indice)
+  - [Índice](#índice)
   - [Matriz de cumplimiento de requisitos (R1-R6)](#matriz-de-cumplimiento-de-requisitos-r1-r6)
   - [Entregables del curso](#entregables-del-curso)
   - [Cronograma recomendado](#cronograma-recomendado)
-  - [Demo minima para la defensa](#demo-minima-para-la-defensa)
+  - [Demo mínima para la defensa](#demo-mínima-para-la-defensa)
   - [Checklist de cumplimiento](#checklist-de-cumplimiento)
   - [Recap final del proyecto](#recap-final-del-proyecto)
 
@@ -16,23 +16,23 @@
 Los seis requisitos oficiales del curso (Avance II, semana 12) y su
 evidencia verificable en este repositorio:
 
-| Requisito | Evidencia | Comando de verificacion | Estado |
+| Requisito | Evidencia | Comando de verificación | Estado |
 | --- | --- | --- | --- |
-| R1 — normalizacion hasta 3FN documentada | [docs/database-and-sql.md](database-and-sql.md), seccion "Normalización de la base de datos" (1FN/2FN/3FN explicadas tabla por tabla) | lectura del documento | [x] DONE |
-| R2 — DDL completo | `database/scripts/02-create-tables.sql` (15 tablas, PK/FK) + `database/scripts/08-full-script.sql` (script unico, una sola pasada) | `bash scripts/setup-db.sh` (ejecuta 01-07 en orden) o `sqlcmd -i database/scripts/08-full-script.sql` | [x] DONE |
-| R3 — minimo 10 tablas | 15 tablas en español ASCII (ver `docs/rename-map.csv` para la equivalencia con los nombres en ingles del diseño original) | `scripts/check-all.sql` (matriz de abajo) o `SELECT COUNT(*) FROM sys.tables` | [x] DONE (15/10) |
-| R4 — minimo 50 registros por tabla, datos coherentes | Seed data en `database/scripts/03-seed-data.sql`, generado por `scripts/gen-seed.py`; coherencia de FKs verificada por `scripts/smoke-db.sql` (12 casos) | `scripts/check-all.sql` (matriz de abajo) | [x] DONE (15/15 tablas >= 50) |
-| R5 — minimo 10 stored procedures | 13 SPs en `database/scripts/04-procedures.sql`, documentados en [docs/sql-signatures.md](sql-signatures.md) seccion 1 | `SELECT COUNT(*) FROM sys.procedures;` | [x] DONE (13/10) |
-| R6 — minimo 5 vistas multi-tabla | 7 vistas en `database/scripts/06-views.sql` (cada una referencia 2+ tablas base), documentadas en [docs/sql-signatures.md](sql-signatures.md) seccion 2 | `SELECT COUNT(*) FROM sys.views;` | [x] DONE (7/5) |
+| R1, normalización hasta 3FN documentada | [docs/database-and-sql.md](database-and-sql.md), sección "Normalización de la base de datos" (1FN/2FN/3FN explicadas tabla por tabla) | lectura del documento | [x] DONE |
+| R2, DDL completo | `database/scripts/02-create-tables.sql` (15 tablas, PK/FK) + `database/scripts/08-full-script.sql` (script único, una sola pasada) | `bash scripts/setup-db.sh` (ejecuta 01-07 en orden) o `sqlcmd -i database/scripts/08-full-script.sql` | [x] DONE |
+| R3, mínimo 10 tablas | 15 tablas en español ASCII (ver `docs/rename-map.csv` para la equivalencia con los nombres en inglés del diseño original) | `scripts/check-all.sql` (matriz de abajo) o `SELECT COUNT(*) FROM sys.tables` | [x] DONE (15/10) |
+| R4, mínimo 50 registros por tabla, datos coherentes | Seed data en `database/scripts/03-seed-data.sql`, generado por `scripts/gen-seed.py`; coherencia de FKs verificada por `scripts/smoke-db.sql` (12 casos) | `scripts/check-all.sql` (matriz de abajo) | [x] DONE (15/15 tablas >= 50) |
+| R5, mínimo 10 stored procedures | 13 SPs en `database/scripts/04-procedures.sql`, documentados en [docs/sql-signatures.md](sql-signatures.md) sección 1 | `SELECT COUNT(*) FROM sys.procedures;` | [x] DONE (13/10) |
+| R6, mínimo 5 vistas multi-tabla | 7 vistas en `database/scripts/06-views.sql` (cada una referencia 2+ tablas base), documentadas en [docs/sql-signatures.md](sql-signatures.md) sección 2 | `SELECT COUNT(*) FROM sys.views;` | [x] DONE (7/5) |
 
-Adicional a los seis requisitos minimos: 6 funciones escalares
+Adicional a los seis requisitos mínimos: 6 funciones escalares
 (`database/scripts/05-functions.sql`) y 7 triggers
-(`database/scripts/07-triggers.sql`), tambien documentados en
+(`database/scripts/07-triggers.sql`), también documentados en
 `docs/sql-signatures.md`.
 
 ### Salida real de `scripts/check-all.sql`
 
-Ejecutado contra el contenedor `mbm_sqlserver` (schema + seed aplicados via
+Ejecutado contra el contenedor `mbm_sqlserver` (schema + seed aplicados vía
 `scripts/setup-db.sh`):
 
 ```bash
@@ -42,7 +42,7 @@ docker exec mbm_sqlserver /opt/mssql-tools18/bin/sqlcmd \
   -S localhost -U sa -P "$SQLSERVER_PASSWORD" -C -I -d mbm_booking -i /tmp/ca.sql
 ```
 
-Muestra de conteos por tabla (las 15 tablas, minimo 50 filas cada una;
+Muestra de conteos por tabla (las 15 tablas, mínimo 50 filas cada una;
 salida de un rebuild limpio desde cero con `docker compose down -v &&
 bash scripts/setup-db.sh`):
 
@@ -77,9 +77,9 @@ Matriz R3-R6 (salida literal):
 
 Nota de coherencia del seed: las 10 reservaciones canceladas del seed tienen
 su bloque liberado (`bloque_disponibilidad_id = NULL`), replicando el efecto
-del trigger `trg_liberar_bloque_al_cancelar`; sus fechas historicas se
-conservan en las columnas denormalizadas. Asi los bloques de esas reservas
-son reservables de nuevo, igual que en operacion real.
+del trigger `trg_liberar_bloque_al_cancelar`; sus fechas históricas se
+conservan en las columnas denormalizadas. Así los bloques de esas reservas
+son reservables de nuevo, igual que en operación real.
 
 El trabajo se organiza por tareas y no por personas, para que todo el equipo participe en cada fase y todos conozcan el proyecto completo.
 
@@ -107,19 +107,19 @@ Debe incluir:
 
 - Descripción del proyecto.
 - Objetivo general.
-- Objetivos especificos.
+- Objetivos específicos.
 - Análisis del problema.
 - Requerimientos funcionales.
 - Requerimientos no funcionales.
 - Lista de entidades.
 - Atributos principales.
 - Llaves primarias.
-- Llaves foraneas.
+- Llaves foráneas.
 - Análisis de relaciones.
 - Diagrama Entidad-Relación.
 - Modelo relacional.
 
-En esta etapa no es obligatorio tener toda la base programada. Lo importante es demostrar que el diseño esta bien planteado.
+En esta etapa no es obligatorio tener toda la base programada. Lo importante es demostrar que el diseño está bien planteado.
 
 Nombre del archivo PDF:
 
@@ -139,7 +139,7 @@ Debe incluir:
 - Base de datos creada en SQL Server.
 - Mínimo 10 tablas.
 - Llaves primarias.
-- Llaves foraneas.
+- Llaves foráneas.
 - Inserción de al menos 50 registros por tabla.
 - Al menos 10 procedimientos almacenados.
 - Al menos 5 funciones SQL.
@@ -191,11 +191,11 @@ Durante la defensa deben demostrar:
 | --- | --- | --- |
 | 1 | Definir idea y alcance | Tema cerrado: MBM Booking Manager. |
 | 2 | Definir entidades | Lista inicial de tablas y módulos. |
-| 3 | Disenar DER | Diagrama inicial. |
+| 3 | Diseñar DER | Diagrama inicial. |
 | 4 | Crear modelo relacional | Tablas, atributos, PK y FK. |
 | 5 | Revisar normalización | Ajustes para llegar a 3FN. |
 | 6 | Preparar documento Avance I | PDF. |
-| 7 | Entregar Avance I | Diseño logico entregado. |
+| 7 | Entregar Avance I | Diseño lógico entregado. |
 | 8 | Crear scripts DDL | Base empieza en SQL Server. |
 | 9 | Crear tablas y relaciones | Estructura SQL lista. |
 | 10 | Insertar seed data | 50 registros por tabla. |
@@ -204,7 +204,7 @@ Durante la defensa deben demostrar:
 | 13 | Crear views, triggers e integración | Proyecto final entregado. |
 | 14 | Defensa | Demo y exposición. |
 
-## Demo minima para la defensa
+## Demo mínima para la defensa
 
 El sistema debe poder demostrar este flujo:
 
@@ -235,7 +235,7 @@ Base de datos
 - [x] Mínimo 10 tablas.
 - [x] 15 tablas propuestas creadas.
 - [x] Llaves primarias definidas.
-- [x] Llaves foraneas definidas.
+- [x] Llaves foráneas definidas.
 - [x] Relaciones documentadas.
 - [x] Diagrama Entidad-Relación creado.
 - [x] Modelo relacional creado.
@@ -256,8 +256,8 @@ Backend
 - [x] Endpoints públicos.
 - [x] Validaciones básicas.
 - [x] Manejo de errores (RFC 7807 en toda la API).
-- [x] Filtro por tenant (via `tenantId` del JWT, nunca desde la request).
-- [x] Documentación automatica disponible en /docs.
+- [x] Filtro por tenant (vía `tenantId` del JWT, nunca desde la request).
+- [x] Documentación automática disponible en /docs.
 
 Frontend
 
@@ -270,7 +270,7 @@ Frontend
 - [ ] Servicios (mock, pendiente de cablear).
 - [ ] Horarios por sede (mock, pendiente de cablear).
 - [ ] Reservas (mock, pendiente de cablear).
-- [x] Página pública de reservas (flujo publico SSR conectado a la API; falta cablear el submit del booking, ver docs/api-handover.md).
+- [x] Página pública de reservas (flujo público SSR conectado a la API; falta cablear el submit del booking, ver docs/api-handover.md).
 - [x] Tracking público (consulta conectada; reagendar pendiente de cablear).
 - [ ] Reportes básicos (mock, pendiente de cablear).
 
@@ -281,12 +281,12 @@ Docker
 - [x] Frontend en contenedor.
 - [x] Docker Compose funcional.
 - [x] Variables de entorno documentadas.
-- [x] README con pasos de instalacion.
-- [ ] Proyecto probado en mas de una computadora.
+- [x] README con pasos de instalación.
+- [ ] Proyecto probado en más de una computadora.
 
 Defensa
 
-- [ ] Presentacion preparada para 15 minutos.
+- [ ] Presentación preparada para 15 minutos.
 - [ ] Todos los integrantes conocen la base de datos.
 - [ ] Todos pueden explicar una tabla.
 - [ ] Todos pueden explicar una relación.
@@ -301,20 +301,20 @@ Defensa
 
 ## Recap final del proyecto
 
-MBM es una plataforma multi tenant de reservas para negocios de servicios. Cada negocio cuenta con un business owner que administra su informacion, servicios, horarios y reservas. Los clientes pueden reservar desde una página pública sin iniciar sesión y reciben un codigo de tracking para consultar, cancelar o reagendar su reserva.
+MBM es una plataforma multi tenant de reservas para negocios de servicios. Cada negocio cuenta con un business owner que administra su información, servicios, horarios y reservas. Los clientes pueden reservar desde una página pública sin iniciar sesión y reciben un código de tracking para consultar, cancelar o reagendar su reserva.
 
-El sistema sera desarrollado con SQL Server, FastAPI, Uvicorn, Python, Next.js, TypeScript y Docker. La base de datos sera el componente principal del proyecto, cumpliendo con los requisitos del curso: análisis, modelo entidad-relación, modelo relacional, normalización, creación de tablas, registros de prueba, procedimientos almacenados, funciones, vistas, triggers y scripts completos.
+El sistema será desarrollado con SQL Server, FastAPI, Uvicorn, Python, Next.js, TypeScript y Docker. La base de datos será el componente principal del proyecto, cumpliendo con los requisitos del curso: análisis, modelo entidad-relación, modelo relacional, normalización, creación de tablas, registros de prueba, procedimientos almacenados, funciones, vistas, triggers y scripts completos.
 
-El planteamiento estilo mvp se mantiene simple para poder cumplir a tiempo, pero deja una base suficientemente solida para que el proyecto pueda evolucionar en el futuro como un producto real.
+El planteamiento estilo mvp se mantiene simple para poder cumplir a tiempo, pero deja una base suficientemente sólida para que el proyecto pueda evolucionar en el futuro como un producto real.
 
-las únicas ramas fijas deberian ser:
+las únicas ramas fijas deberían ser:
 
 - main
 - develop
 
-Y las ramas feature/* nacen solo cuando alguien va a trabajar algo especifico.
+Y las ramas feature/* nacen solo cuando alguien va a trabajar algo específico.
 
-La idea es que main sea el punto seguro del proyecto. No se trabaja directamente ahi.
+La idea es que main sea el punto seguro del proyecto. No se trabaja directamente ahí.
 
 Flujo correcto
 
@@ -322,7 +322,7 @@ Primero se crea main con la estructura inicial. Luego desde main se crea:
 
 - develop
 
-Despues, cada funcionalidad nace desde develop.
+Después, cada funcionalidad nace desde develop.
 
 Ejemplo:
 
@@ -335,7 +335,7 @@ Cuando alguien termina una feature:
 
 - feature/* -> Pull Request -> develop
 
-Y cuando develop este estable para una entrega:
+Y cuando develop esté estable para una entrega:
 
 - develop -> Pull Request -> main
 
@@ -345,4 +345,4 @@ Regla simple para el equipo
 - develop = integración del equipo
 - feature/* = trabajo individual o por módulo
 
-Nunca se trabaja directo en main. Lo ideal tambien es evitar trabajar directo en develop, salvo ajustes pequenos de documentación o configuración.
+Nunca se trabaja directo en main. Lo ideal también es evitar trabajar directo en develop, salvo ajustes pequeños de documentación o configuración.
