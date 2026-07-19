@@ -20,7 +20,7 @@ export default async function ServiceSelectionPage({ params }: { params: Promise
   const { slug } = await params;
   const services = await loadServices(slug);
   return (
-    <BookingShell>
+    <BookingShell currentStep={1}>
       <ServiceSelection slug={slug} services={services} />
     </BookingShell>
   );

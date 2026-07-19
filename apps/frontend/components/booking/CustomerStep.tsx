@@ -1,59 +1,86 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, useState } from "react";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+const textareaClass =
+  "flex min-h-[88px] w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm text-foreground shadow-soft placeholder:text-muted-foreground/70 focus-visible:border-primary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40";
 
 export function CustomerStep({ slug }: { slug: string }) {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const serviceId = searchParams.get("service") || "1";
-  const blockId = searchParams.get("block") || "101";
-  const [ready, setReady] = useState(false);
+  const serviceId = searchParams.get("service") || "";
+  const blockId = searchParams.get("block") || "";
+  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "", notes: "" });
+
+  function update(key: keyof typeof form, value: string) {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    // TODO (pase funcional): POST /public/{slug}/bookings. Requiere locationId,
+    // que hoy no viene en el contrato de disponibilidad publica.
+    const params = new URLSearchParams({ service: serviceId, block: blockId, name: form.firstName });
+    router.push(`/book/${slug}/confirmation?${params.toString()}`);
+  }
 
   return (
-    <div className="booking-flow">
-      <div className="stepper" aria-label="Progreso de reserva">
-        <span>Servicio</span>
-        <span>Fecha y hora</span>
-        <span className="active">Datos</span>
-        <span>Confirmacion</span>
+    <div>
+      <h1 className="font-serif text-3xl font-medium tracking-tight">Completa tus datos</h1>
+      <p className="mt-2 text-muted-foreground">
+        Usaremos esta informacion solo para gestionar tu reserva.
+      </p>
+
+      <div className="mt-6 flex items-start gap-3 rounded-2xl bg-primary/5 px-4 py-3 text-sm text-foreground/80">
+        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+        <span>Recibiras un codigo para consultar, cancelar o reagendar tu reserva sin crear cuenta.</span>
       </div>
 
-      <div className="page-header">
-        <div>
-          <h1>Completa tus datos</h1>
-          <p>Usaremos esta informacion solo para gestionar tu reserva.</p>
-        </div>
-      </div>
-
-      <section className="checkout-layout">
-        <form className="auth-card form-stack" onChange={() => setReady(true)}>
-          <label className="field-group"><span>Nombre</span><input placeholder="Sofia" /></label>
-          <label className="field-group"><span>Apellido</span><input placeholder="Campos" /></label>
-          <label className="field-group"><span>Correo electronico</span><input type="email" placeholder="sofia@email.com" /></label>
-          <label className="field-group"><span>Telefono</span><input placeholder="8888-8888" /></label>
-          <label className="field-group"><span>Notas opcionales</span><textarea placeholder="Algo que el negocio deba saber" rows={4} /></label>
-        </form>
-
-        <aside className="panel">
-          <div className="panel-header"><h3>Resumen</h3></div>
-          <div className="panel-body">
-            <p><strong>Negocio:</strong> Barberia Elite</p>
-            <p><strong>Servicio:</strong> Corte clasico</p>
-            <p><strong>Horario:</strong> 09:00</p>
-            <p className="field-helper">Recibiras un codigo para consultar, cancelar o reagendar tu reserva.</p>
+      <form onSubmit={submit} className="mt-6 space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label htmlFor="firstName">Nombre</Label>
+            <Input id="firstName" value={form.firstName} onChange={(e) => update("firstName", e.target.value)} placeholder="Sofia" required />
           </div>
-        </aside>
-      </section>
+          <div className="space-y-2">
+            <Label htmlFor="lastName">Apellido</Label>
+            <Input id="lastName" value={form.lastName} onChange={(e) => update("lastName", e.target.value)} placeholder="Campos" required />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="email">Correo electronico</Label>
+          <Input id="email" type="email" value={form.email} onChange={(e) => update("email", e.target.value)} placeholder="sofia@email.com" required />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="phone">Telefono</Label>
+          <Input id="phone" value={form.phone} onChange={(e) => update("phone", e.target.value)} placeholder="8888-8888" required />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="notes">Notas opcionales</Label>
+          <textarea
+            id="notes"
+            className={textareaClass}
+            value={form.notes}
+            onChange={(e) => update("notes", e.target.value)}
+            placeholder="Algo que el negocio deba saber"
+          />
+        </div>
 
-      <div className="booking-actions">
-        <Link className="btn secondary" href={`/book/${slug}/datetime?service=${serviceId}`}>Volver</Link>
-        {ready ? (
-          <Link className="btn" href={`/book/${slug}/confirmation?service=${serviceId}&block=${blockId}`}>Confirmar reserva</Link>
-        ) : (
-          <button className="btn" type="button" disabled>Completa tus datos</button>
-        )}
-      </div>
+        <div className="flex items-center justify-between gap-3 pt-2">
+          <Link
+            href={`/book/${slug}/datetime?service=${serviceId}`}
+            className={buttonVariants({ variant: "outline" })}
+          >
+            Volver
+          </Link>
+          <Button type="submit">Confirmar reserva</Button>
+        </div>
+      </form>
     </div>
   );
 }
