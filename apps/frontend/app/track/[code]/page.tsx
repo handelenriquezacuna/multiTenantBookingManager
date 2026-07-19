@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BookingShell } from "@/components/layout/BookingShell";
+import { buttonVariants } from "@/components/ui/button";
 import { apiGet, isMockMode } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import { mockBookings } from "@/lib/mock-data";
@@ -23,27 +24,45 @@ export default async function TrackPage({ params }: { params: Promise<{ code: st
   if (!booking) {
     notFound();
   }
+
+  const rows: [string, string][] = [
+    ["Codigo", booking.trackingCode],
+    ["Cliente", booking.customerName],
+    ["Servicio", booking.serviceName],
+    ["Fecha", `${booking.bookingDate} - ${booking.startTime}`],
+    ["Estado", booking.status]
+  ];
+
   return (
     <BookingShell>
-      <section className="track-detail card">
-        <span className="badge">Reserva encontrada</span>
-        <h1>Detalle de tu cita</h1>
-        <dl>
-          <div><dt>Codigo</dt><dd>{booking.trackingCode}</dd></div>
-          <div><dt>Cliente</dt><dd>{booking.customerName}</dd></div>
-          <div><dt>Servicio</dt><dd>{booking.serviceName}</dd></div>
-          <div><dt>Fecha</dt><dd>{booking.bookingDate} · {booking.startTime}</dd></div>
-          <div><dt>Estado</dt><dd>{booking.status}</dd></div>
+      <div className="rounded-3xl border border-border bg-card p-8 shadow-soft">
+        <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+          Reserva encontrada
+        </span>
+        <h1 className="mt-4 font-serif text-3xl font-medium tracking-tight">Detalle de tu cita</h1>
+
+        <dl className="mt-6 divide-y divide-border">
+          {rows.map(([label, value]) => (
+            <div key={label} className="flex items-center justify-between gap-4 py-3 text-sm">
+              <dt className="text-muted-foreground">{label}</dt>
+              <dd className="text-right font-medium">{value}</dd>
+            </div>
+          ))}
         </dl>
-        <div className="track-actions">
-          <Link className="btn" href={`/track/${booking.trackingCode}/reschedule`}>
+
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link href={`/track/${booking.trackingCode}/reschedule`} className={buttonVariants()}>
             Reagendar
           </Link>
-          <Link className="btn secondary" href={`/track/${booking.trackingCode}/cancel`}>
+          <Link
+            href={`/track/${booking.trackingCode}/cancel`}
+            className={buttonVariants({ variant: "outline" })}
+          >
             Cancelar
           </Link>
         </div>
-      </section>
+      </div>
     </BookingShell>
   );
 }
