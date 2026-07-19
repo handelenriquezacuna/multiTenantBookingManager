@@ -2,11 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { BookingShell } from "@/components/layout/BookingShell";
+import { SiteHeader } from "@/components/marketing/site-header";
+import { SiteFooter } from "@/components/marketing/site-footer";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function TrackLookupPage() {
   const router = useRouter();
-  const [code, setCode] = useState("CITARI-8F3K2A");
+  const [code, setCode] = useState("");
 
   function submitTrackingCode(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -16,21 +20,44 @@ export default function TrackLookupPage() {
   }
 
   return (
-    <BookingShell>
-      <section className="track-lookup">
-        <div>
-          <span className="badge">Seguimiento de reserva</span>
-          <h1>Consulta tu cita</h1>
-          <p>Ingresa el codigo que recibiste al confirmar la reserva para ver, cancelar o reagendar tu cita.</p>
+    <div data-ct className="flex min-h-[100dvh] flex-col bg-background font-sans text-foreground antialiased">
+      <SiteHeader />
+
+      <main className="flex flex-1 items-center justify-center px-6 py-16">
+        <div className="w-full max-w-md text-center">
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary">
+            Seguimiento de reserva
+          </p>
+          <h1 className="mt-3 font-serif text-4xl font-medium tracking-tight">
+            Consulta tu <em className="italic text-primary">cita</em>.
+          </h1>
+          <p className="mx-auto mt-3 max-w-sm text-muted-foreground">
+            Ingresa el codigo que recibiste al confirmar para ver, cancelar o reagendar tu reserva.
+          </p>
+
+          <form
+            onSubmit={submitTrackingCode}
+            className="mt-8 rounded-3xl border border-border bg-card p-6 text-left shadow-soft"
+          >
+            <div className="space-y-2">
+              <Label htmlFor="code">Codigo de seguimiento</Label>
+              <Input
+                id="code"
+                value={code}
+                onChange={(event) => setCode(event.target.value)}
+                placeholder="CITARI-XXXXXX"
+                autoFocus
+                className="text-center font-mono tracking-widest"
+              />
+            </div>
+            <Button type="submit" className="mt-4 w-full">
+              Consultar reserva
+            </Button>
+          </form>
         </div>
-        <form className="track-card" onSubmit={submitTrackingCode}>
-          <label className="field-group">
-            <span>Codigo de tracking</span>
-            <input value={code} onChange={(event) => setCode(event.target.value)} placeholder="CITARI-8F3K2A" />
-          </label>
-          <button className="btn" type="submit">Consultar reserva</button>
-        </form>
-      </section>
-    </BookingShell>
+      </main>
+
+      <SiteFooter />
+    </div>
   );
 }
