@@ -14,19 +14,19 @@
   --ct-card-foreground: 34 15% 9%;
   --ct-popover: 40 40% 99%;
   --ct-popover-foreground: 34 15% 9%;
-  --ct-primary: 13 63% 48%;           /* terracota #C8502E */
+  --ct-primary: 221 76% 52%;           /* azul cobalto */
   --ct-primary-foreground: 40 33% 97%;
   --ct-secondary: 40 22% 91%;
   --ct-secondary-foreground: 34 15% 12%;
   --ct-muted: 40 20% 90%;
   --ct-muted-foreground: 34 8% 40%;
-  --ct-accent: 13 63% 48%;
+  --ct-accent: 221 76% 52%;
   --ct-accent-foreground: 40 33% 97%;
   --ct-destructive: 0 62% 45%;
   --ct-destructive-foreground: 40 33% 97%;
   --ct-border: 34 14% 86%;
   --ct-input: 34 14% 86%;
-  --ct-ring: 13 63% 48%;
+  --ct-ring: 221 76% 52%;
   --ct-radius: 0.85rem;
   --font-serif: "Newsreader Variable", Georgia, serif;
   --font-sans: "Hanken Grotesk Variable", system-ui, sans-serif;
