@@ -1,0 +1,174 @@
+"""Grupo 6 (soft delete, adaptado al diseno real).
+
+DELETE service/category/location/block -> respuesta ok; el recurso NO se
+borra fisicamente (verificado via sql_scalar activo=0); GET por id y
+presencia en el listado default se documentan tal cual se comportan en la
+API real (no todos coinciden con lo esperado - ver comentarios inline,
+especialmente availability-blocks, que es un DEFECTO real, no solo una
+diferencia de diseno).
+
+El escenario de "clave natural" (bloque cuya reserva se cancela queda
+re-reservable) esta cubierto en test_api_public_track.py
+(test_public_book_track_cancel_frees_block_for_rebooking), no se repite
+aqui."""
+
+from __future__ import annotations
+
+import httpx
+import pytest
+
+from conftest import bearer, sql_scalar
+from test_api_helpers import unique_tag
+
+pytestmark = pytest.mark.e2e
+
+
+def test_service_category_soft_delete_full_behavior(
+    client: httpx.Client, owner1_token: str, cleanup_sql
+) -> None:
+    tag = unique_tag()
+    h = bearer(owner1_token)
+    name = f"ZZ_E2E_SOFTDEL_CAT_{tag}"
+
+    category_id = client.post("/service-categories", json={"name": name}, headers=h).json()["categoryId"]
+    cleanup_sql(f"DELETE FROM categorias_servicios WHERE categoria_id = {category_id}")
+
+    delete_resp = client.delete(f"/service-categories/{category_id}", headers=h)
+    assert delete_resp.status_code == 200
+    assert delete_resp.json() == {"status": "deleted"}
+
+    # GET por id sigue devolviendo 200 (no 404) con isActive=false: el
+    # soft-deleted sigue siendo legible por id (ver docstring de
+    # ServiceCategoryRepository.get_by_id: "no activo filter here...a
+    # soft-deleted category must still be readable by id").
+    get_resp = client.get(f"/service-categories/{category_id}", headers=h)
+    assert get_resp.status_code == 200
+    assert get_resp.json()["isActive"] is False
+
+    # Desaparece del listado default (list_by_tenant si filtra activo=1).
+    list_resp = client.get("/service-categories", params={"pageSize": 100}, headers=h)
+    assert category_id not in [c["categoryId"] for c in list_resp.json()["items"]]
+
+    # No se borro fisicamente.
+    assert sql_scalar(
+        f"SELECT COUNT(*) FROM categorias_servicios WHERE categoria_id = {category_id}"
+    ) == "1"
+    assert sql_scalar(
+        f"SELECT activo FROM categorias_servicios WHERE categoria_id = {category_id}"
+    ) == "0"
+
+
+def test_service_soft_delete_full_behavior(client: httpx.Client, owner1_token: str, cleanup_sql) -> None:
+    tag = unique_tag()
+    h = bearer(owner1_token)
+
+    category_id = client.post(
+        "/service-categories", json={"name": f"ZZ_E2E_SOFTDEL_SVCCAT_{tag}"}, headers=h
+    ).json()["categoryId"]
+    cleanup_sql(f"DELETE FROM categorias_servicios WHERE categoria_id = {category_id}")
+    service_id = client.post(
+        "/services",
+        json={"categoryId": category_id, "name": f"ZZ_E2E_SOFTDEL_SVC_{tag}", "durationMinutes": 30},
+        headers=h,
+    ).json()["serviceId"]
+    cleanup_sql(f"DELETE FROM servicios WHERE servicio_id = {service_id}")
+
+    delete_resp = client.delete(f"/services/{service_id}", headers=h)
+    assert delete_resp.status_code == 200
+    assert delete_resp.json() == {"status": "deleted"}
+
+    # Comportamiento real documentado: ServiceResponse NO expone isActive
+    # (a diferencia de ServiceCategoryResponse/LocationResponse) - el
+    # frontend no puede saber por la respuesta de GET si un servicio esta
+    # activo o no, solo por SQL/inferencia (deja de aparecer en el listado).
+    get_resp = client.get(f"/services/{service_id}", headers=h)
+    assert get_resp.status_code == 200
+    assert "isActive" not in get_resp.json()
+
+    list_resp = client.get("/services", params={"pageSize": 100}, headers=h)
+    assert service_id not in [s["serviceId"] for s in list_resp.json()["items"]]
+
+    assert sql_scalar(f"SELECT activo FROM servicios WHERE servicio_id = {service_id}") == "0"
+
+
+def test_location_soft_delete_full_behavior(client: httpx.Client, owner1_token: str, cleanup_sql) -> None:
+    tag = unique_tag()
+    h = bearer(owner1_token)
+    name = f"ZZ_E2E_SOFTDEL_LOC_{tag}"
+
+    location_id = client.post(
+        "/locations", json={"name": name, "address": "dir"}, headers=h
+    ).json()["locationId"]
+    cleanup_sql(f"DELETE FROM localidades WHERE localidad_id = {location_id}")
+
+    delete_resp = client.delete(f"/locations/{location_id}", headers=h)
+    assert delete_resp.status_code == 200
+    assert delete_resp.json() == {"status": "deleted"}
+
+    get_resp = client.get(f"/locations/{location_id}", headers=h)
+    assert get_resp.status_code == 200
+    assert get_resp.json()["isActive"] is False
+
+    list_resp = client.get("/locations", params={"pageSize": 100}, headers=h)
+    assert location_id not in [loc["locationId"] for loc in list_resp.json()["items"]]
+
+    assert sql_scalar(f"SELECT activo FROM localidades WHERE localidad_id = {location_id}") == "0"
+
+
+def test_availability_block_soft_delete_get_and_physical_state(
+    client: httpx.Client, owner1_token: str, cleanup_sql
+) -> None:
+    h = bearer(owner1_token)
+    block_id = client.post(
+        "/availability-blocks",
+        json={"locationId": 1, "blockDate": "2027-06-01", "startTime": "09:00:00", "endTime": "09:30:00"},
+        headers=h,
+    ).json()["availabilityBlockId"]
+    cleanup_sql(f"DELETE FROM bloques_de_disponibilidad WHERE bloque_disponibilidad_id = {block_id}")
+
+    delete_resp = client.delete(f"/availability-blocks/{block_id}", headers=h)
+    assert delete_resp.status_code == 200
+    assert delete_resp.json() == {"status": "deleted"}
+
+    # GET por id sigue en 200 (igual que las otras entidades).
+    get_resp = client.get(f"/availability-blocks/{block_id}", headers=h)
+    assert get_resp.status_code == 200
+
+    # No se borro fisicamente: activo pasa a 0.
+    assert sql_scalar(
+        f"SELECT activo FROM bloques_de_disponibilidad WHERE bloque_disponibilidad_id = {block_id}"
+    ) == "0"
+
+
+def test_availability_block_soft_delete_still_appears_in_owner_listing_defect(
+    client: httpx.Client, owner1_token: str, cleanup_sql
+) -> None:
+    """DEFECTO (severidad mayor, ver tests/reports/api_report.md): a
+    diferencia de service-categories/services/locations, GET
+    /availability-blocks NO filtra `activo = 1` en su listado (ver
+    AvailabilityRepository.list_owner en
+    apps/api/app/repositories/availability_repository.py - su WHERE solo
+    tiene dominio_id/fecha/localidad_id, no activo). Un bloque desactivado
+    (DELETE) sigue apareciendo en GET /availability-blocks para el owner,
+    aunque el publico (GET /public/{slug}/availability, que si filtra
+    bloque_activo=1) ya no lo ve. Este test documenta el comportamiento
+    real (no es lo esperado por el matrix del WP, que asume "desaparece de
+    listados default" para todo soft delete)."""
+    h = bearer(owner1_token)
+    block_id = client.post(
+        "/availability-blocks",
+        json={"locationId": 1, "blockDate": "2027-06-02", "startTime": "09:00:00", "endTime": "09:30:00"},
+        headers=h,
+    ).json()["availabilityBlockId"]
+    cleanup_sql(f"DELETE FROM bloques_de_disponibilidad WHERE bloque_disponibilidad_id = {block_id}")
+
+    client.delete(f"/availability-blocks/{block_id}", headers=h)
+
+    list_resp = client.get(
+        "/availability-blocks", params={"date": "2027-06-02", "pageSize": 100}, headers=h
+    )
+    ids = [b["availabilityBlockId"] for b in list_resp.json()["items"]]
+    assert block_id in ids, (
+        "Si esta asercion falla, el defecto fue corregido: actualizar "
+        "tests/reports/api_report.md (ya no es un defecto)."
+    )
