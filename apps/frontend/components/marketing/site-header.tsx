@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { motion, useMotionValueEvent, useScroll } from "framer-motion";
+import { useMotionValueEvent, useScroll } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
 const links = [
@@ -17,12 +17,7 @@ export function SiteHeader() {
   useMotionValueEvent(scrollY, "change", (y) => setScrolled(y > 16));
 
   return (
-    <motion.header
-      initial={{ y: -14, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className="sticky top-4 z-50 px-4"
-    >
+    <header className="sticky top-4 z-50 px-4 duration-500 animate-in fade-in slide-in-from-top-2">
       <div
         className={`mx-auto flex h-14 max-w-4xl items-center justify-between gap-4 rounded-full border pl-6 pr-2.5 transition-[background-color,border-color,box-shadow] duration-300 ${
           scrolled
@@ -51,6 +46,6 @@ export function SiteHeader() {
           </Button>
         </div>
       </div>
-    </motion.header>
+    </header>
   );
 }

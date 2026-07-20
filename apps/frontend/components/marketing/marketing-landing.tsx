@@ -1,7 +1,4 @@
-"use client";
-
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
@@ -15,24 +12,10 @@ const agenda = [
   { time: "15:00", name: "Andrew Fuentes", service: "Revision", tone: "pendiente" }
 ];
 
+// Entrada por CSS (tailwindcss-animate): determinista, sin mismatch de hydration.
+const reveal = "animate-in fade-in slide-in-from-bottom-3 fill-mode-both duration-700 motion-reduce:animate-none";
+
 export function MarketingLanding() {
-  const reduce = useReducedMotion();
-
-  const container = {
-    hidden: {},
-    show: {
-      transition: { staggerChildren: reduce ? 0 : 0.08, delayChildren: 0.05 }
-    }
-  };
-  const item = {
-    hidden: { opacity: 0, y: reduce ? 0 : 18 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }
-    }
-  };
-
   return (
     <div data-ct className="min-h-screen bg-background font-sans text-foreground antialiased">
       {/* atmosfera: resplandor calido muy suave */}
@@ -44,47 +27,47 @@ export function MarketingLanding() {
       <SiteHeader />
 
       {/* hero */}
-      <motion.section
-        variants={container}
-        initial="hidden"
-        animate="show"
-        className="mx-auto max-w-6xl px-6 pb-10 pt-12 text-center md:pt-20"
-      >
-        <motion.span
-          variants={item}
-          className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-xs font-medium text-muted-foreground shadow-soft"
+      <section className="mx-auto max-w-6xl px-6 pb-10 pt-12 text-center md:pt-20">
+        <span
+          className={`inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-xs font-medium text-muted-foreground shadow-soft ${reveal}`}
         >
           <span className="h-1.5 w-1.5 rounded-full bg-primary" />
           Reservas para negocios de servicios
-        </motion.span>
+        </span>
 
-        <motion.h1
-          variants={item}
-          className="mx-auto mt-7 max-w-4xl text-balance pb-2 font-serif text-5xl font-medium leading-[1.08] tracking-tight md:text-7xl"
+        <h1
+          className={`mx-auto mt-7 max-w-4xl text-balance pb-2 font-serif text-5xl font-medium leading-[1.08] tracking-tight md:text-7xl ${reveal}`}
+          style={{ animationDelay: "80ms" }}
         >
           Reservas que fluyen,
           <br />
           negocios que <em className="italic text-primary">respiran</em>.
-        </motion.h1>
+        </h1>
 
-        <motion.p variants={item} className="mx-auto mt-6 max-w-xl text-pretty text-lg text-muted-foreground">
+        <p
+          className={`mx-auto mt-6 max-w-xl text-pretty text-lg text-muted-foreground ${reveal}`}
+          style={{ animationDelay: "160ms" }}
+        >
           Servicios, horarios, disponibilidad y reservas en un solo lugar. Tus clientes agendan en
           segundos.
-        </motion.p>
+        </p>
 
-        <motion.div variants={item} className="mt-9 flex flex-wrap items-center justify-center gap-3">
+        <div
+          className={`mt-9 flex flex-wrap items-center justify-center gap-3 ${reveal}`}
+          style={{ animationDelay: "240ms" }}
+        >
           <Button asChild size="lg">
             <Link href="/register">Crear cuenta gratis</Link>
           </Button>
           <Button asChild size="lg" variant="outline">
             <Link href="/track">Seguir una reserva</Link>
           </Button>
-        </motion.div>
+        </div>
 
         {/* maqueta de agenda con profundidad */}
-        <motion.div
-          variants={item}
-          className="relative mx-auto mt-16 max-w-3xl rounded-3xl border border-border bg-card p-3 shadow-lift"
+        <div
+          className={`relative mx-auto mt-16 max-w-3xl rounded-3xl border border-border bg-card p-3 shadow-lift ${reveal}`}
+          style={{ animationDelay: "320ms" }}
         >
           <div className="rounded-2xl bg-background/60 p-5 text-left">
             <div className="mb-4 flex items-center justify-between">
@@ -98,12 +81,10 @@ export function MarketingLanding() {
             </div>
             <div className="space-y-2">
               {agenda.map((row, i) => (
-                <motion.div
+                <div
                   key={row.time}
-                  initial={{ opacity: 0, x: reduce ? 0 : -12 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.6 + i * 0.09, duration: 0.5 }}
-                  className="flex items-center gap-4 rounded-xl border border-border/70 bg-card px-4 py-3"
+                  className="flex items-center gap-4 rounded-xl border border-border/70 bg-card px-4 py-3 animate-in fade-in slide-in-from-left-2 fill-mode-both duration-500 motion-reduce:animate-none"
+                  style={{ animationDelay: `${520 + i * 90}ms` }}
                 >
                   <span className="w-14 font-mono text-sm text-muted-foreground">{row.time}</span>
                   <div className="min-w-0 flex-1">
@@ -119,12 +100,12 @@ export function MarketingLanding() {
                   >
                     {row.tone}
                   </span>
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>
-        </motion.div>
-      </motion.section>
+        </div>
+      </section>
 
       {/* sectores */}
       <section id="sectores" className="mx-auto max-w-6xl px-6 py-16 text-center">
