@@ -24,7 +24,7 @@ export function StatusBadge({ active, labels }: { active: boolean; labels?: [str
   const [on, off] = labels ?? ["Activo", "Inactivo"];
   return (
     <span
-      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+      className={`rounded-md px-2 py-0.5 text-xs font-medium ${
         active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
       }`}
     >
@@ -34,7 +34,7 @@ export function StatusBadge({ active, labels }: { active: boolean; labels?: [str
 }
 
 export const selectClass =
-  "flex h-11 w-full rounded-xl border border-border bg-card px-3.5 text-sm text-foreground shadow-soft focus-visible:border-primary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40";
+  "flex h-9 w-full rounded-md border border-input bg-card px-3 text-sm text-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30";
 
 export const textareaClass =
-  "flex min-h-[80px] w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm text-foreground shadow-soft placeholder:text-muted-foreground/70 focus-visible:border-primary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40";
+  "flex min-h-[80px] w-full rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30";

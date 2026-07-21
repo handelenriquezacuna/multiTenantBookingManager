@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PageHeader, selectClass } from "@/components/ui/page-header";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { selectClass } from "@/components/ui/page-header";
+import { ManagerHeader } from "@/components/admin/manager-ui";
 import { apiGet, apiPut, isMockMode } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import { apiList, errMessage } from "@/lib/resource";
@@ -138,27 +140,28 @@ export function BusinessHoursManager() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <PageHeader
+    <div className="mx-auto max-w-4xl space-y-6">
+      <ManagerHeader
         title="Horarios del negocio"
         subtitle="Configura los horarios de atencion por sede. La agenda publicada usa estos horarios."
         action={
-          <Button size="sm" onClick={saveHours} disabled={saving || loading}>
+          <Button onClick={saveHours} disabled={saving || loading}>
             {saving ? "Guardando..." : "Guardar horarios"}
           </Button>
         }
       />
 
       {error ? (
-        <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">{error}</div>
+        <div className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">{error}</div>
       ) : null}
       {saved ? (
-        <div className="mt-4 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-primary">Horarios guardados.</div>
+        <div className="rounded-md border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-primary">Horarios guardados.</div>
       ) : null}
 
-      <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-soft">
+      <Card>
+        <CardContent className="space-y-4 p-5">
         <h2 className="font-semibold">Sede y horario base</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2 sm:col-span-3">
             <Label htmlFor="bh-loc">Sede</Label>
             <select id="bh-loc" className={selectClass} value={selectedLocationId} onChange={(e) => setSelectedLocationId(Number(e.target.value))}>
@@ -179,28 +182,32 @@ export function BusinessHoursManager() {
             <Button className="w-full" onClick={applyBaseSchedule}>Aplicar</Button>
           </div>
         </div>
-        <p className="mt-4 text-xs text-muted-foreground">Dias a los que se aplica el horario base</p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {schedule.map((item) => {
-            const on = selectedDays.includes(item.dow);
-            return (
-              <button
-                key={item.dow}
-                type="button"
-                onClick={() => toggleSelectedDay(item.dow)}
-                className={`rounded-full border px-3 py-1 text-sm transition-colors ${on ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}
-              >
-                {item.label}
-              </button>
-            );
-          })}
+        <div>
+          <p className="text-xs text-muted-foreground">Dias a los que se aplica el horario base</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {schedule.map((item) => {
+              const on = selectedDays.includes(item.dow);
+              return (
+                <button
+                  key={item.dow}
+                  type="button"
+                  onClick={() => toggleSelectedDay(item.dow)}
+                  className={`h-8 rounded-md border px-3 text-sm font-medium transition-colors ${on ? "border-primary bg-primary/10 text-primary" : "border-input text-muted-foreground hover:bg-accent hover:text-foreground"}`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </section>
+        </CardContent>
+      </Card>
 
-      <section className="mt-6 rounded-2xl border border-border bg-card shadow-soft">
-        <div className="border-b border-border px-5 py-4">
-          <h2 className="font-semibold">Semana operativa</h2>
-        </div>
+      <Card>
+        <CardHeader className="border-b border-border py-4">
+          <CardTitle className="text-base">Semana operativa</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
         <div className="divide-y divide-border">
           {loading ? (
             <p className="px-5 py-10 text-center text-muted-foreground">Cargando horarios...</p>
@@ -228,7 +235,8 @@ export function BusinessHoursManager() {
             ))
           )}
         </div>
-      </section>
+        </CardContent>
+      </Card>
     </div>
   );
 }
