@@ -54,6 +54,24 @@ const config: Config = {
         popover: {
           DEFAULT: "hsl(var(--ct-popover))",
           foreground: "hsl(var(--ct-popover-foreground))"
+        },
+        ink: {
+          DEFAULT: "hsl(var(--ct-ink))",
+          foreground: "hsl(var(--ct-ink-foreground))"
+        },
+        brand: {
+          DEFAULT: "hsl(var(--ct-brand))",
+          foreground: "hsl(var(--ct-brand-foreground))"
+        },
+        sidebar: {
+          DEFAULT: "hsl(var(--ct-sidebar))",
+          foreground: "hsl(var(--ct-sidebar-foreground))",
+          primary: "hsl(var(--ct-sidebar-primary))",
+          "primary-foreground": "hsl(var(--ct-sidebar-primary-foreground))",
+          accent: "hsl(var(--ct-sidebar-accent))",
+          "accent-foreground": "hsl(var(--ct-sidebar-accent-foreground))",
+          border: "hsl(var(--ct-sidebar-border))",
+          ring: "hsl(var(--ct-sidebar-ring))"
         }
       },
       borderRadius: {

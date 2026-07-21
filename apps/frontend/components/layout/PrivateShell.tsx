@@ -3,20 +3,72 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import {
+  BarChart3,
+  CalendarCheck,
+  Clock,
+  ExternalLink,
+  LayoutDashboard,
+  LogOut,
+  MapPin,
+  Scissors,
+  Settings,
+  Store,
+  Tags,
+  Users
+} from "lucide-react";
 import { apiGet, clearAuthToken, isMockMode } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import { useAuth, userInitials } from "@/hooks/useAuth";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar
+} from "@/components/ui/sidebar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 
-const navItems: [string, string][] = [
-  ["/dashboard", "Resumen"],
-  ["/bookings", "Reservas"],
-  ["/services", "Servicios"],
-  ["/service-categories", "Categorias"],
-  ["/locations", "Sedes"],
-  ["/business-hours", "Horarios"],
-  ["/customers", "Clientes"],
-  ["/reports", "Reportes"],
-  ["/settings/business", "Configuracion"]
+type NavItem = { href: string; label: string; icon: typeof LayoutDashboard };
+
+const navGroups: { label: string; items: NavItem[] }[] = [
+  {
+    label: "General",
+    items: [
+      { href: "/dashboard", label: "Resumen", icon: LayoutDashboard },
+      { href: "/bookings", label: "Reservas", icon: CalendarCheck },
+      { href: "/customers", label: "Clientes", icon: Users },
+      { href: "/reports", label: "Reportes", icon: BarChart3 }
+    ]
+  },
+  {
+    label: "Negocio",
+    items: [
+      { href: "/services", label: "Servicios", icon: Scissors },
+      { href: "/service-categories", label: "Categorias", icon: Tags },
+      { href: "/locations", label: "Sedes", icon: MapPin },
+      { href: "/business-hours", label: "Horarios", icon: Clock },
+      { href: "/settings/business", label: "Configuracion", icon: Settings }
+    ]
+  }
 ];
 
 type CurrentTenant = { tenantId: number; slug: string; name: string; status: string };
@@ -28,10 +80,16 @@ const MOCK_TENANT: CurrentTenant = {
   status: "activo"
 };
 
+function pageTitle(pathname: string): string {
+  for (const group of navGroups) {
+    const item = group.items.find((i) => pathname === i.href || pathname.startsWith(`${i.href}/`));
+    if (item) return item.label;
+  }
+  return "Panel";
+}
+
 export function PrivateShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
   const router = useRouter();
-  const [profileOpen, setProfileOpen] = useState(false);
   const { user, loading } = useAuth();
   const [tenant, setTenant] = useState<CurrentTenant | null>(null);
 
@@ -54,103 +112,142 @@ export function PrivateShell({ children }: { children: React.ReactNode }) {
     };
   }, [user]);
 
-  function logout() {
-    clearAuthToken();
-    router.push("/login");
-  }
-
   if (loading || !user) {
     return (
-      <div data-ct className="flex min-h-[100dvh] items-center justify-center bg-background font-sans text-muted-foreground">
+      <div data-ct className="flex min-h-svh items-center justify-center bg-background font-sans text-muted-foreground">
         Cargando tu panel...
       </div>
     );
   }
 
-  const tenantName = tenant?.name ?? "Panel del negocio";
-  const tenantSlug = tenant?.slug ?? "";
-  const fullName = `${user.firstName} ${user.lastName}`.trim();
+  return (
+    <div data-ct className="font-sans text-foreground antialiased">
+      <SidebarProvider>
+        <AppSidebar tenant={tenant} />
+        <SidebarInset>
+          <Topbar user={user} tenant={tenant} onLogout={() => { clearAuthToken(); router.push("/login"); }} />
+          <div className="flex-1 overflow-y-auto bg-background p-4 md:p-8">{children}</div>
+        </SidebarInset>
+      </SidebarProvider>
+    </div>
+  );
+}
+
+function AppSidebar({ tenant }: { tenant: CurrentTenant | null }) {
+  const pathname = usePathname();
+  const { collapsed } = useSidebar();
 
   return (
-    <div data-ct className="flex min-h-[100dvh] bg-background font-sans text-foreground antialiased">
-      {/* Sidebar */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-card/60 lg:flex">
-        <div className="flex h-16 items-center px-6">
-          <Link href="/dashboard" className="font-serif text-xl font-semibold tracking-tight">
-            Citari
-          </Link>
-        </div>
-        <nav className="flex-1 space-y-1 px-3 py-2" aria-label="Navegacion del panel">
-          {navItems.map(([href, label]) => {
-            const active = pathname === href;
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={`block rounded-lg px-3 py-2 text-sm transition-colors ${
-                  active
-                    ? "bg-primary/10 font-semibold text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                {label}
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="border-t border-border p-4">
-          <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-            Negocio activo
+    <Sidebar>
+      <SidebarHeader>
+        <Link href="/dashboard" className="flex h-10 items-center gap-2.5 px-1.5">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-ink text-ink-foreground">
+            <Store className="h-4 w-4" />
           </span>
-          <p className="mt-2 text-xs text-muted-foreground">{tenantName}</p>
-        </div>
-      </aside>
+          {!collapsed ? <span className="font-serif text-lg font-semibold tracking-tight text-sidebar-foreground">Citari</span> : null}
+        </Link>
+      </SidebarHeader>
 
-      {/* Main */}
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-16 items-center justify-between border-b border-border px-6">
-          <div>
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">{tenantName}</p>
-            <strong className="text-sm">Panel del negocio</strong>
+      <SidebarContent>
+        {navGroups.map((group) => (
+          <SidebarGroup key={group.label}>
+            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+            <SidebarMenu>
+              {group.items.map((item) => {
+                const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                const Icon = item.icon;
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
+                      <Link href={item.href}>
+                        <Icon />
+                        {!collapsed ? <span>{item.label}</span> : null}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroup>
+        ))}
+      </SidebarContent>
+
+      <SidebarFooter>
+        {!collapsed ? (
+          <div className="rounded-lg bg-sidebar-accent/60 p-3">
+            <Badge variant="brand" className="gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              {tenant?.status === "activo" || !tenant ? "Negocio activo" : tenant.status}
+            </Badge>
+            <p className="mt-2 truncate text-xs text-sidebar-foreground/70">{tenant?.name ?? "Panel del negocio"}</p>
           </div>
-          <div className="flex items-center gap-3">
-            {tenantSlug ? (
-              <Link
-                href={`/book/${tenantSlug}`}
-                className="hidden rounded-full border border-border px-4 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground sm:inline-flex"
-              >
-                Ver pagina publica
-              </Link>
-            ) : null}
-            <div className="relative">
-              <button
-                type="button"
-                aria-label="Abrir menu de perfil"
-                onClick={() => setProfileOpen((open) => !open)}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground text-xs font-semibold text-background"
-              >
-                {userInitials(user)}
-              </button>
-              {profileOpen ? (
-                <div className="absolute right-0 top-11 z-20 w-56 rounded-2xl border border-border bg-card p-2 shadow-lift" role="menu">
-                  <div className="px-3 py-2">
-                    <strong className="block text-sm">{fullName}</strong>
-                    <small className="text-muted-foreground">Responsable de {tenantName}</small>
-                  </div>
-                  <Link href="/settings/business" role="menuitem" className="block rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground">
-                    Configuracion del negocio
-                  </Link>
-                  <button type="button" role="menuitem" onClick={logout} className="block w-full rounded-lg px-3 py-2 text-left text-sm text-destructive hover:bg-destructive/10">
-                    Cerrar sesion
-                  </button>
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </header>
-        <section className="flex-1 overflow-y-auto p-6">{children}</section>
+        ) : (
+          <span className="mx-auto h-2 w-2 rounded-full bg-primary" title="Negocio activo" />
+        )}
+      </SidebarFooter>
+    </Sidebar>
+  );
+}
+
+function Topbar({
+  user,
+  tenant,
+  onLogout
+}: {
+  user: NonNullable<ReturnType<typeof useAuth>["user"]>;
+  tenant: CurrentTenant | null;
+  onLogout: () => void;
+}) {
+  const pathname = usePathname();
+  const fullName = `${user.firstName} ${user.lastName}`.trim();
+  const tenantName = tenant?.name ?? "Panel del negocio";
+
+  return (
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur md:px-8">
+      <SidebarTrigger className="-ml-1" />
+      <Separator orientation="vertical" className="mr-1 h-6" />
+      <div className="min-w-0">
+        <h1 className="truncate text-base font-semibold leading-tight">{pageTitle(pathname)}</h1>
+        <p className="truncate text-xs text-muted-foreground">{tenantName}</p>
       </div>
-    </div>
+
+      <div className="ml-auto flex items-center gap-2">
+        {tenant?.slug ? (
+          <Link
+            href={`/book/${tenant.slug}`}
+            className="hidden items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground sm:inline-flex"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            Pagina publica
+          </Link>
+        ) : null}
+
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <Avatar>
+              <AvatarFallback className="bg-ink text-ink-foreground">{userInitials(user)}</AvatarFallback>
+            </Avatar>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-60">
+            <DropdownMenuLabel className="font-normal">
+              <p className="text-sm font-semibold">{fullName}</p>
+              <p className="truncate text-xs font-normal text-muted-foreground">{user.email}</p>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/settings/business">
+                <Settings />
+                Configuracion del negocio
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onLogout} className="text-destructive focus:text-destructive">
+              <LogOut />
+              Cerrar sesion
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </header>
   );
 }
