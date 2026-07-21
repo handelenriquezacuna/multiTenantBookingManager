@@ -90,12 +90,14 @@
 [data-ct] *::after {
   box-sizing: border-box;
 }
+/* Solo heredan la tipografia (preflight esta off). NO se hereda `color`: eso
+   pisaria por especificidad las clases de color de Tailwind en los botones
+   solidos (bg-ink/brand con texto claro) y los dejaria texto-oscuro-sobre-oscuro. */
 [data-ct] button,
 [data-ct] input,
 [data-ct] textarea,
 [data-ct] select {
   font: inherit;
-  color: inherit;
 }
 
 /* ============================================================

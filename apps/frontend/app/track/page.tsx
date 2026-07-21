@@ -37,7 +37,7 @@ export default function TrackLookupPage() {
 
           <form
             onSubmit={submitTrackingCode}
-            className="mt-8 rounded-3xl border border-border bg-card p-6 text-left shadow-soft"
+            className="mt-8 rounded-xl border border-border bg-card p-6 text-left"
           >
             <div className="space-y-2">
               <Label htmlFor="code">Codigo de seguimiento</Label>
