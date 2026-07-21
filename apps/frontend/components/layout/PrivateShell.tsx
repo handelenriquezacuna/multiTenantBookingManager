@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import {
   BarChart3,
   CalendarCheck,
+  CalendarRange,
   Clock,
   ExternalLink,
   LayoutDashboard,
@@ -66,6 +67,7 @@ const navGroups: { label: string; items: NavItem[] }[] = [
       { href: "/service-categories", label: "Categorias", icon: Tags },
       { href: "/locations", label: "Sedes", icon: MapPin },
       { href: "/business-hours", label: "Horarios", icon: Clock },
+      { href: "/availability", label: "Disponibilidad", icon: CalendarRange },
       { href: "/settings/business", label: "Configuracion", icon: Settings }
     ]
   }
