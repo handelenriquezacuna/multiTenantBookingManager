@@ -1,35 +1,63 @@
+"use client";
+
 import Link from "next/link";
 import { PrivateShell } from "@/components/layout/PrivateShell";
 import { buttonVariants } from "@/components/ui/button";
+import { endpoints } from "@/lib/endpoints";
+import { useResource, useResourceOne } from "@/lib/resource";
+import { mockBookings } from "@/lib/mock-data";
+import type { Booking } from "@/types/booking";
 
-const kpis = [
-  ["Reservas hoy", "12", "en la agenda de hoy"],
-  ["Proximas", "34", "en los proximos 7 dias"],
-  ["Servicios activos", "18", "disponibles para reservar"],
-  ["Clientes", "248", "registrados"]
-];
+type Dashboard = {
+  name: string;
+  totalBookings: number;
+  pendingBookings: number;
+  confirmedBookings: number;
+  cancelledBookings: number;
+  totalCustomers: number;
+  totalActiveServices: number;
+  totalActiveLocations: number;
+};
 
-const recentBookings = [
-  ["Handel Enriquez", "Limpieza dental", "Hoy", "09:00", "Confirmada"],
-  ["Isaac Chaves", "Consulta odontologica", "Hoy", "10:30", "Pendiente"],
-  ["Andrew Fuentes", "Blanqueamiento", "Hoy", "12:00", "Confirmada"],
-  ["Luna Delgado", "Revision de control", "Manana", "08:30", "Reagendada"]
-];
+const mockDashboard: Dashboard = {
+  name: "Clinica Dental Sonrisa",
+  totalBookings: 143,
+  pendingBookings: 12,
+  confirmedBookings: 110,
+  cancelledBookings: 21,
+  totalCustomers: 248,
+  totalActiveServices: 18,
+  totalActiveLocations: 2
+};
 
-const agenda = [
-  ["09:00", "Handel Enriquez", "Limpieza dental"],
-  ["10:30", "Isaac Chaves", "Consulta odontologica"],
-  ["12:00", "Andrew Fuentes", "Blanqueamiento"],
-  ["15:30", "Melannie Campos", "Revision de control"]
-];
+const statusLabels: Record<Booking["status"], string> = {
+  pending: "Pendiente",
+  confirmed: "Confirmada",
+  cancelled: "Cancelada",
+  completed: "Completada",
+  rescheduled: "Reagendada"
+};
 
-function statusClass(status: string) {
-  if (status === "Confirmada") return "bg-primary/10 text-primary";
-  if (status === "Pendiente") return "bg-muted text-muted-foreground";
+function statusClass(status: Booking["status"]) {
+  if (status === "confirmed") return "bg-primary/10 text-primary";
+  if (status === "pending") return "bg-muted text-muted-foreground";
+  if (status === "cancelled") return "bg-destructive/10 text-destructive";
   return "bg-foreground/10 text-foreground";
 }
 
 export default function DashboardPage() {
+  const { data: summary } = useResourceOne<Dashboard>(endpoints.reports.dashboard, mockDashboard);
+  const { items: bookings } = useResource<Booking>(endpoints.bookings.list, mockBookings);
+
+  const kpis: [string, number, string][] = [
+    ["Reservas totales", summary.totalBookings, "acumuladas"],
+    ["Pendientes", summary.pendingBookings, "por confirmar"],
+    ["Servicios activos", summary.totalActiveServices, "disponibles para reservar"],
+    ["Clientes", summary.totalCustomers, "registrados"]
+  ];
+  const recent = bookings.slice(0, 5);
+  const agenda = bookings.slice(0, 4);
+
   return (
     <PrivateShell>
       <div className="mx-auto max-w-5xl">
@@ -37,7 +65,7 @@ export default function DashboardPage() {
           <div>
             <h1 className="font-serif text-3xl font-medium tracking-tight">Dashboard</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Vista operativa del negocio: reservas de hoy, agenda y acciones principales.
+              Vista operativa de {summary.name}: reservas, agenda y acciones principales.
             </p>
           </div>
           <Link href="/bookings" className={buttonVariants({ size: "sm" })}>
@@ -75,19 +103,25 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {recentBookings.map(([customer, service, date, time, status]) => (
-                    <tr key={`${customer}-${time}`}>
-                      <td className="px-5 py-3 font-semibold">{customer}</td>
-                      <td className="px-5 py-3 text-muted-foreground">{service}</td>
-                      <td className="px-5 py-3 text-muted-foreground">{date}</td>
-                      <td className="px-5 py-3 font-mono text-xs">{time}</td>
-                      <td className="px-5 py-3">
-                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClass(status)}`}>
-                          {status}
-                        </span>
-                      </td>
+                  {recent.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-5 py-8 text-center text-muted-foreground">Sin reservas recientes.</td>
                     </tr>
-                  ))}
+                  ) : (
+                    recent.map((booking) => (
+                      <tr key={booking.bookingId}>
+                        <td className="px-5 py-3 font-semibold">{booking.customerName}</td>
+                        <td className="px-5 py-3 text-muted-foreground">{booking.serviceName}</td>
+                        <td className="px-5 py-3 text-muted-foreground">{booking.bookingDate}</td>
+                        <td className="px-5 py-3 font-mono text-xs">{booking.startTime}</td>
+                        <td className="px-5 py-3">
+                          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClass(booking.status)}`}>
+                            {statusLabels[booking.status]}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -95,26 +129,21 @@ export default function DashboardPage() {
 
           <aside className="rounded-2xl border border-border bg-card shadow-soft">
             <div className="border-b border-border px-5 py-4">
-              <h2 className="font-semibold">Agenda de hoy</h2>
+              <h2 className="font-semibold">Agenda</h2>
             </div>
             <div className="space-y-2 p-4">
-              {agenda.map(([time, customer, service]) => (
-                <div key={`${time}-${customer}`} className="flex items-center gap-3 rounded-xl border border-border/70 px-3 py-2.5">
-                  <span className="w-12 font-mono text-xs text-muted-foreground">{time}</span>
+              {agenda.map((booking) => (
+                <div key={booking.bookingId} className="flex items-center gap-3 rounded-xl border border-border/70 px-3 py-2.5">
+                  <span className="w-12 font-mono text-xs text-muted-foreground">{booking.startTime}</span>
                   <div className="min-w-0 flex-1">
-                    <strong className="block truncate text-sm">{customer}</strong>
-                    <p className="truncate text-xs text-muted-foreground">{service}</p>
+                    <strong className="block truncate text-sm">{booking.customerName}</strong>
+                    <p className="truncate text-xs text-muted-foreground">{booking.serviceName}</p>
                   </div>
                 </div>
               ))}
             </div>
           </aside>
         </section>
-
-        <p className="mt-6 text-xs text-muted-foreground">
-          Datos ilustrativos. El cableado a <code className="font-mono">GET /reports/dashboard</code> es
-          parte del pase funcional.
-        </p>
       </div>
     </PrivateShell>
   );

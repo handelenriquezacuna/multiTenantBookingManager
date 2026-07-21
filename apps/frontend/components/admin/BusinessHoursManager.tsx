@@ -1,97 +1,140 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader, selectClass } from "@/components/ui/page-header";
+import { apiGet, apiPut, isMockMode } from "@/lib/api";
+import { endpoints } from "@/lib/endpoints";
+import { apiList, errMessage } from "@/lib/resource";
 
-type DaySchedule = {
-  day: string;
-  isClosed: boolean;
-  intervals: Array<{ id: number; openTime: string; closeTime: string }>;
-};
+type Location = { locationId: number; name: string };
 
-const locations = ["Sede central", "Sucursal oeste"];
-
-const centralSchedule: DaySchedule[] = [
-  { day: "Lunes", isClosed: false, intervals: [{ id: 1, openTime: "09:00", closeTime: "12:00" }, { id: 2, openTime: "13:00", closeTime: "17:00" }] },
-  { day: "Martes", isClosed: false, intervals: [{ id: 3, openTime: "09:00", closeTime: "12:00" }, { id: 4, openTime: "13:00", closeTime: "17:00" }] },
-  { day: "Miercoles", isClosed: false, intervals: [{ id: 5, openTime: "09:00", closeTime: "12:00" }, { id: 6, openTime: "13:00", closeTime: "17:00" }] },
-  { day: "Jueves", isClosed: false, intervals: [{ id: 7, openTime: "09:00", closeTime: "12:00" }, { id: 8, openTime: "13:00", closeTime: "17:00" }] },
-  { day: "Viernes", isClosed: false, intervals: [{ id: 9, openTime: "09:00", closeTime: "12:00" }, { id: 10, openTime: "13:00", closeTime: "16:00" }] },
-  { day: "Sabado", isClosed: true, intervals: [] },
-  { day: "Domingo", isClosed: true, intervals: [] }
+// dia_semana per db/03-seed-data.sql: 0=Domingo .. 6=Sabado (JS getDay convention).
+const WEEK: { label: string; dow: number }[] = [
+  { label: "Lunes", dow: 1 },
+  { label: "Martes", dow: 2 },
+  { label: "Miercoles", dow: 3 },
+  { label: "Jueves", dow: 4 },
+  { label: "Viernes", dow: 5 },
+  { label: "Sabado", dow: 6 },
+  { label: "Domingo", dow: 0 }
 ];
 
-const westSchedule: DaySchedule[] = [
-  { day: "Lunes", isClosed: false, intervals: [{ id: 11, openTime: "10:00", closeTime: "14:00" }] },
-  { day: "Martes", isClosed: false, intervals: [{ id: 12, openTime: "10:00", closeTime: "14:00" }] },
-  { day: "Miercoles", isClosed: false, intervals: [{ id: 13, openTime: "10:00", closeTime: "14:00" }] },
-  { day: "Jueves", isClosed: false, intervals: [{ id: 14, openTime: "10:00", closeTime: "14:00" }] },
-  { day: "Viernes", isClosed: true, intervals: [] },
-  { day: "Sabado", isClosed: false, intervals: [{ id: 15, openTime: "09:00", closeTime: "12:00" }] },
-  { day: "Domingo", isClosed: true, intervals: [] }
+type DayRow = { dow: number; label: string; isClosed: boolean; openTime: string; closeTime: string };
+
+type HoursApiRow = { dayOfWeek: number; openTime: string | null; closeTime: string | null; isClosed: boolean };
+
+const mockLocations: Location[] = [
+  { locationId: 1, name: "Sede central" },
+  { locationId: 2, name: "Sucursal oeste" }
 ];
 
-const initialSchedules: Record<string, DaySchedule[]> = {
-  "Sede central": centralSchedule,
-  "Sucursal oeste": westSchedule
-};
+function defaultSchedule(): DayRow[] {
+  return WEEK.map(({ label, dow }) => ({
+    dow,
+    label,
+    isClosed: dow === 0 || dow === 6,
+    openTime: "09:00",
+    closeTime: "17:00"
+  }));
+}
+
+function toTime(value: string | null): string {
+  return value ? value.slice(0, 5) : "";
+}
 
 export function BusinessHoursManager() {
-  const [selectedLocation, setSelectedLocation] = useState("Sede central");
-  const [schedulesByLocation, setSchedulesByLocation] = useState(initialSchedules);
+  const [locations, setLocations] = useState<Location[]>(mockLocations);
+  const [selectedLocationId, setSelectedLocationId] = useState<number>(mockLocations[0].locationId);
+  const [schedule, setSchedule] = useState<DayRow[]>(defaultSchedule());
   const [baseOpenTime, setBaseOpenTime] = useState("09:00");
   const [baseCloseTime, setBaseCloseTime] = useState("17:00");
-  const [selectedDays, setSelectedDays] = useState<string[]>(["Lunes", "Martes", "Miercoles", "Jueves", "Viernes"]);
+  const [selectedDays, setSelectedDays] = useState<number[]>([1, 2, 3, 4, 5]);
+  const [loading, setLoading] = useState(!isMockMode());
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
 
-  const schedule = schedulesByLocation[selectedLocation];
+  // Cargar sedes (API) para poblar el selector con ids reales.
+  useEffect(() => {
+    if (isMockMode()) return;
+    apiList<Location>(endpoints.locations.list)
+      .then((rows) => {
+        if (rows.length === 0) return;
+        setLocations(rows);
+        setSelectedLocationId(rows[0].locationId);
+      })
+      .catch((err) => setError(errMessage(err, "No se pudieron cargar las sedes.")));
+  }, []);
 
-  function updateSelectedSchedule(updater: (current: DaySchedule[]) => DaySchedule[]) {
-    setSchedulesByLocation((current) => ({ ...current, [selectedLocation]: updater(current[selectedLocation]) }));
+  // Cargar horarios de la sede seleccionada.
+  useEffect(() => {
+    if (isMockMode()) {
+      setSchedule(defaultSchedule());
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    apiGet<HoursApiRow[]>(`${endpoints.businessHours}?locationId=${selectedLocationId}`)
+      .then((rows) => {
+        const byDow = new Map(rows.map((r) => [r.dayOfWeek, r]));
+        setSchedule(
+          WEEK.map(({ label, dow }) => {
+            const row = byDow.get(dow);
+            return {
+              dow,
+              label,
+              isClosed: row ? row.isClosed : true,
+              openTime: toTime(row?.openTime ?? null) || "09:00",
+              closeTime: toTime(row?.closeTime ?? null) || "17:00"
+            };
+          })
+        );
+      })
+      .catch((err) => setError(errMessage(err, "No se pudieron cargar los horarios.")))
+      .finally(() => setLoading(false));
+  }, [selectedLocationId]);
+
+  function updateDay(dow: number, patch: Partial<DayRow>) {
+    setSchedule((current) => current.map((d) => (d.dow === dow ? { ...d, ...patch } : d)));
+    setSaved(false);
   }
 
-  function toggleSelectedDay(day: string) {
-    setSelectedDays((current) => (current.includes(day) ? current.filter((item) => item !== day) : [...current, day]));
+  function toggleSelectedDay(dow: number) {
+    setSelectedDays((current) => (current.includes(dow) ? current.filter((d) => d !== dow) : [...current, dow]));
   }
 
   function applyBaseSchedule() {
-    updateSelectedSchedule((current) =>
-      current.map((item) =>
-        selectedDays.includes(item.day)
-          ? { ...item, isClosed: false, intervals: [{ id: Date.now() + item.day.length, openTime: baseOpenTime, closeTime: baseCloseTime }] }
-          : item
-      )
+    setSchedule((current) =>
+      current.map((d) => (selectedDays.includes(d.dow) ? { ...d, isClosed: false, openTime: baseOpenTime, closeTime: baseCloseTime } : d))
     );
+    setSaved(false);
   }
 
-  function toggleDay(day: string) {
-    updateSelectedSchedule((current) =>
-      current.map((item) => {
-        if (item.day !== day) return item;
-        const nextClosed = !item.isClosed;
-        return { ...item, isClosed: nextClosed, intervals: nextClosed ? [] : [{ id: Date.now(), openTime: "09:00", closeTime: "17:00" }] };
-      })
-    );
-  }
-
-  function addInterval(day: string) {
-    updateSelectedSchedule((current) =>
-      current.map((item) => (item.day === day ? { ...item, isClosed: false, intervals: [...item.intervals, { id: Date.now(), openTime: "13:00", closeTime: "17:00" }] } : item))
-    );
-  }
-
-  function updateInterval(day: string, id: number, field: "openTime" | "closeTime", value: string) {
-    updateSelectedSchedule((current) =>
-      current.map((item) => (item.day === day ? { ...item, intervals: item.intervals.map((interval) => (interval.id === id ? { ...interval, [field]: value } : interval)) } : item))
-    );
-  }
-
-  function removeInterval(day: string, id: number) {
-    updateSelectedSchedule((current) =>
-      current.map((item) => (item.day === day ? { ...item, intervals: item.intervals.filter((interval) => interval.id !== id) } : item))
-    );
+  async function saveHours() {
+    setSaved(false);
+    if (isMockMode()) {
+      setSaved(true);
+      return;
+    }
+    setError(null);
+    setSaving(true);
+    try {
+      const hours = schedule.map((d) => ({
+        dayOfWeek: d.dow,
+        openTime: d.isClosed ? null : d.openTime,
+        closeTime: d.isClosed ? null : d.closeTime,
+        isClosed: d.isClosed
+      }));
+      await apiPut(endpoints.businessHours, { locationId: selectedLocationId, hours });
+      setSaved(true);
+    } catch (err) {
+      setError(errMessage(err, "No se pudieron guardar los horarios."));
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -99,17 +142,28 @@ export function BusinessHoursManager() {
       <PageHeader
         title="Horarios del negocio"
         subtitle="Configura los horarios de atencion por sede. La agenda publicada usa estos horarios."
-        action={<Button size="sm">Guardar horarios</Button>}
+        action={
+          <Button size="sm" onClick={saveHours} disabled={saving || loading}>
+            {saving ? "Guardando..." : "Guardar horarios"}
+          </Button>
+        }
       />
+
+      {error ? (
+        <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">{error}</div>
+      ) : null}
+      {saved ? (
+        <div className="mt-4 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-primary">Horarios guardados.</div>
+      ) : null}
 
       <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-soft">
         <h2 className="font-semibold">Sede y horario base</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-3">
           <div className="space-y-2 sm:col-span-3">
             <Label htmlFor="bh-loc">Sede</Label>
-            <select id="bh-loc" className={selectClass} value={selectedLocation} onChange={(e) => setSelectedLocation(e.target.value)}>
+            <select id="bh-loc" className={selectClass} value={selectedLocationId} onChange={(e) => setSelectedLocationId(Number(e.target.value))}>
               {locations.map((location) => (
-                <option key={location}>{location}</option>
+                <option key={location.locationId} value={location.locationId}>{location.name}</option>
               ))}
             </select>
           </div>
@@ -125,18 +179,18 @@ export function BusinessHoursManager() {
             <Button className="w-full" onClick={applyBaseSchedule}>Aplicar</Button>
           </div>
         </div>
-        <p className="mt-4 text-xs text-muted-foreground">Dias a los que se aplica en esta sede</p>
+        <p className="mt-4 text-xs text-muted-foreground">Dias a los que se aplica el horario base</p>
         <div className="mt-2 flex flex-wrap gap-2">
           {schedule.map((item) => {
-            const on = selectedDays.includes(item.day);
+            const on = selectedDays.includes(item.dow);
             return (
               <button
-                key={item.day}
+                key={item.dow}
                 type="button"
-                onClick={() => toggleSelectedDay(item.day)}
+                onClick={() => toggleSelectedDay(item.dow)}
                 className={`rounded-full border px-3 py-1 text-sm transition-colors ${on ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}
               >
-                {item.day}
+                {item.label}
               </button>
             );
           })}
@@ -145,38 +199,34 @@ export function BusinessHoursManager() {
 
       <section className="mt-6 rounded-2xl border border-border bg-card shadow-soft">
         <div className="border-b border-border px-5 py-4">
-          <h2 className="font-semibold">Semana operativa de {selectedLocation}</h2>
+          <h2 className="font-semibold">Semana operativa</h2>
         </div>
         <div className="divide-y divide-border">
-          {schedule.map((item) => (
-            <article key={item.day} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start">
-              <div className="w-32 shrink-0">
-                <h3 className="font-semibold">{item.day}</h3>
-                <button type="button" onClick={() => toggleDay(item.day)} className="text-xs text-primary hover:underline">
-                  {item.isClosed ? "Marcar abierto" : "Marcar cerrado"}
-                </button>
-              </div>
-              <div className="flex flex-1 flex-col gap-2">
-                {item.isClosed ? (
-                  <span className="text-sm text-muted-foreground">Cerrado</span>
-                ) : (
-                  item.intervals.map((interval) => (
-                    <div key={interval.id} className="flex items-center gap-2">
-                      <Input type="time" value={interval.openTime} onChange={(e) => updateInterval(item.day, interval.id, "openTime", e.target.value)} className="h-9 w-28" />
-                      <span className="text-sm text-muted-foreground">a</span>
-                      <Input type="time" value={interval.closeTime} onChange={(e) => updateInterval(item.day, interval.id, "closeTime", e.target.value)} className="h-9 w-28" />
-                      <button type="button" onClick={() => removeInterval(item.day, interval.id)} className="text-xs text-destructive hover:underline">Quitar</button>
-                    </div>
-                  ))
-                )}
-                {!item.isClosed ? (
-                  <button type="button" onClick={() => addInterval(item.day)} className="self-start text-xs text-primary hover:underline">
-                    + Agregar intervalo
+          {loading ? (
+            <p className="px-5 py-10 text-center text-muted-foreground">Cargando horarios...</p>
+          ) : (
+            schedule.map((item) => (
+              <article key={item.dow} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center">
+                <div className="w-32 shrink-0">
+                  <h3 className="font-semibold">{item.label}</h3>
+                  <button type="button" onClick={() => updateDay(item.dow, { isClosed: !item.isClosed })} className="text-xs text-primary hover:underline">
+                    {item.isClosed ? "Marcar abierto" : "Marcar cerrado"}
                   </button>
-                ) : null}
-              </div>
-            </article>
-          ))}
+                </div>
+                <div className="flex flex-1 items-center gap-2">
+                  {item.isClosed ? (
+                    <span className="text-sm text-muted-foreground">Cerrado</span>
+                  ) : (
+                    <>
+                      <Input type="time" value={item.openTime} onChange={(e) => updateDay(item.dow, { openTime: e.target.value })} className="h-9 w-28" />
+                      <span className="text-sm text-muted-foreground">a</span>
+                      <Input type="time" value={item.closeTime} onChange={(e) => updateDay(item.dow, { closeTime: e.target.value })} className="h-9 w-28" />
+                    </>
+                  )}
+                </div>
+              </article>
+            ))
+          )}
         </div>
       </section>
     </div>
