@@ -1,11 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import { MoreHorizontal, Pencil, Plus, Power, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
-import { PageHeader, StatusBadge, selectClass, textareaClass } from "@/components/ui/page-header";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { selectClass, textareaClass } from "@/components/ui/page-header";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { ErrorBanner, ManagerHeader } from "@/components/admin/manager-ui";
 import { apiDelete, apiPatch, apiPost, isMockMode } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import { errMessage, useResource } from "@/lib/resource";
@@ -33,12 +46,9 @@ export function CategoriesManager() {
   async function saveCategory() {
     if (!name.trim()) return;
     setError(null);
-
     if (isMockMode()) {
       if (editingId) {
-        setCategories((current) =>
-          current.map((category) => (category.categoryId === editingId ? { ...category, name, description, isActive } : category))
-        );
+        setCategories((current) => current.map((c) => (c.categoryId === editingId ? { ...c, name, description, isActive } : c)));
       } else {
         setCategories((current) => [...current, { categoryId: Date.now(), name, description, isActive }]);
       }
@@ -46,7 +56,6 @@ export function CategoriesManager() {
       setIsModalOpen(false);
       return;
     }
-
     setBusy(true);
     try {
       if (editingId) {
@@ -115,81 +124,68 @@ export function CategoriesManager() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl">
-      <PageHeader
+    <div className="mx-auto max-w-5xl space-y-6">
+      <ManagerHeader
         title="Categorias de servicios"
         subtitle="Organiza los servicios que el negocio muestra en su pagina de reservas."
-        action={
-          <Button size="sm" onClick={openCreateModal}>
-            Agregar categoria
-          </Button>
-        }
+        action={<Button onClick={openCreateModal}><Plus />Agregar categoria</Button>}
       />
 
-      {error ? (
-        <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          <span>{error}</span>
-          <button type="button" onClick={reload} className="font-semibold hover:underline">
-            Reintentar
-          </button>
-        </div>
-      ) : null}
+      {error ? <ErrorBanner message={error} onRetry={reload} /> : null}
 
-      <section className="mt-6 rounded-2xl border border-border bg-card shadow-soft">
-        <div className="border-b border-border px-5 py-4">
-          <h2 className="font-semibold">Listado</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
-                <th className="px-5 py-3 font-medium">Nombre</th>
-                <th className="px-5 py-3 font-medium">Descripcion</th>
-                <th className="px-5 py-3 font-medium">Estado</th>
-                <th className="px-5 py-3 text-right font-medium">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="pl-6">Nombre</TableHead>
+                <TableHead>Descripcion</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead className="pr-6 text-right">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {loading ? (
-                <tr>
-                  <td colSpan={4} className="px-5 py-10 text-center text-muted-foreground">
-                    Cargando categorias...
-                  </td>
-                </tr>
+                Array.from({ length: 3 }).map((_, i) => (
+                  <TableRow key={i} className="hover:bg-transparent">
+                    <TableCell className="pl-6"><Skeleton className="h-4 w-36" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-16 rounded-md" /></TableCell>
+                    <TableCell className="pr-6"><Skeleton className="ml-auto h-8 w-8 rounded-md" /></TableCell>
+                  </TableRow>
+                ))
               ) : categories.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-5 py-10 text-center text-muted-foreground">
-                    Aun no hay categorias. Crea la primera.
-                  </td>
-                </tr>
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={4} className="py-12 text-center text-muted-foreground">Aun no hay categorias. Crea la primera.</TableCell>
+                </TableRow>
               ) : (
                 categories.map((category) => (
-                  <tr key={category.categoryId}>
-                    <td className="px-5 py-3 font-semibold">{category.name}</td>
-                    <td className="px-5 py-3 text-muted-foreground">{category.description}</td>
-                    <td className="px-5 py-3">
-                      <StatusBadge active={category.isActive} labels={["Activa", "Inactiva"]} />
-                    </td>
-                    <td className="px-5 py-3">
-                      <div className="flex justify-end gap-2">
-                        <button type="button" onClick={() => editCategory(category)} className="rounded-lg px-2.5 py-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground">
-                          Editar
-                        </button>
-                        <button type="button" onClick={() => toggleCategory(category)} className="rounded-lg px-2.5 py-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground">
-                          {category.isActive ? "Inactivar" : "Activar"}
-                        </button>
-                        <button type="button" onClick={() => deleteCategory(category)} className="rounded-lg px-2.5 py-1 text-sm text-destructive hover:bg-destructive/10">
-                          Eliminar
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                  <TableRow key={category.categoryId}>
+                    <TableCell className="pl-6 font-medium">{category.name}</TableCell>
+                    <TableCell className="text-muted-foreground">{category.description}</TableCell>
+                    <TableCell>
+                      <Badge variant={category.isActive ? "success" : "muted"}>{category.isActive ? "Activa" : "Inactiva"}</Badge>
+                    </TableCell>
+                    <TableCell className="pr-6 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal /><span className="sr-only">Acciones</span></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem onClick={() => editCategory(category)}><Pencil />Editar</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => toggleCategory(category)}><Power />{category.isActive ? "Inactivar" : "Activar"}</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => deleteCategory(category)} className="text-destructive focus:text-destructive"><Trash2 />Eliminar</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Editar categoria" : "Crear categoria"}>
         <div className="space-y-4">

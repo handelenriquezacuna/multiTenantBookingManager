@@ -1,20 +1,16 @@
 "use client";
 
+import { BarChart3, CalendarClock, MapPin, Users } from "lucide-react";
 import { PrivateShell } from "@/components/layout/PrivateShell";
-import { PageHeader } from "@/components/ui/page-header";
-import { reportLabels } from "@/lib/labels";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import { endpoints } from "@/lib/endpoints";
 import { useResource, useResourceOne } from "@/lib/resource";
 
-type Dashboard = {
-  totalBookings: number;
-  totalCustomers: number;
-  totalActiveServices: number;
-  totalActiveLocations: number;
-};
-
+type Dashboard = { totalBookings: number; totalCustomers: number; totalActiveServices: number; totalActiveLocations: number };
 type ServiceDemand = { serviceId: number; serviceName: string; totalBookings: number; lastBookingAt: string | null };
-
 type AvailabilityStatus = {
   availabilityBlockId: number;
   locationName: string;
@@ -25,13 +21,11 @@ type AvailabilityStatus = {
 };
 
 const mockDashboard: Dashboard = { totalBookings: 143, totalCustomers: 248, totalActiveServices: 18, totalActiveLocations: 2 };
-
 const mockDemand: ServiceDemand[] = [
   { serviceId: 1, serviceName: "Limpieza dental", totalBookings: 42, lastBookingAt: "2026-05-19" },
   { serviceId: 2, serviceName: "Consulta odontologica", totalBookings: 28, lastBookingAt: "2026-05-18" },
   { serviceId: 3, serviceName: "Blanqueamiento dental", totalBookings: 21, lastBookingAt: "2026-05-15" }
 ];
-
 const mockAvailability: AvailabilityStatus[] = [
   { availabilityBlockId: 1, locationName: "Sede central", blockDate: "2026-05-20", startTime: "09:00", endTime: "09:30", isReserved: false },
   { availabilityBlockId: 2, locationName: "Sede central", blockDate: "2026-05-20", startTime: "11:00", endTime: "11:30", isReserved: false },
@@ -42,114 +36,95 @@ function todayIso() {
   return new Date().toISOString().slice(0, 10);
 }
 
-const tabs = [
-  reportLabels.dashboard,
-  reportLabels.dailyAgenda,
-  reportLabels.bookingsDetail,
-  reportLabels.servicesDemand,
-  reportLabels.availabilityStatus
-];
-
 export default function ReportsPage() {
-  const { data: summary } = useResourceOne<Dashboard>(endpoints.reports.dashboard, mockDashboard);
+  const { data: summary, loading } = useResourceOne<Dashboard>(endpoints.reports.dashboard, mockDashboard);
   const { items: demand } = useResource<ServiceDemand>(endpoints.reports.servicesDemand, mockDemand);
   const { items: availability } = useResource<AvailabilityStatus>(
     `${endpoints.reports.availabilityStatus}?date=${todayIso()}`,
     mockAvailability
   );
 
-  const kpis: [string, number, string][] = [
-    ["Reservas totales", summary.totalBookings, "acumuladas"],
-    ["Clientes registrados", summary.totalCustomers, "con historial"],
-    ["Servicios activos", summary.totalActiveServices, "disponibles"],
-    ["Sedes activas", summary.totalActiveLocations, "operando"]
+  const kpis = [
+    { label: "Reservas totales", value: summary.totalBookings, helper: "acumuladas", icon: BarChart3 },
+    { label: "Clientes", value: summary.totalCustomers, helper: "con historial", icon: Users },
+    { label: "Servicios activos", value: summary.totalActiveServices, helper: "publicados", icon: CalendarClock },
+    { label: "Sedes activas", value: summary.totalActiveLocations, helper: "operando", icon: MapPin }
   ];
 
   return (
     <PrivateShell>
-      <div className="mx-auto max-w-5xl">
-        <PageHeader
-          title="Reportes"
-          subtitle="Indicadores operativos basados en reservas, servicios y disponibilidad."
-        />
-
-        <div className="mt-5 flex flex-wrap gap-2">
-          {tabs.map((tab, i) => (
-            <span
-              key={tab}
-              className={`rounded-full border px-3 py-1 text-sm ${i === 3 ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}
-            >
-              {tab}
-            </span>
-          ))}
+      <div className="mx-auto max-w-5xl space-y-6">
+        <div>
+          <h2 className="font-serif text-2xl font-medium tracking-tight">Reportes</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Indicadores operativos de reservas, servicios y disponibilidad.</p>
         </div>
 
-        <section className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {kpis.map(([label, value, helper]) => (
-            <article key={label} className="rounded-2xl border border-border bg-card p-5 shadow-soft">
-              <p className="text-sm text-muted-foreground">{label}</p>
-              <p className="mt-2 font-serif text-3xl font-medium">{value}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{helper}</p>
-            </article>
-          ))}
+        <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {kpis.map((k) => {
+            const Icon = k.icon;
+            return (
+              <Card key={k.label}>
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">{k.label}</p>
+                    <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary"><Icon className="h-4 w-4" /></span>
+                  </div>
+                  {loading ? <Skeleton className="mt-3 h-8 w-16" /> : <p className="mt-2 text-3xl font-semibold tracking-tight">{k.value}</p>}
+                  <p className="mt-1 text-xs text-muted-foreground">{k.helper}</p>
+                </CardContent>
+              </Card>
+            );
+          })}
         </section>
 
-        <section className="mt-6 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-2xl border border-border bg-card shadow-soft">
-            <div className="border-b border-border px-5 py-4">
-              <h2 className="font-semibold">{reportLabels.servicesDemand}</h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
-                    <th className="px-5 py-3 font-medium">Servicio</th>
-                    <th className="px-5 py-3 font-medium">Reservas</th>
-                    <th className="px-5 py-3 font-medium">Ultima</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
+        <section className="grid gap-4 lg:grid-cols-2">
+          <Card>
+            <CardHeader className="border-b border-border py-4"><CardTitle className="text-base">Demanda de servicios</CardTitle></CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="pl-6">Servicio</TableHead>
+                    <TableHead>Reservas</TableHead>
+                    <TableHead>Ultima</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {demand.map((row) => (
-                    <tr key={row.serviceId}>
-                      <td className="px-5 py-3 font-semibold">{row.serviceName}</td>
-                      <td className="px-5 py-3 text-muted-foreground">{row.totalBookings}</td>
-                      <td className="px-5 py-3 text-muted-foreground">{row.lastBookingAt?.slice(0, 10) ?? "—"}</td>
-                    </tr>
+                    <TableRow key={row.serviceId}>
+                      <TableCell className="pl-6 font-medium">{row.serviceName}</TableCell>
+                      <TableCell className="text-muted-foreground">{row.totalBookings}</TableCell>
+                      <TableCell className="text-muted-foreground">{row.lastBookingAt?.slice(0, 10) ?? "—"}</TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
 
-          <div className="rounded-2xl border border-border bg-card shadow-soft">
-            <div className="border-b border-border px-5 py-4">
-              <h2 className="font-semibold">{reportLabels.availabilityStatus}</h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
-                    <th className="px-5 py-3 font-medium">Fecha</th>
-                    <th className="px-5 py-3 font-medium">Horario</th>
-                    <th className="px-5 py-3 font-medium">Estado</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
+          <Card>
+            <CardHeader className="border-b border-border py-4"><CardTitle className="text-base">Estado de disponibilidad</CardTitle></CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="pl-6">Fecha</TableHead>
+                    <TableHead>Horario</TableHead>
+                    <TableHead>Estado</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {availability.map((row) => (
-                    <tr key={row.availabilityBlockId}>
-                      <td className="px-5 py-3 text-muted-foreground">{row.blockDate}</td>
-                      <td className="px-5 py-3 font-mono text-xs">{row.startTime} - {row.endTime}</td>
-                      <td className="px-5 py-3">
-                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${row.isReserved ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"}`}>
-                          {row.isReserved ? "Reservado" : "Disponible"}
-                        </span>
-                      </td>
-                    </tr>
+                    <TableRow key={row.availabilityBlockId}>
+                      <TableCell className="pl-6 text-muted-foreground">{row.blockDate}</TableCell>
+                      <TableCell className="font-mono text-xs">{row.startTime} - {row.endTime}</TableCell>
+                      <TableCell><Badge variant={row.isReserved ? "muted" : "success"}>{row.isReserved ? "Reservado" : "Disponible"}</Badge></TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </section>
       </div>
     </PrivateShell>

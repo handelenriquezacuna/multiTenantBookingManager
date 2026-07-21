@@ -1,11 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import { MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
-import { PageHeader, selectClass, textareaClass } from "@/components/ui/page-header";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { selectClass, textareaClass } from "@/components/ui/page-header";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { ErrorBanner, ManagerHeader } from "@/components/admin/manager-ui";
 import { apiDelete, apiPatch, apiPost, isMockMode } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import { errMessage, useResource } from "@/lib/resource";
@@ -27,14 +38,7 @@ const initialServices: ServiceRow[] = mockServices.map((service) => ({
   categoryName: "Odontologia general"
 }));
 
-const emptyForm = {
-  name: "",
-  description: "",
-  durationMinutes: 30,
-  price: 0,
-  showPrice: true,
-  categoryId: 0
-};
+const emptyForm = { name: "", description: "", durationMinutes: 30, price: 0, showPrice: true, categoryId: 0 };
 type ServiceForm = typeof emptyForm;
 
 export function ServicesManager() {
@@ -64,26 +68,15 @@ export function ServicesManager() {
       return;
     }
     setError(null);
-
     if (isMockMode()) {
       if (editingId) {
-        setServices((current) =>
-          current.map((service) =>
-            service.serviceId === editingId
-              ? { ...service, ...form, categoryName: categoryName(form.categoryId) }
-              : service
-          )
-        );
+        setServices((current) => current.map((s) => (s.serviceId === editingId ? { ...s, ...form, categoryName: categoryName(form.categoryId) } : s)));
       } else {
-        setServices((current) => [
-          ...current,
-          { serviceId: Date.now(), ...form, categoryName: categoryName(form.categoryId) }
-        ]);
+        setServices((current) => [...current, { serviceId: Date.now(), ...form, categoryName: categoryName(form.categoryId) }]);
       }
       closeModal();
       return;
     }
-
     setBusy(true);
     try {
       const body = {
@@ -96,9 +89,7 @@ export function ServicesManager() {
       };
       if (editingId) {
         const updated = await apiPatch<Service>(endpoints.services.byId(editingId), body);
-        setServices((current) =>
-          current.map((s) => (s.serviceId === editingId ? { ...updated, categoryId: form.categoryId, categoryName: categoryName(form.categoryId) } : s))
-        );
+        setServices((current) => current.map((s) => (s.serviceId === editingId ? { ...updated, categoryId: form.categoryId, categoryName: categoryName(form.categoryId) } : s)));
       } else {
         const created = await apiPost<Service>(endpoints.services.list, body);
         setServices((current) => [...current, { ...created, categoryId: form.categoryId, categoryName: categoryName(form.categoryId) }]);
@@ -151,95 +142,74 @@ export function ServicesManager() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl">
-      <PageHeader
+    <div className="mx-auto max-w-5xl space-y-6">
+      <ManagerHeader
         title="Servicios"
         subtitle="Administra los servicios que tus clientes pueden reservar."
-        action={
-          <Button size="sm" onClick={openCreateModal}>
-            Agregar servicio
-          </Button>
-        }
+        action={<Button onClick={openCreateModal}><Plus />Agregar servicio</Button>}
       />
 
-      {error ? (
-        <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          <span>{error}</span>
-          <button type="button" onClick={reload} className="font-semibold hover:underline">
-            Reintentar
-          </button>
-        </div>
-      ) : null}
+      {error ? <ErrorBanner message={error} onRetry={reload} /> : null}
 
-      <section className="mt-6 rounded-2xl border border-border bg-card shadow-soft">
-        <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4">
-          <h2 className="font-semibold">Listado</h2>
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Buscar servicio"
-            className="h-9 w-56"
-          />
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
-                <th className="px-5 py-3 font-medium">Nombre</th>
-                <th className="px-5 py-3 font-medium">Categoria</th>
-                <th className="px-5 py-3 font-medium">Duracion</th>
-                <th className="px-5 py-3 font-medium">Precio</th>
-                <th className="px-5 py-3 text-right font-medium">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
+      <Card>
+        <CardHeader className="flex-row items-center justify-between space-y-0 border-b border-border py-4">
+          <p className="text-sm font-medium">{filtered.length} servicio(s)</p>
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar servicio" className="h-9 w-56" />
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="pl-6">Nombre</TableHead>
+                <TableHead>Categoria</TableHead>
+                <TableHead>Duracion</TableHead>
+                <TableHead>Precio</TableHead>
+                <TableHead className="pr-6 text-right">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {loading ? (
-                <tr>
-                  <td colSpan={5} className="px-5 py-10 text-center text-muted-foreground">Cargando servicios...</td>
-                </tr>
+                Array.from({ length: 3 }).map((_, i) => (
+                  <TableRow key={i} className="hover:bg-transparent">
+                    <TableCell className="pl-6"><Skeleton className="h-4 w-40" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                    <TableCell className="pr-6"><Skeleton className="ml-auto h-8 w-8 rounded-md" /></TableCell>
+                  </TableRow>
+                ))
               ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-5 py-10 text-center text-muted-foreground">
-                    No hay servicios que coincidan.
-                  </td>
-                </tr>
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={5} className="py-12 text-center text-muted-foreground">No hay servicios que coincidan.</TableCell>
+                </TableRow>
               ) : (
                 filtered.map((service) => (
-                  <tr key={service.serviceId}>
-                    <td className="px-5 py-3">
-                      <strong className="block font-semibold">{service.name}</strong>
-                      <small className="text-muted-foreground">{service.description}</small>
-                    </td>
-                    <td className="px-5 py-3 text-muted-foreground">{service.categoryName ?? categoryName(service.categoryId)}</td>
-                    <td className="px-5 py-3 text-muted-foreground">{service.durationMinutes} min</td>
-                    <td className="px-5 py-3 text-muted-foreground">
-                      {service.showPrice && service.price ? `CRC ${service.price}` : "No visible"}
-                    </td>
-                    <td className="px-5 py-3">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => editService(service)}
-                          className="rounded-lg px-2.5 py-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => deleteService(service)}
-                          className="rounded-lg px-2.5 py-1 text-sm text-destructive hover:bg-destructive/10"
-                        >
-                          Eliminar
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                  <TableRow key={service.serviceId}>
+                    <TableCell className="pl-6">
+                      <span className="block font-medium">{service.name}</span>
+                      <span className="text-xs text-muted-foreground">{service.description}</span>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{service.categoryName ?? categoryName(service.categoryId)}</TableCell>
+                    <TableCell className="text-muted-foreground">{service.durationMinutes} min</TableCell>
+                    <TableCell className="text-muted-foreground">{service.showPrice && service.price ? `CRC ${service.price}` : "No visible"}</TableCell>
+                    <TableCell className="pr-6 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal /><span className="sr-only">Acciones</span></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem onClick={() => editService(service)}><Pencil />Editar</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => deleteService(service)} className="text-destructive focus:text-destructive"><Trash2 />Eliminar</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title={isEditing ? "Editar servicio" : "Crear servicio"}>
         <div className="space-y-4">
@@ -264,9 +234,7 @@ export function ServicesManager() {
             <div className="space-y-2">
               <Label htmlFor="svc-dur">Duracion</Label>
               <select id="svc-dur" className={selectClass} value={form.durationMinutes} onChange={(e) => setForm({ ...form, durationMinutes: Number(e.target.value) })}>
-                {[15, 30, 45, 60, 90].map((m) => (
-                  <option key={m} value={m}>{m} min</option>
-                ))}
+                {[15, 30, 45, 60, 90].map((m) => <option key={m} value={m}>{m} min</option>)}
               </select>
             </div>
             <div className="space-y-2">

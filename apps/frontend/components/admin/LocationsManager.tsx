@@ -1,11 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import { MoreHorizontal, Pencil, Plus, Power, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
-import { PageHeader, StatusBadge, selectClass } from "@/components/ui/page-header";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { selectClass } from "@/components/ui/page-header";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { ErrorBanner, ManagerHeader } from "@/components/admin/manager-ui";
 import { apiDelete, apiPatch, apiPost, isMockMode } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import { errMessage, useResource } from "@/lib/resource";
@@ -53,7 +66,6 @@ export function LocationsManager() {
   async function saveLocation() {
     if (!form.name.trim() || !form.address.trim()) return;
     setError(null);
-
     if (isMockMode()) {
       if (editingId) {
         setLocations((current) => current.map((l) => (l.locationId === editingId ? { ...l, ...form } : l)));
@@ -63,7 +75,6 @@ export function LocationsManager() {
       setIsModalOpen(false);
       return;
     }
-
     setBusy(true);
     try {
       const body = { name: form.name, address: form.address, phone: form.phone || null, isMain: form.isMain };
@@ -112,81 +123,73 @@ export function LocationsManager() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <PageHeader
+    <div className="mx-auto max-w-4xl space-y-6">
+      <ManagerHeader
         title="Sedes"
         subtitle="Ubicaciones donde tu negocio atiende reservas."
-        action={
-          <Button size="sm" onClick={openCreate}>
-            Agregar sede
-          </Button>
-        }
+        action={<Button onClick={openCreate}><Plus />Agregar sede</Button>}
       />
 
-      {error ? (
-        <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          <span>{error}</span>
-          <button type="button" onClick={reload} className="font-semibold hover:underline">
-            Reintentar
-          </button>
-        </div>
-      ) : null}
+      {error ? <ErrorBanner message={error} onRetry={reload} /> : null}
 
-      <section className="mt-6 rounded-2xl border border-border bg-card shadow-soft">
-        <div className="border-b border-border px-5 py-4">
-          <h2 className="font-semibold">Listado</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
-                <th className="px-5 py-3 font-medium">Nombre</th>
-                <th className="px-5 py-3 font-medium">Direccion</th>
-                <th className="px-5 py-3 font-medium">Tipo</th>
-                <th className="px-5 py-3 font-medium">Estado</th>
-                <th className="px-5 py-3 text-right font-medium">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="pl-6">Nombre</TableHead>
+                <TableHead>Direccion</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead className="pr-6 text-right">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {loading ? (
-                <tr>
-                  <td colSpan={5} className="px-5 py-10 text-center text-muted-foreground">Cargando sedes...</td>
-                </tr>
+                Array.from({ length: 2 }).map((_, i) => (
+                  <TableRow key={i} className="hover:bg-transparent">
+                    <TableCell className="pl-6"><Skeleton className="h-4 w-32" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-16 rounded-md" /></TableCell>
+                    <TableCell className="pr-6"><Skeleton className="ml-auto h-8 w-8 rounded-md" /></TableCell>
+                  </TableRow>
+                ))
               ) : locations.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-5 py-10 text-center text-muted-foreground">
-                    Aun no hay sedes. Crea la primera.
-                  </td>
-                </tr>
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={5} className="py-12 text-center text-muted-foreground">Aun no hay sedes. Crea la primera.</TableCell>
+                </TableRow>
               ) : (
                 locations.map((location) => (
-                  <tr key={location.locationId}>
-                    <td className="px-5 py-3 font-semibold">{location.name}</td>
-                    <td className="px-5 py-3 text-muted-foreground">{location.address}</td>
-                    <td className="px-5 py-3 text-muted-foreground">{location.isMain ? "Principal" : "Secundaria"}</td>
-                    <td className="px-5 py-3">
-                      <StatusBadge active={location.isActive} />
-                    </td>
-                    <td className="px-5 py-3">
-                      <div className="flex justify-end gap-2">
-                        <button type="button" onClick={() => editLocation(location)} className="rounded-lg px-2.5 py-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground">
-                          Editar
-                        </button>
-                        <button type="button" onClick={() => toggleLocation(location)} className="rounded-lg px-2.5 py-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground">
-                          {location.isActive ? "Inactivar" : "Activar"}
-                        </button>
-                        <button type="button" onClick={() => deleteLocation(location)} className="rounded-lg px-2.5 py-1 text-sm text-destructive hover:bg-destructive/10">
-                          Eliminar
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                  <TableRow key={location.locationId}>
+                    <TableCell className="pl-6 font-medium">{location.name}</TableCell>
+                    <TableCell className="text-muted-foreground">{location.address}</TableCell>
+                    <TableCell>
+                      {location.isMain ? <Badge variant="brand">Principal</Badge> : <Badge variant="muted">Secundaria</Badge>}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={location.isActive ? "success" : "muted"}>{location.isActive ? "Activa" : "Inactiva"}</Badge>
+                    </TableCell>
+                    <TableCell className="pr-6 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal /><span className="sr-only">Acciones</span></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem onClick={() => editLocation(location)}><Pencil />Editar</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => toggleLocation(location)}><Power />{location.isActive ? "Inactivar" : "Activar"}</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => deleteLocation(location)} className="text-destructive focus:text-destructive"><Trash2 />Eliminar</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title={isEditing ? "Editar sede" : "Crear sede"}>
         <div className="space-y-4">

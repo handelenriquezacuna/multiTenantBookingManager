@@ -1,10 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import { CalendarClock, Check, CheckCheck, MoreHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
-import { PageHeader, selectClass } from "@/components/ui/page-header";
+import { selectClass } from "@/components/ui/page-header";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 import { apiPost, isMockMode } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import { errMessage, useResource } from "@/lib/resource";
@@ -12,20 +24,21 @@ import { mockAvailability, mockBookings } from "@/lib/mock-data";
 import type { AvailabilityBlock } from "@/types/availability";
 import type { Booking } from "@/types/booking";
 
-function statusClass(status: string) {
-  switch (status) {
-    case "confirmed":
-      return "bg-primary/10 text-primary";
-    case "completed":
-      return "bg-foreground/10 text-foreground";
-    case "cancelled":
-      return "bg-destructive/10 text-destructive";
-    case "rescheduled":
-      return "bg-primary/5 text-primary";
-    default:
-      return "bg-muted text-muted-foreground";
-  }
-}
+const statusLabels: Record<Booking["status"], string> = {
+  pending: "Pendiente",
+  confirmed: "Confirmada",
+  cancelled: "Cancelada",
+  completed: "Completada",
+  rescheduled: "Reagendada"
+};
+
+const statusVariant: Record<Booking["status"], "brand" | "success" | "muted" | "destructive"> = {
+  pending: "muted",
+  confirmed: "brand",
+  cancelled: "destructive",
+  completed: "success",
+  rescheduled: "brand"
+};
 
 export function BookingsManager() {
   const { items: bookings, setItems: setBookings, loading, error, setError, reload } = useResource<Booking>(
@@ -50,8 +63,7 @@ export function BookingsManager() {
     setError(null);
     setBusyId(booking.bookingId);
     try {
-      const url = endpoints.bookings[action](booking.bookingId);
-      const updated = await apiPost<Booking>(url);
+      const updated = await apiPost<Booking>(endpoints.bookings[action](booking.bookingId));
       replace(updated);
     } catch (err) {
       setError(errMessage(err, "No se pudo actualizar la reserva."));
@@ -68,7 +80,6 @@ export function BookingsManager() {
   async function rescheduleBooking() {
     if (!selectedBooking || !selectedSlot) return;
     const target = selectedBooking;
-
     if (isMockMode()) {
       const slot = availability.find((block) => String(block.availabilityBlockId) === selectedSlot);
       if (!slot) return;
@@ -76,7 +87,6 @@ export function BookingsManager() {
       setSelectedBooking(null);
       return;
     }
-
     setError(null);
     setBusyId(target.bookingId);
     try {
@@ -93,86 +103,98 @@ export function BookingsManager() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl">
-      <PageHeader
-        title="Reservas"
-        subtitle="Revisa, confirma, completa, cancela o reagenda citas desde el panel del negocio."
-      />
+    <div className="mx-auto max-w-6xl space-y-6">
+      <div>
+        <h2 className="font-serif text-2xl font-medium tracking-tight">Reservas</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Revisa, confirma, completa, cancela o reagenda citas del negocio.
+        </p>
+      </div>
 
       {error ? (
-        <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           <span>{error}</span>
-          <button type="button" onClick={reload} className="font-semibold hover:underline">
-            Reintentar
-          </button>
+          <button type="button" onClick={reload} className="font-semibold hover:underline">Reintentar</button>
         </div>
       ) : null}
 
-      <section className="mt-6 rounded-2xl border border-border bg-card shadow-soft">
-        <div className="border-b border-border px-5 py-4">
-          <h2 className="font-semibold">Agenda de reservas</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
-                <th className="px-5 py-3 font-medium">Cliente</th>
-                <th className="px-5 py-3 font-medium">Servicio</th>
-                <th className="px-5 py-3 font-medium">Fecha</th>
-                <th className="px-5 py-3 font-medium">Hora</th>
-                <th className="px-5 py-3 font-medium">Estado</th>
-                <th className="px-5 py-3 font-medium">Codigo</th>
-                <th className="px-5 py-3 text-right font-medium">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
+      <Card>
+        <CardHeader className="border-b border-border py-4">
+          <CardTitle className="text-base">Agenda de reservas</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="pl-6">Cliente</TableHead>
+                <TableHead>Servicio</TableHead>
+                <TableHead>Fecha</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead>Codigo</TableHead>
+                <TableHead className="pr-6 text-right">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {loading ? (
-                <tr>
-                  <td colSpan={7} className="px-5 py-10 text-center text-muted-foreground">Cargando reservas...</td>
-                </tr>
+                Array.from({ length: 3 }).map((_, i) => (
+                  <TableRow key={i} className="hover:bg-transparent">
+                    <TableCell className="pl-6"><Skeleton className="h-4 w-32" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-16 rounded-md" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                    <TableCell className="pr-6"><Skeleton className="ml-auto h-8 w-8 rounded-md" /></TableCell>
+                  </TableRow>
+                ))
               ) : bookings.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-5 py-10 text-center text-muted-foreground">
-                    Aun no hay reservas.
-                  </td>
-                </tr>
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={6} className="py-12 text-center text-muted-foreground">Aun no hay reservas.</TableCell>
+                </TableRow>
               ) : (
                 bookings.map((booking) => (
-                  <tr key={booking.bookingId} className={busyId === booking.bookingId ? "opacity-50" : undefined}>
-                    <td className="px-5 py-3 font-semibold">{booking.customerName}</td>
-                    <td className="px-5 py-3 text-muted-foreground">{booking.serviceName}</td>
-                    <td className="px-5 py-3 text-muted-foreground">{booking.bookingDate}</td>
-                    <td className="px-5 py-3 font-mono text-xs">{booking.startTime}</td>
-                    <td className="px-5 py-3">
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClass(booking.status)}`}>
-                        {booking.status}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 font-mono text-xs text-muted-foreground">{booking.trackingCode}</td>
-                    <td className="px-5 py-3">
-                      <div className="flex flex-wrap justify-end gap-1.5">
-                        <button type="button" onClick={() => lifecycle(booking, "confirm")} className="rounded-lg px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground">Confirmar</button>
-                        <button type="button" onClick={() => lifecycle(booking, "complete")} className="rounded-lg px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground">Completar</button>
-                        <button type="button" onClick={() => openReschedule(booking)} className="rounded-lg px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground">Reagendar</button>
-                        <button type="button" onClick={() => lifecycle(booking, "cancel")} className="rounded-lg px-2 py-1 text-xs text-destructive hover:bg-destructive/10">Cancelar</button>
-                      </div>
-                    </td>
-                  </tr>
+                  <TableRow key={booking.bookingId} className={busyId === booking.bookingId ? "opacity-50" : undefined}>
+                    <TableCell className="pl-6 font-medium">{booking.customerName}</TableCell>
+                    <TableCell className="text-muted-foreground">{booking.serviceName}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {booking.bookingDate} · <span className="font-mono text-xs">{booking.startTime.slice(0, 5)}</span>
+                    </TableCell>
+                    <TableCell><Badge variant={statusVariant[booking.status]}>{statusLabels[booking.status]}</Badge></TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">{booking.trackingCode}</TableCell>
+                    <TableCell className="pr-6 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal />
+                            <span className="sr-only">Acciones</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44">
+                          <DropdownMenuItem onClick={() => lifecycle(booking, "confirm")}><Check />Confirmar</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => lifecycle(booking, "complete")}><CheckCheck />Completar</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openReschedule(booking)}><CalendarClock />Reagendar</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => lifecycle(booking, "cancel")} className="text-destructive focus:text-destructive">
+                            <X />Cancelar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <Modal open={!!selectedBooking} onClose={() => setSelectedBooking(null)} title="Reagendar reserva">
         {selectedBooking ? (
           <div className="space-y-4">
-            <div className="rounded-2xl bg-muted/60 p-4 text-sm">
+            <div className="rounded-lg bg-muted/60 p-4 text-sm">
               <strong className="block">{selectedBooking.customerName}</strong>
               <span className="text-muted-foreground">{selectedBooking.serviceName}</span>
               <span className="mt-1 block text-muted-foreground">
-                {selectedBooking.bookingDate} - {selectedBooking.startTime}
+                {selectedBooking.bookingDate} · {selectedBooking.startTime.slice(0, 5)}
               </span>
             </div>
             <div className="space-y-2">
@@ -181,14 +203,14 @@ export function BookingsManager() {
                 <option value="">Selecciona un horario</option>
                 {availability.filter((b) => !b.isReserved).map((block) => (
                   <option key={block.availabilityBlockId} value={block.availabilityBlockId}>
-                    {block.blockDate} - {block.startTime} a {block.endTime}
+                    {block.blockDate} · {block.startTime} a {block.endTime}
                   </option>
                 ))}
               </select>
             </div>
             <div className="flex justify-end gap-3 pt-2">
               <Button variant="outline" onClick={() => setSelectedBooking(null)}>Cancelar</Button>
-              <Button onClick={rescheduleBooking} disabled={busyId === selectedBooking.bookingId}>Guardar reagendamiento</Button>
+              <Button onClick={rescheduleBooking} disabled={busyId === selectedBooking.bookingId}>Guardar</Button>
             </div>
           </div>
         ) : null}

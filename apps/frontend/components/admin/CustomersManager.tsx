@@ -1,11 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
-import { PageHeader } from "@/components/ui/page-header";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorBanner, ManagerHeader } from "@/components/admin/manager-ui";
 import { apiPost, isMockMode } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import { errMessage, useResource } from "@/lib/resource";
@@ -19,6 +24,10 @@ const initialCustomers: Customer[] = [
 
 const emptyForm = { firstName: "", lastName: "", email: "", phone: "", notes: "" };
 
+function initials(c: Customer) {
+  return `${c.firstName[0] ?? ""}${c.lastName[0] ?? ""}`.toUpperCase();
+}
+
 export function CustomersManager() {
   const { items: customers, setItems: setCustomers, loading, error, setError, reload } = useResource<Customer>(
     endpoints.customers.list,
@@ -30,21 +39,17 @@ export function CustomersManager() {
   const [busy, setBusy] = useState(false);
 
   const term = search.toLowerCase();
-  const filtered = customers.filter((c) =>
-    `${c.firstName} ${c.lastName} ${c.email} ${c.phone}`.toLowerCase().includes(term)
-  );
+  const filtered = customers.filter((c) => `${c.firstName} ${c.lastName} ${c.email} ${c.phone}`.toLowerCase().includes(term));
 
   async function saveCustomer() {
     if (!form.firstName.trim() || !form.lastName.trim()) return;
     setError(null);
-
     if (isMockMode()) {
       setCustomers((current) => [...current, { customerId: Date.now(), ...form }]);
       setForm(emptyForm);
       setIsModalOpen(false);
       return;
     }
-
     setBusy(true);
     try {
       const created = await apiPost<Customer>(endpoints.customers.list, form);
@@ -59,69 +64,60 @@ export function CustomersManager() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <PageHeader
+    <div className="mx-auto max-w-4xl space-y-6">
+      <ManagerHeader
         title="Clientes"
         subtitle="Personas que han reservado en tu negocio."
-        action={
-          <Button size="sm" onClick={() => { setForm(emptyForm); setIsModalOpen(true); }}>
-            Agregar cliente
-          </Button>
-        }
+        action={<Button onClick={() => { setForm(emptyForm); setIsModalOpen(true); }}><Plus />Agregar cliente</Button>}
       />
 
-      {error ? (
-        <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          <span>{error}</span>
-          <button type="button" onClick={reload} className="font-semibold hover:underline">
-            Reintentar
-          </button>
-        </div>
-      ) : null}
+      {error ? <ErrorBanner message={error} onRetry={reload} /> : null}
 
-      <section className="mt-6 rounded-2xl border border-border bg-card shadow-soft">
-        <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4">
-          <h2 className="font-semibold">Listado</h2>
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Buscar cliente"
-            className="h-9 w-56"
-          />
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
-                <th className="px-5 py-3 font-medium">Nombre</th>
-                <th className="px-5 py-3 font-medium">Correo</th>
-                <th className="px-5 py-3 font-medium">Telefono</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
+      <Card>
+        <CardHeader className="flex-row items-center justify-between space-y-0 border-b border-border py-4">
+          <p className="text-sm font-medium">{filtered.length} cliente(s)</p>
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar cliente" className="h-9 w-56" />
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="pl-6">Nombre</TableHead>
+                <TableHead>Correo</TableHead>
+                <TableHead>Telefono</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {loading ? (
-                <tr>
-                  <td colSpan={3} className="px-5 py-10 text-center text-muted-foreground">Cargando clientes...</td>
-                </tr>
+                Array.from({ length: 3 }).map((_, i) => (
+                  <TableRow key={i} className="hover:bg-transparent">
+                    <TableCell className="pl-6"><Skeleton className="h-4 w-40" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-44" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                  </TableRow>
+                ))
               ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="px-5 py-10 text-center text-muted-foreground">
-                    No hay clientes que coincidan.
-                  </td>
-                </tr>
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={3} className="py-12 text-center text-muted-foreground">No hay clientes que coincidan.</TableCell>
+                </TableRow>
               ) : (
                 filtered.map((customer) => (
-                  <tr key={customer.customerId}>
-                    <td className="px-5 py-3 font-semibold">{customer.firstName} {customer.lastName}</td>
-                    <td className="px-5 py-3 text-muted-foreground">{customer.email}</td>
-                    <td className="px-5 py-3 text-muted-foreground">{customer.phone}</td>
-                  </tr>
+                  <TableRow key={customer.customerId}>
+                    <TableCell className="pl-6">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8"><AvatarFallback>{initials(customer)}</AvatarFallback></Avatar>
+                        <span className="font-medium">{customer.firstName} {customer.lastName}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{customer.email}</TableCell>
+                    <TableCell className="text-muted-foreground">{customer.phone}</TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title="Nuevo cliente">
         <div className="space-y-4">
