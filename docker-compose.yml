@@ -99,6 +99,10 @@ services:
     command: sh -c "corepack enable && pnpm install && pnpm exec next dev --webpack -H 0.0.0.0 -p 3000"
     environment:
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+      # URL que usa el SERVIDOR de Next (Server Components/SSR) dentro del
+      # contenedor: "localhost" ahi apunta al propio contenedor `web`, no a
+      # `api`, por eso necesita el hostname del servicio Docker.
+      API_INTERNAL_BASE_URL: http://api:8000
       NEXT_PUBLIC_API_MODE: ${NEXT_PUBLIC_API_MODE:-api}
       # Polling para que el hot reload detecte cambios sobre bind mounts de Windows.
       WATCHPACK_POLLING: "true"
