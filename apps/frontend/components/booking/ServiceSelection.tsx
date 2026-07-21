@@ -30,10 +30,10 @@ export function ServiceSelection({ slug, services }: { slug: string; services: S
                 key={service.serviceId}
                 onClick={() => setSelectedId(service.serviceId)}
                 aria-pressed={isSelected}
-                className={`flex w-full items-center justify-between gap-4 rounded-2xl border p-4 text-left transition-all ${
+                className={`flex w-full items-center justify-between gap-4 rounded-xl border p-4 text-left transition-colors ${
                   isSelected
-                    ? "border-primary bg-primary/5 shadow-soft"
-                    : "border-border bg-card hover:border-primary/40"
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "border-border bg-card hover:bg-accent/60"
                 }`}
               >
                 <div className="min-w-0">

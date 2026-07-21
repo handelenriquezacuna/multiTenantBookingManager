@@ -34,10 +34,10 @@ export function DatetimeSelection({ slug, blocks }: { slug: string; blocks: Avai
                   key={block.availabilityBlockId}
                   onClick={() => setSelectedBlockId(block.availabilityBlockId)}
                   aria-pressed={selected}
-                  className={`flex flex-col items-start gap-1 rounded-2xl border p-3.5 text-left transition-all ${
+                  className={`flex flex-col items-start gap-1 rounded-xl border p-3.5 text-left transition-colors ${
                     selected
-                      ? "border-primary bg-primary/5 shadow-soft"
-                      : "border-border bg-card hover:border-primary/40"
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "border-border bg-card hover:bg-accent/60"
                   }`}
                 >
                   <span className="text-xs text-muted-foreground">{block.blockDate}</span>

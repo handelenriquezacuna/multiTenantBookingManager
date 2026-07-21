@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { clearAuthToken, isMockMode } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -39,13 +40,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             </Link>
             <span className="text-xs uppercase tracking-widest text-muted-foreground">Panel interno</span>
           </div>
-          <button
-            type="button"
-            onClick={logout}
-            className="rounded-full border border-border px-4 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
+          <Button type="button" variant="outline" size="sm" onClick={logout}>
             Cerrar sesion
-          </button>
+          </Button>
         </div>
       </header>
       <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">{children}</main>
