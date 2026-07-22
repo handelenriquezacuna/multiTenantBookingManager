@@ -38,11 +38,11 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         day: "size-9 p-0 text-center text-sm",
         day_button: cn(
           buttonVariants({ variant: "ghost" }),
-          "size-9 rounded-md p-0 font-normal aria-selected:opacity-100"
+          "relative size-9 rounded-md p-0 font-normal aria-selected:opacity-100"
         ),
         selected:
           "[&>button]:!bg-ink [&>button]:!text-ink-foreground [&>button:hover]:!bg-ink [&>button:hover]:!text-ink-foreground",
-        today: "[&>button]:border [&>button]:border-primary [&>button]:text-primary",
+        today: "[&>button]:font-semibold",
         outside: "text-muted-foreground/40",
         disabled: "text-muted-foreground/30 opacity-50",
         hidden: "invisible",
@@ -59,5 +59,11 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
   );
 }
 Calendar.displayName = "Calendar";
+
+// Marca los dias con cupo con un puntito discreto bajo el numero (patron
+// "calendario con eventos"), en vez de rellenar la celda. En el dia
+// seleccionado (fondo tinta) el punto se vuelve claro para que se vea.
+export const dayWithSlotsClass =
+  "[&>button]:after:absolute [&>button]:after:bottom-1 [&>button]:after:left-1/2 [&>button]:after:h-1 [&>button]:after:w-1 [&>button]:after:-translate-x-1/2 [&>button]:after:rounded-full [&>button]:after:bg-primary [&>button]:after:content-[''] [&>button[aria-selected=true]]:after:bg-ink-foreground";
 
 export { Calendar };

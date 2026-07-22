@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Clock3 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar, dayWithSlotsClass } from "@/components/ui/calendar";
 import type { AvailabilityBlock } from "@/types/availability";
 
 function parseIsoDate(iso: string): Date {
@@ -86,7 +86,7 @@ export function DatetimeSelection({ slug, blocks }: { slug: string; blocks: Avai
               onSelect={pickDate}
               disabled={[{ before: today }, (date) => !byDate.has(toIsoDate(date))]}
               modifiers={{ hasSlots: availableDates }}
-              modifiersClassNames={{ hasSlots: "font-semibold [&>button]:bg-primary/10 [&>button]:text-primary" }}
+              modifiersClassNames={{ hasSlots: dayWithSlotsClass }}
               defaultMonth={availableDates[0]}
               className="shrink-0"
             />
@@ -109,10 +109,10 @@ export function DatetimeSelection({ slug, blocks }: { slug: string; blocks: Avai
                         key={block.availabilityBlockId}
                         onClick={() => setSelectedBlockId(block.availabilityBlockId)}
                         aria-pressed={selected}
-                        className={`rounded-md border px-2 py-2 text-center text-sm font-medium transition-colors ${
+                        className={`h-10 rounded-md border text-center text-sm font-medium transition-colors ${
                           selected
-                            ? "border-primary bg-primary/5 text-primary ring-1 ring-primary"
-                            : "border-input bg-card text-foreground hover:bg-accent"
+                            ? "border-ink bg-ink text-ink-foreground"
+                            : "border-input bg-card text-foreground hover:border-ink/40 hover:bg-accent"
                         }`}
                       >
                         {block.startTime.slice(0, 5)}

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar, dayWithSlotsClass } from "@/components/ui/calendar";
 import { selectClass } from "@/components/ui/page-header";
 import { ErrorBanner, ManagerHeader } from "@/components/admin/manager-ui";
 import { apiDelete, apiGet, apiPost, apiPut, isMockMode } from "@/lib/api";
@@ -298,9 +298,9 @@ export function AvailabilityManager() {
                     <span className="text-sm text-muted-foreground">No se atiende este dia</span>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <Input type="time" value={item.openTime} onChange={(e) => updateDay(item.dow, { openTime: e.target.value })} className="h-9 w-28" />
+                      <Input type="time" value={item.openTime} onChange={(e) => updateDay(item.dow, { openTime: e.target.value })} className="h-9 w-36" />
                       <span className="text-sm text-muted-foreground">a</span>
-                      <Input type="time" value={item.closeTime} onChange={(e) => updateDay(item.dow, { closeTime: e.target.value })} className="h-9 w-28" />
+                      <Input type="time" value={item.closeTime} onChange={(e) => updateDay(item.dow, { closeTime: e.target.value })} className="h-9 w-36" />
                     </div>
                   )}
                 </div>
@@ -381,7 +381,7 @@ export function AvailabilityManager() {
                 onSelect={setSelectedDate}
                 disabled={{ before: today }}
                 modifiers={{ hasSlots: daysWithSlots }}
-                modifiersClassNames={{ hasSlots: "font-semibold [&>button]:bg-primary/10 [&>button]:text-primary" }}
+                modifiersClassNames={{ hasSlots: dayWithSlotsClass }}
                 defaultMonth={daysWithSlots[0]}
                 className="shrink-0"
               />
