@@ -75,8 +75,13 @@ class AvailabilityRepository:
         location_id: int | None = None,
     ) -> tuple[list[dict[str, Any]], int]:
         """GET /availability-blocks: paginated, with optional ?date/
-        ?locationId filters (WP7b brief)."""
-        conditions = ["dominio_id = ?"]
+        ?locationId filters (WP7b brief).
+
+        `bloque_activo = 1` excludes soft-deleted blocks (see `deactivate`) -
+        without it, DELETE /availability-blocks/{id} would not actually
+        remove the block from this listing (defect D1, test/e2e-backend-
+        validation)."""
+        conditions = ["dominio_id = ?", "bloque_activo = 1"]
         params: list[Any] = [tenant_id]
         if block_date is not None:
             conditions.append("fecha_de_bloque = ?")
@@ -162,7 +167,8 @@ class AvailabilityRepository:
             "CAST(fecha_de_bloque AS DATE) AS fecha_bloque, "
             "CAST(fecha_inicio AS TIME) AS hora_inicio, "
             "CAST(fecha_final AS TIME) AS hora_fin, "
-            "reservado AS esta_reservado "
+            "reservado AS esta_reservado, "
+            "localidad_id "
             "FROM vw_estado_disponibilidad "
             "WHERE " + " AND ".join(conditions) + " "
             "ORDER BY fecha_de_bloque, fecha_inicio"

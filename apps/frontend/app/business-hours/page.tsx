@@ -1,10 +1,8 @@
-import { BusinessHoursManager } from "@/components/admin/BusinessHoursManager";
-import { PrivateShell } from "@/components/layout/PrivateShell";
+import { redirect } from "next/navigation";
 
+// La configuracion de horario se unifico con la generacion de turnos en
+// /availability (un solo flujo). Se conserva la ruta como redireccion para no
+// romper enlaces viejos.
 export default function BusinessHoursPage() {
-  return (
-    <PrivateShell>
-      <BusinessHoursManager />
-    </PrivateShell>
-  );
+  redirect("/availability");
 }

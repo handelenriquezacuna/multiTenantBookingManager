@@ -18,6 +18,11 @@ import re
 from dataclasses import dataclass
 
 _SQL_ERROR_NUMBER_RE = re.compile(r"\((\d{5})\)")
+# Leading ODBC driver preamble, e.g. "[42000] [Microsoft][ODBC Driver 18 for
+# SQL Server][SQL Server]" prefixing the actual THROW message (defect D4,
+# test/e2e-backend-validation): strips it so `detail` carries only the
+# business message, not driver internals.
+_ODBC_PREAMBLE_RE = re.compile(r"^(?:\[[^\]]*\]\s*)+")
 
 BAD_REQUEST_RANGE = range(50001, 50020)
 NOT_FOUND_RANGE = range(50020, 50040)
@@ -108,7 +113,8 @@ def extract_sql_error_number(message: str) -> int | None:
 def domain_error_from_pyodbc_message(message: str) -> DomainError:
     """Builds the right DomainError subclass from a raw pyodbc error message."""
     number = extract_sql_error_number(message)
+    detail = _ODBC_PREAMBLE_RE.sub("", message).strip() or message
     if number is None:
-        return InternalError(message)
+        return InternalError(detail)
     error_cls = error_class_for_sql_number(number)
-    return error_cls(message, sql_error_number=number)
+    return error_cls(detail, sql_error_number=number)

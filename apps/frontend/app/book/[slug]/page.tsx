@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BookingShell } from "@/components/layout/BookingShell";
+import { buttonVariants } from "@/components/ui/button";
 import { apiGet, isMockMode } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import { mockTenant } from "@/lib/mock-data";
@@ -25,15 +26,22 @@ export default async function PublicTenantPage({ params }: { params: Promise<{ s
   }
 
   return (
-    <BookingShell>
-      <section className="card">
-        <h2 style={{ marginTop: 0 }}>{tenant.name}</h2>
-        <p>{tenant.description}</p>
-        <p style={{ color: "var(--muted)" }}>{tenant.publicMessage}</p>
-        <Link className="btn" href={`/book/${slug}/service`}>
+    <BookingShell currentStep={0}>
+      <div className="rounded-3xl border border-border bg-card p-8 shadow-soft">
+        <p className="text-xs font-semibold uppercase tracking-widest text-primary">Reservar</p>
+        <h1 className="mt-2 font-serif text-4xl font-medium tracking-tight">{tenant.name}</h1>
+        {tenant.description ? (
+          <p className="mt-3 text-muted-foreground">{tenant.description}</p>
+        ) : null}
+        {tenant.publicMessage ? (
+          <div className="mt-5 rounded-2xl bg-primary/5 px-4 py-3 text-sm text-foreground/80">
+            {tenant.publicMessage}
+          </div>
+        ) : null}
+        <Link href={`/book/${slug}/service`} className={`${buttonVariants({ size: "lg" })} mt-7 w-full`}>
           Empezar reserva
         </Link>
-      </section>
+      </div>
     </BookingShell>
   );
 }

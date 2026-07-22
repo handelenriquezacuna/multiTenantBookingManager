@@ -2,7 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { PublicShell } from "@/components/layout/PublicShell";
+import { AuthShell } from "@/components/auth/auth-shell";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ApiError, apiPost, isMockMode, setAuthToken } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import type { LoginResponse } from "@/types/auth";
@@ -40,34 +43,46 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <PublicShell>
-      <section className="card" style={{ maxWidth: 460 }}>
-        <h2>Inicio de sesion superadmin</h2>
-        <form className="grid" onSubmit={submitLogin}>
-          <input
-            placeholder="Correo"
+    <AuthShell
+      eyebrow="Acceso interno"
+      title="Panel superadmin"
+      subtitle="Administra los negocios de la plataforma: activacion, suspension y auditoria."
+      aside={
+        <p className="max-w-md font-serif text-3xl leading-snug">
+          Una plataforma, muchos negocios, <em className="italic text-primary">un solo control</em>.
+        </p>
+      }
+    >
+      <form className="space-y-4" onSubmit={submitLogin}>
+        <div className="space-y-2">
+          <Label htmlFor="email">Correo</Label>
+          <Input
+            id="email"
             type="email"
-            style={inputStyle}
+            placeholder="admin@citari.admin"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             required
+            autoComplete="email"
           />
-          <input
-            placeholder="Contrasena"
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="password">Contrasena</Label>
+          <Input
+            id="password"
             type="password"
-            style={inputStyle}
+            placeholder="Tu contrasena"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             required
+            autoComplete="current-password"
           />
-          {error ? <p className="field-helper" style={{ color: "var(--danger)" }}>{error}</p> : null}
-          <button className="btn" type="submit" disabled={loading}>
-            {loading ? "Ingresando..." : "Ingresar"}
-          </button>
-        </form>
-      </section>
-    </PublicShell>
+        </div>
+        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? "Ingresando..." : "Ingresar"}
+        </Button>
+      </form>
+    </AuthShell>
   );
 }
-
-const inputStyle = { border: "1px solid var(--border)", borderRadius: "10px", padding: "0.7rem" };

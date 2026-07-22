@@ -37,6 +37,7 @@ Citari es una plataforma de reservas multi tenant para negocios de servicios. La
 - [docs/api-handover.md](docs/api-handover.md) handover de la API: convenciones, tabla completa de endpoints, ejemplos curl, estados y pendientes de cableado
 - [docs/arquitectura-visual.md](docs/arquitectura-visual.md) arquitectura visual, puertos, secuencia de login JWT y bootstrap
 - [docs/frontend-map.md](docs/frontend-map.md) mapa de rutas frontend y su relación con endpoints
+- [docs/deployment.md](docs/deployment.md) despliegue a producción: imágenes Docker, publicación a GHCR y configuración obligatoria
 
 **Otros:**
 
@@ -110,6 +111,16 @@ python3 -m venv .venv
 ```
 
 Más detalle de variables de entorno, arquitectura por capas y lint/type-check en [apps/api/README.md](apps/api/README.md).
+
+### Producción
+
+Este repositorio contiene la aplicación y cómo construirla, no la
+infraestructura que la hospeda. GitHub Actions construye y publica las
+imágenes de `frontend` y `api` en GHCR (`.github/workflows/publish-images.yml`)
+en cada push a `main`, tag `vX.Y.Z` o de forma manual; el servidor de
+producción (por ejemplo, Dockploy) solo vigila esas imágenes y redeploya,
+nunca compila código. Detalle completo, variables obligatorias y cómo probar
+la imagen en local: [docs/deployment.md](docs/deployment.md).
 
 ## Modelo de datos: visión general
 

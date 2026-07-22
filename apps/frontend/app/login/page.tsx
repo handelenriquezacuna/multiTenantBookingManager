@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { PublicShell } from "@/components/layout/PublicShell";
+import { AuthShell } from "@/components/auth/auth-shell";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ApiError, apiPost, isMockMode, setAuthToken } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import type { LoginResponse } from "@/types/auth";
@@ -41,58 +44,50 @@ export default function LoginPage() {
   }
 
   return (
-    <PublicShell>
-      <section className="auth-page">
-        <div className="auth-visual">
-          <span className="badge">Acceso privado</span>
-          <h1>Gestiona tu agenda con calma.</h1>
-          <p>
-            Entra al panel de tu negocio para revisar reservas, administrar servicios y abrir nuevos bloques de disponibilidad.
-          </p>
-          <div className="trust-row">
-            <span className="trust-pill">Acceso seguro</span>
-            <span className="trust-pill">Datos separados por negocio</span>
-            <span className="trust-pill">Agenda siempre organizada</span>
-          </div>
+    <AuthShell
+      eyebrow="Panel del negocio"
+      title="Iniciar sesion"
+      subtitle="Accede para administrar servicios, disponibilidad, clientes y reservas."
+      footer={
+        <>
+          Aun no tienes negocio?{" "}
+          <Link href="/register" className="font-semibold text-primary hover:underline">
+            Solicita acceso
+          </Link>
+          .
+        </>
+      }
+    >
+      <form className="space-y-4" onSubmit={submitLogin}>
+        <div className="space-y-2">
+          <Label htmlFor="email">Correo electronico</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="owner@negocio.com"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+            autoComplete="email"
+          />
         </div>
-
-        <section className="auth-card" aria-labelledby="login-title">
-          <p className="section-eyebrow">Citari</p>
-          <h2 id="login-title" style={{ margin: 0, fontSize: "1.65rem" }}>Iniciar sesion</h2>
-          <p style={{ color: "var(--muted)", lineHeight: 1.65 }}>
-            Accede al espacio privado para administrar servicios, disponibilidad, clientes y reservas.
-          </p>
-          <form className="form-stack" onSubmit={submitLogin}>
-            <label className="field-group">
-              <span>Correo electronico</span>
-              <input
-                placeholder="owner@negocio.com"
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-              />
-            </label>
-            <label className="field-group">
-              <span>Contrasena</span>
-              <input
-                placeholder="Tu contrasena"
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-              />
-            </label>
-            {error ? <p className="field-helper" style={{ color: "var(--danger)" }}>{error}</p> : null}
-            <button className="btn" type="submit" disabled={loading}>
-              {loading ? "Ingresando..." : "Entrar al panel"}
-            </button>
-            <p className="field-helper">
-              Aun no tienes negocio? <Link href="/register" style={{ color: "var(--primary)", fontWeight: 800 }}>Solicita acceso</Link>.
-            </p>
-          </form>
-        </section>
-      </section>
-    </PublicShell>
+        <div className="space-y-2">
+          <Label htmlFor="password">Contrasena</Label>
+          <Input
+            id="password"
+            type="password"
+            placeholder="Tu contrasena"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+            autoComplete="current-password"
+          />
+        </div>
+        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? "Ingresando..." : "Entrar al panel"}
+        </Button>
+      </form>
+    </AuthShell>
   );
 }

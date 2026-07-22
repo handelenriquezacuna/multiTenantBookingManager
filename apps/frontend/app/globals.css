@@ -1,3 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   Citari, direccion "editorial calido": tokens de diseño.
+   Namespaced (--ct-*) para convivir con el CSS legacy de abajo
+   mientras se migra el frontend pantalla por pantalla.
+   ============================================================ */
+:root {
+  /* Base neutra refinada (shadcn new-york) + azul solo como acento.
+     `primary` es el azul de acento (chips, links, estados activos, ring);
+     los BOTONES usan `ink` (oscuro), no azul. */
+  --ct-background: 240 6% 97%;         /* lienzo gris muy claro */
+  --ct-foreground: 240 10% 6%;         /* tinta casi negra */
+  --ct-card: 0 0% 100%;
+  --ct-card-foreground: 240 10% 6%;
+  --ct-popover: 0 0% 100%;
+  --ct-popover-foreground: 240 10% 6%;
+  --ct-primary: 221 83% 53%;           /* azul acento */
+  --ct-primary-foreground: 0 0% 100%;
+  --ct-secondary: 240 5% 94%;
+  --ct-secondary-foreground: 240 8% 12%;
+  --ct-muted: 240 5% 94%;
+  --ct-muted-foreground: 240 4% 44%;
+  --ct-accent: 240 5% 94%;             /* hover neutro (no azul) */
+  --ct-accent-foreground: 240 8% 12%;
+  --ct-destructive: 0 72% 48%;
+  --ct-destructive-foreground: 0 0% 100%;
+  --ct-border: 240 6% 90%;
+  --ct-input: 240 6% 90%;
+  --ct-ring: 221 83% 53%;
+  --ct-ink: 240 9% 10%;                /* fondo de botones primarios */
+  --ct-ink-foreground: 0 0% 98%;
+  --ct-brand: 221 83% 53%;             /* alias explicito del azul */
+  --ct-brand-foreground: 0 0% 100%;
+  --ct-radius: 0.6rem;
+  /* Sidebar (shadcn) */
+  --ct-sidebar: 0 0% 100%;
+  --ct-sidebar-foreground: 240 6% 28%;
+  --ct-sidebar-primary: 240 9% 10%;
+  --ct-sidebar-primary-foreground: 0 0% 98%;
+  --ct-sidebar-accent: 240 5% 95%;
+  --ct-sidebar-accent-foreground: 240 8% 12%;
+  --ct-sidebar-border: 240 6% 91%;
+  --ct-sidebar-ring: 221 83% 53%;
+  --font-serif: "Newsreader Variable", Georgia, serif;
+  --font-sans: "Hanken Grotesk Variable", system-ui, sans-serif;
+}
+
+.dark {
+  --ct-background: 240 8% 6%;
+  --ct-foreground: 0 0% 96%;
+  --ct-card: 240 8% 9%;
+  --ct-card-foreground: 0 0% 96%;
+  --ct-popover: 240 8% 9%;
+  --ct-popover-foreground: 0 0% 96%;
+  --ct-primary: 217 91% 60%;
+  --ct-primary-foreground: 0 0% 100%;
+  --ct-secondary: 240 5% 16%;
+  --ct-secondary-foreground: 0 0% 96%;
+  --ct-muted: 240 5% 16%;
+  --ct-muted-foreground: 240 5% 62%;
+  --ct-accent: 240 5% 18%;
+  --ct-accent-foreground: 0 0% 96%;
+  --ct-destructive: 0 72% 51%;
+  --ct-destructive-foreground: 0 0% 100%;
+  --ct-border: 240 5% 18%;
+  --ct-input: 240 5% 20%;
+  --ct-ring: 217 91% 60%;
+  --ct-ink: 0 0% 96%;
+  --ct-ink-foreground: 240 9% 10%;
+  --ct-brand: 217 91% 60%;
+  --ct-brand-foreground: 0 0% 100%;
+  --ct-sidebar: 240 8% 8%;
+  --ct-sidebar-foreground: 240 5% 72%;
+  --ct-sidebar-primary: 0 0% 96%;
+  --ct-sidebar-primary-foreground: 240 9% 10%;
+  --ct-sidebar-accent: 240 5% 15%;
+  --ct-sidebar-accent-foreground: 0 0% 96%;
+  --ct-sidebar-border: 240 5% 16%;
+  --ct-sidebar-ring: 217 91% 60%;
+}
+
+/* Reset minimo solo para los arboles rediseñados (preflight esta off).
+   Se activa envolviendo la pantalla en un contenedor con data-ct. */
+[data-ct],
+[data-ct] *,
+[data-ct] *::before,
+[data-ct] *::after {
+  box-sizing: border-box;
+}
+/* Solo heredan la tipografia (preflight esta off). NO se hereda `color`: eso
+   pisaria por especificidad las clases de color de Tailwind en los botones
+   solidos (bg-ink/brand con texto claro) y los dejaria texto-oscuro-sobre-oscuro. */
+[data-ct] button,
+[data-ct] input,
+[data-ct] textarea,
+[data-ct] select {
+  font: inherit;
+}
+
+/* ============================================================
+   LEGACY: estilos de las pantallas aun no rediseñadas.
+   Se iran eliminando a medida que cada pantalla migre a Tailwind.
+   ============================================================ */
 :root {
   --bg: #ffffff;
   --surface: #ffffff;

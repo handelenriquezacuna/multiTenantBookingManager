@@ -14,7 +14,25 @@ and `GET /ready` are the only routes that require no auth (`/ready` checks the D
 with a simple `SELECT 1`). The one intentional exception is `POST /admin/tenants`,
 left as `501` on purpose — tenants are created via `POST /auth/register-owner`.
 
-## Run locally
+## Run locally (recommended: Docker)
+
+From the repo root:
+
+```bash
+docker compose up --build
+```
+
+Brings up `db` + this API + the frontend. The `api` service is bind-mounted
+and installed editable (`pip install -e .`), runs `uvicorn --reload`, and sets
+`WATCHFILES_FORCE_POLLING=true` so the reloader picks up changes over Windows/
+Docker Desktop bind mounts — edit a file on the host, save, and uvicorn
+reloads on its own. No rebuild needed for ordinary code changes; a
+`docker compose up -d --build api` is only required when `pyproject.toml`
+dependencies change.
+
+API at http://localhost:8000, interactive docs at `/docs`.
+
+## Run locally (without Docker, in a venv)
 
 ```bash
 cd apps/api
@@ -67,7 +85,12 @@ seeding and cleaning up its own rows, and includes cross-tenant isolation checks
 | `CORS_ORIGINS` | `http://localhost:3000` | Comma-separated allowed origins |
 | `LOG_FORMAT` | `json` | `dev` for a human-readable pipe-delimited line, `json` (default) for one JSON object per line |
 
-## Docker
+## Production image
+
+Same `Dockerfile` used above for dev (editable install), but production runs
+it without `--reload` and without the bind mount (baked-in code, immutable
+image). See [docs/deployment.md](../../docs/deployment.md) for the GHCR
+publish workflow and required runtime env vars.
 
 ```bash
 docker build -t citari-api apps/api

@@ -1,5 +1,5 @@
 """Shared fixtures for the WP6 integration suite: real SQL Server (the live
-`citari-db` container / `citari` database, seed already loaded - see
+`db` container / `citari` database, seed already loaded - see
 docs/sql-signatures.md and scripts/smoke-db.sql for the conventions this
 mirrors).
 
@@ -12,11 +12,14 @@ so the suite is safely re-runnable and always leaves the seed counts
 untouched.
 
 Connection target: SQLSERVER_HOST/PORT/USER/PASSWORD/DB env vars (same ones
-app.config.Settings reads), defaulting to localhost:1433 - the docker-compose
-published port. If pyodbc cannot load "ODBC Driver 18 for SQL Server" from
-the host (no driver installed on macOS), run this suite inside a container on
-the compose network instead (SQLSERVER_HOST=sqlserver) - see apps/api/README
-and the WP6 report for the exact command used.
+app.config.Settings reads). `app.config.Settings` defaults to port 1433 (the
+in-container port); running this suite from the HOST machine against the
+dockerized instance needs SQLSERVER_PORT=11433 (docker-compose.yml's default
+published port, chosen to avoid clashing with a local SQL Server on 1433). If
+pyodbc cannot load "ODBC Driver 18 for SQL Server" from the host (no driver
+installed on macOS), run this suite inside a container on the compose network
+instead (SQLSERVER_HOST=db, SQLSERVER_PORT=1433) - see apps/api/README and
+the WP6 report for the exact command used.
 """
 
 from __future__ import annotations

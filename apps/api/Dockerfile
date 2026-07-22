@@ -32,10 +32,19 @@ RUN apt-get update \
     && sed -i 's#deb \[arch=amd64,armhf,arm64\]#deb [arch=amd64,armhf,arm64 signed-by=/usr/share/keyrings/microsoft-prod.gpg]#g' /etc/apt/sources.list.d/mssql-release.list \
     && apt-get update \
     && ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql18 unixodbc libgssapi-krb5-2 \
-    && pip install --no-cache-dir . \
+    && pip install --no-cache-dir -e . \
     && apt-get purge -y --auto-remove curl gnupg2 apt-transport-https gcc g++ unixodbc-dev \
     && rm -rf /var/lib/apt/lists/* /usr/share/doc /usr/share/man
 
+# Instalado en modo editable (-e): con el bind mount de docker-compose.yml,
+# el codigo en el contenedor ES el codigo del host, y --reload recarga solo
+# con guardar el archivo, sin reconstruir la imagen (ver perfil dev en
+# docker-compose.yml).
+
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# --no-access-log: RequestContextMiddleware already logs every request as a
+# structured JSON line (method/path/status/duration); uvicorn's own access
+# log is plain text and was mixing with the JSON stream in `docker logs`
+# (defect D7, test/e2e-backend-validation).
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]

@@ -21,8 +21,8 @@ export default async function DatetimeSelectionPage({ params }: { params: Promis
   const { slug } = await params;
   const blocks = await loadAvailability(slug);
   return (
-    <BookingShell>
-      <Suspense fallback={<p>Cargando horarios...</p>}>
+    <BookingShell currentStep={2}>
+      <Suspense fallback={<p className="text-muted-foreground">Cargando horarios...</p>}>
         <DatetimeSelection slug={slug} blocks={blocks} />
       </Suspense>
     </BookingShell>

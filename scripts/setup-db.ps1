@@ -5,7 +5,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $SQLCMD   = "/opt/mssql-tools18/bin/sqlcmd"
-$CONTAINER = "citari-db"
+$CONTAINER = "db"
 $ENV_FILE  = ".env"
 $ENV_EXAMPLE = ".env.example"
 
@@ -48,7 +48,7 @@ do {
     Write-Host "  ... esperando ($attempts/$max)"
     if ($attempts -ge $max) {
         Write-Error "[ERROR] SQL Server no respondió después de $($max * 5) segundos."
-        docker compose logs sqlserver
+        docker compose logs db
         exit 1
     }
 } until ($status -eq "healthy")

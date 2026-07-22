@@ -1,26 +1,40 @@
-export function SimpleTable({ headers, rows }: { headers: string[]; rows: Array<Array<string | number>> }) {
+export function SimpleTable({
+  headers,
+  rows
+}: {
+  headers: string[];
+  rows: Array<Array<string | number>>;
+}) {
   return (
-    <div className="card" style={{ overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+    <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-soft">
+      <table className="w-full text-sm">
         <thead>
-          <tr>
+          <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
             {headers.map((head) => (
-              <th key={head} style={{ textAlign: "left", borderBottom: "1px solid var(--border)", paddingBottom: "0.5rem" }}>
+              <th key={head} className="px-5 py-3 font-medium">
                 {head}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody>
-          {rows.map((row, idx) => (
-            <tr key={idx}>
-              {row.map((cell, cidx) => (
-                <td key={cidx} style={{ padding: "0.65rem 0", borderBottom: "1px solid #efe6db" }}>
-                  {cell}
-                </td>
-              ))}
+        <tbody className="divide-y divide-border">
+          {rows.length === 0 ? (
+            <tr>
+              <td colSpan={headers.length} className="px-5 py-10 text-center text-muted-foreground">
+                Sin registros.
+              </td>
             </tr>
-          ))}
+          ) : (
+            rows.map((row, idx) => (
+              <tr key={idx}>
+                {row.map((cell, cidx) => (
+                  <td key={cidx} className={`px-5 py-3 ${cidx === 0 ? "font-semibold" : "text-muted-foreground"}`}>
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>

@@ -4,7 +4,7 @@
 set -e
 
 SQLCMD="/opt/mssql-tools18/bin/sqlcmd"
-CONTAINER="citari-db"
+CONTAINER="db"
 ENV_FILE=".env"
 ENV_EXAMPLE=".env.example"
 
@@ -35,7 +35,7 @@ until docker inspect --format='{{.State.Health.Status}}' "$CONTAINER" 2>/dev/nul
     ATTEMPTS=$((ATTEMPTS + 1))
     if [ "$ATTEMPTS" -ge "$MAX" ]; then
         echo "[ERROR] SQL Server no respondió después de $(( MAX * 5 )) segundos."
-        docker compose logs sqlserver
+        docker compose logs db
         exit 1
     fi
     echo "  ... esperando (${ATTEMPTS}/${MAX})"

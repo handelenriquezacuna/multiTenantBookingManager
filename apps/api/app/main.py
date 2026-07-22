@@ -4,6 +4,7 @@ handlers (RFC 7807 envelope), and router registration under /api/v1.
 
 from __future__ import annotations
 
+import json
 import logging
 from http import HTTPStatus
 
@@ -41,7 +42,7 @@ def create_app() -> FastAPI:
     settings = get_settings()
     setup_logging(settings.log_format)
 
-    app = FastAPI(title="MultiTenantBookingManager API", version="0.1.0")
+    app = FastAPI(title="Citari API", version="0.1.0")
 
     app.state.db_factory = ConnectionFactory(settings)
 
@@ -79,7 +80,13 @@ def create_app() -> FastAPI:
     async def validation_error_handler(
         request: Request, exc: RequestValidationError
     ) -> JSONResponse:
-        return _problem_response(422, "Unprocessable Entity", str(exc.errors()))
+        # `str(exc.errors())` is a Python repr (single-quoted, tuples for
+        # `loc`) - not valid JSON, inconsistent with the RFC 7807 envelope
+        # used everywhere else (defect D3, test/e2e-backend-validation).
+        # `default=str` guards against any non-serializable value a custom
+        # validator's `ctx` might carry.
+        detail = json.dumps(exc.errors(), default=str)
+        return _problem_response(422, "Unprocessable Entity", detail)
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:

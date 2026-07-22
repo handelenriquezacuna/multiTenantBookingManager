@@ -4,4 +4,5 @@ export type AvailabilityBlock = {
   startTime: string;
   endTime: string;
   isReserved?: boolean;
+  locationId?: number;
 };

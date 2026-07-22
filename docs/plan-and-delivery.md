@@ -39,13 +39,13 @@ re-ejecución con `make up && make test-e2e`.
 
 ### Salida real de `scripts/check-all.sql`
 
-Ejecutado contra el contenedor `citari-db` (schema + seed aplicados vía
+Ejecutado contra el contenedor `db` (schema + seed aplicados vía
 `scripts/setup-db.sh`):
 
 ```bash
 source .env
-docker cp scripts/check-all.sql citari-db:/tmp/ca.sql
-docker exec citari-db /opt/mssql-tools18/bin/sqlcmd \
+docker cp scripts/check-all.sql db:/tmp/ca.sql
+docker exec db /opt/mssql-tools18/bin/sqlcmd \
   -S localhost -U sa -P "$SQLSERVER_PASSWORD" -C -I -d citari -i /tmp/ca.sql
 ```
 

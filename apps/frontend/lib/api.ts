@@ -1,8 +1,14 @@
 import { frontendConfig } from "@/lib/frontend-config";
 
-const API_BASE_URL = frontendConfig.apiBaseUrl;
 const API_MODE = frontendConfig.apiMode;
 const API_PREFIX = "/api/v1";
+
+// Browser fetches (client components) need the host-published URL; Next.js
+// server fetches (Server Components, SSR) need the internal Docker service
+// URL — see lib/frontend-config.ts for why these can differ.
+function apiBaseUrl(): string {
+  return typeof window === "undefined" ? frontendConfig.apiInternalBaseUrl : frontendConfig.apiBaseUrl;
+}
 const TOKEN_STORAGE_KEY = "citari_token";
 
 export function isMockMode() {
@@ -65,12 +71,18 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     headers["Content-Type"] = "application/json";
   }
 
-  const response = await fetch(`${API_BASE_URL}${API_PREFIX}${path}`, {
+  const response = await fetch(`${apiBaseUrl()}${API_PREFIX}${path}`, {
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
     cache: "no-store"
   });
+
+  if (response.status === 401) {
+    // Token invalido o expirado: lo limpiamos para que la sesion se rehidrate
+    // como no autenticado (las guardas de ruta redirigen a login).
+    clearAuthToken();
+  }
 
   if (response.status === 204) {
     return undefined as T;

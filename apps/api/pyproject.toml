@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "citari-api"
 version = "0.1.0"
-description = "MultiTenantBookingManager API (FastAPI + pyodbc, sync)"
+description = "Citari API (FastAPI + pyodbc, sync)"
 requires-python = ">=3.11"
 readme = "README.md"
 dependencies = [
