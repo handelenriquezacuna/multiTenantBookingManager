@@ -27,7 +27,18 @@ function formatDayLabel(iso: string): string {
 export function DatetimeSelection({ slug, blocks }: { slug: string; blocks: AvailabilityBlock[] }) {
   const searchParams = useSearchParams();
   const serviceId = searchParams.get("service") || "";
-  const available = useMemo(() => blocks.filter((block) => !block.isReserved), [blocks]);
+  // Solo turnos libres y a futuro: nunca se ofrece una hora que ya paso.
+  const available = useMemo(() => {
+    const now = new Date();
+    return blocks.filter(
+      (block) => !block.isReserved && new Date(`${block.blockDate}T${block.startTime.slice(0, 5)}:00`) > now
+    );
+  }, [blocks]);
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
 
   const byDate = useMemo(() => {
     const map = new Map<string, AvailabilityBlock[]>();
@@ -73,7 +84,9 @@ export function DatetimeSelection({ slug, blocks }: { slug: string; blocks: Avai
               mode="single"
               selected={selectedDate}
               onSelect={pickDate}
-              disabled={(date) => !byDate.has(toIsoDate(date))}
+              disabled={[{ before: today }, (date) => !byDate.has(toIsoDate(date))]}
+              modifiers={{ hasSlots: availableDates }}
+              modifiersClassNames={{ hasSlots: "font-semibold [&>button]:bg-primary/10 [&>button]:text-primary" }}
               defaultMonth={availableDates[0]}
               className="shrink-0"
             />
