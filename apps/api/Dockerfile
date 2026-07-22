@@ -43,4 +43,8 @@ RUN apt-get update \
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# --no-access-log: RequestContextMiddleware already logs every request as a
+# structured JSON line (method/path/status/duration); uvicorn's own access
+# log is plain text and was mixing with the JSON stream in `docker logs`
+# (defect D7, test/e2e-backend-validation).
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]
