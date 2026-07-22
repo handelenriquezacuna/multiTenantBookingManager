@@ -41,7 +41,7 @@ def create_app() -> FastAPI:
     settings = get_settings()
     setup_logging(settings.log_format)
 
-    app = FastAPI(title="MultiTenantBookingManager API", version="0.1.0")
+    app = FastAPI(title="Citari API", version="0.1.0")
 
     app.state.db_factory = ConnectionFactory(settings)
 
