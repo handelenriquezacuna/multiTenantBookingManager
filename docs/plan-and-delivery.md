@@ -30,6 +30,13 @@ Adicional a los seis requisitos mínimos: 6 funciones escalares
 (`database/scripts/07-triggers.sql`), también documentados en
 `docs/sql-signatures.md`.
 
+Validación end-to-end (2026-07-19): la suite `tests/e2e/` (296 verificaciones
+automatizadas: 178 de esquema, 111 de API funcional, 7 de flujos de negocio
+con prueba de concurrencia 5/5) corre en verde contra el stack completo y
+valida en vivo R2-R6 más el aislamiento multi-tenant, la autenticación y los
+triggers. Veredicto y defectos conocidos en `tests/reports/GO_NO_GO.md`;
+re-ejecución con `make up && make test-e2e`.
+
 ### Salida real de `scripts/check-all.sql`
 
 Ejecutado contra el contenedor `citari-db` (schema + seed aplicados vía
