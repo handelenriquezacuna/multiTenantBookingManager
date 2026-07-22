@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Clock3 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Calendar, dayWithSlotsClass } from "@/components/ui/calendar";
@@ -27,18 +27,31 @@ function formatDayLabel(iso: string): string {
 export function DatetimeSelection({ slug, blocks }: { slug: string; blocks: AvailabilityBlock[] }) {
   const searchParams = useSearchParams();
   const serviceId = searchParams.get("service") || "";
-  // Solo turnos libres y a futuro: nunca se ofrece una hora que ya paso.
-  const available = useMemo(() => {
-    const now = new Date();
-    return blocks.filter(
-      (block) => !block.isReserved && new Date(`${block.blockDate}T${block.startTime.slice(0, 5)}:00`) > now
-    );
-  }, [blocks]);
+
+  // `now` se resuelve SOLO tras montar en el cliente. Durante el SSR y la
+  // primera hidratacion vale null, asi el render es identico en servidor y
+  // cliente (nada de hora actual, que difiere por zona horaria/tiempo y rompe
+  // la hidratacion). Ya montado, se filtra lo pasado.
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => setNow(Date.now()), []);
+
+  // Solo turnos libres; ya montado, ademas descarta los que ya pasaron.
+  const available = useMemo(
+    () =>
+      blocks.filter(
+        (block) =>
+          !block.isReserved &&
+          (now === null || new Date(`${block.blockDate}T${block.startTime.slice(0, 5)}:00`).getTime() > now)
+      ),
+    [blocks, now]
+  );
+
   const today = useMemo(() => {
-    const d = new Date();
+    if (now === null) return undefined;
+    const d = new Date(now);
     d.setHours(0, 0, 0, 0);
     return d;
-  }, []);
+  }, [now]);
 
   const byDate = useMemo(() => {
     const map = new Map<string, AvailabilityBlock[]>();
@@ -51,13 +64,15 @@ export function DatetimeSelection({ slug, blocks }: { slug: string; blocks: Avai
     return map;
   }, [available]);
 
-  const availableDates = useMemo(
-    () => [...byDate.keys()].sort().map(parseIsoDate),
-    [byDate]
-  );
+  const availableDates = useMemo(() => [...byDate.keys()].sort().map(parseIsoDate), [byDate]);
 
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(availableDates[0]);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedBlockId, setSelectedBlockId] = useState<number | null>(null);
+
+  // Selecciona el primer dia disponible recien en el cliente (evita el mismatch).
+  useEffect(() => {
+    if (now !== null && !selectedDate && availableDates.length > 0) setSelectedDate(availableDates[0]);
+  }, [now, availableDates, selectedDate]);
 
   const selectedIso = selectedDate ? toIsoDate(selectedDate) : undefined;
   const slotsForDay = selectedIso ? byDate.get(selectedIso) ?? [] : [];
@@ -84,7 +99,11 @@ export function DatetimeSelection({ slug, blocks }: { slug: string; blocks: Avai
               mode="single"
               selected={selectedDate}
               onSelect={pickDate}
-              disabled={[{ before: today }, (date) => !byDate.has(toIsoDate(date))]}
+              disabled={
+                today
+                  ? [{ before: today }, (date) => !byDate.has(toIsoDate(date))]
+                  : (date) => !byDate.has(toIsoDate(date))
+              }
               modifiers={{ hasSlots: availableDates }}
               modifiersClassNames={{ hasSlots: dayWithSlotsClass }}
               defaultMonth={availableDates[0]}
