@@ -50,6 +50,7 @@ export function DatetimeSelection({ slug, blocks }: { slug: string; blocks: Avai
 
   const selectedIso = selectedDate ? toIsoDate(selectedDate) : undefined;
   const slotsForDay = selectedIso ? byDate.get(selectedIso) ?? [] : [];
+  const selectedBlock = slotsForDay.find((b) => b.availabilityBlockId === selectedBlockId);
 
   function pickDate(date: Date | undefined) {
     setSelectedDate(date);
@@ -117,7 +118,10 @@ export function DatetimeSelection({ slug, blocks }: { slug: string; blocks: Avai
           Volver
         </Link>
         {selectedBlockId ? (
-          <Link href={`/book/${slug}/customer?service=${serviceId}&block=${selectedBlockId}`} className={buttonVariants()}>
+          <Link
+            href={`/book/${slug}/customer?service=${serviceId}&block=${selectedBlockId}&location=${selectedBlock?.locationId ?? ""}`}
+            className={buttonVariants()}
+          >
             Continuar
           </Link>
         ) : (

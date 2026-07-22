@@ -6,27 +6,65 @@ import { FormEvent, useState } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ApiError, apiPost, isMockMode } from "@/lib/api";
+import { endpoints } from "@/lib/endpoints";
 
 const textareaClass =
-  "flex min-h-[88px] w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm text-foreground shadow-soft placeholder:text-muted-foreground/70 focus-visible:border-primary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40";
+  "flex min-h-[88px] w-full rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30";
+
+type BookingResponse = { trackingCode: string };
 
 export function CustomerStep({ slug }: { slug: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const serviceId = searchParams.get("service") || "";
   const blockId = searchParams.get("block") || "";
+  const locationId = searchParams.get("location") || "";
   const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "", notes: "" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function update(key: keyof typeof form, value: string) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    // TODO (pase funcional): POST /public/{slug}/bookings. Requiere locationId,
-    // que hoy no viene en el contrato de disponibilidad publica.
-    const params = new URLSearchParams({ service: serviceId, block: blockId, name: form.firstName });
-    router.push(`/book/${slug}/confirmation?${params.toString()}`);
+    setError(null);
+
+    if (isMockMode()) {
+      const params = new URLSearchParams({ name: form.firstName, code: "CITARI-DEMO01" });
+      router.push(`/book/${slug}/confirmation?${params.toString()}`);
+      return;
+    }
+
+    if (!serviceId || !blockId || !locationId) {
+      setError("Falta informacion del horario seleccionado. Volve a elegir fecha y hora.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const booking = await apiPost<BookingResponse>(endpoints.public.bookings(slug), {
+        serviceId: Number(serviceId),
+        locationId: Number(locationId),
+        availabilityBlockId: Number(blockId),
+        customer: {
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email,
+          phone: form.phone
+        },
+        customerNotes: form.notes || null
+      });
+
+      const params = new URLSearchParams({ name: form.firstName, code: booking.trackingCode });
+      router.push(`/book/${slug}/confirmation?${params.toString()}`);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.detail || err.title : "No se pudo crear la reserva. Intenta de nuevo.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -36,7 +74,7 @@ export function CustomerStep({ slug }: { slug: string }) {
         Usaremos esta informacion solo para gestionar tu reserva.
       </p>
 
-      <div className="mt-6 flex items-start gap-3 rounded-2xl bg-primary/5 px-4 py-3 text-sm text-foreground/80">
+      <div className="mt-6 flex items-start gap-3 rounded-xl bg-primary/5 px-4 py-3 text-sm text-foreground/80">
         <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
         <span>Recibiras un codigo para consultar, cancelar o reagendar tu reserva sin crear cuenta.</span>
       </div>
@@ -71,6 +109,8 @@ export function CustomerStep({ slug }: { slug: string }) {
           />
         </div>
 
+        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+
         <div className="flex items-center justify-between gap-3 pt-2">
           <Link
             href={`/book/${slug}/datetime?service=${serviceId}`}
@@ -78,7 +118,9 @@ export function CustomerStep({ slug }: { slug: string }) {
           >
             Volver
           </Link>
-          <Button type="submit">Confirmar reserva</Button>
+          <Button type="submit" disabled={loading}>
+            {loading ? "Reservando..." : "Confirmar reserva"}
+          </Button>
         </div>
       </form>
     </div>

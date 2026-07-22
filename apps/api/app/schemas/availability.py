@@ -13,6 +13,7 @@ class AvailabilityBlockResponse(CamelModel):
     start_time: time
     end_time: time
     is_reserved: bool | None = None
+    location_id: int | None = None
 
 
 class AvailabilityBlockCreateRequest(CamelModel):

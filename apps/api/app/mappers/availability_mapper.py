@@ -19,4 +19,6 @@ def map_availability_block(row: dict[str, Any]) -> dict[str, Any]:
     }
     if "esta_reservado" in row:
         result["is_reserved"] = bool(row["esta_reservado"])
+    if "localidad_id" in row:
+        result["location_id"] = row["localidad_id"]
     return result
